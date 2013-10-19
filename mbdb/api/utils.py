@@ -82,3 +82,14 @@ def serialize_response(code, message, data):
     else:
         return jsonify(response)
 
+
+def serialize_partial_date(data, name, date):
+    if not date:
+        return False
+    d = data[name] = {'year': date.year}
+    if date.month:
+        d['month'] = date.month
+        if date.day:
+            d['day'] = date.day
+    return True
+

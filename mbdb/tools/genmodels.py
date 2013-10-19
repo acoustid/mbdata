@@ -123,7 +123,9 @@ def generate_models_from_sql(sql):
     yield 'from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR'
     yield 'from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
-    yield 'from sqlalchemy.orm import relationship'
+    yield 'from sqlalchemy.orm import relationship, composite'
+    yield 'from sqlalchemy.ext.hybrid import hybrid_property'
+    yield 'from mbdb.types import PartialDate'
     yield ''
     yield 'Base = declarative_base()'
     yield ''
@@ -138,6 +140,8 @@ def generate_models_from_sql(sql):
         yield '    __table_args__ = { "schema" : "musicbrainz" }'
         yield ''
 
+        composites = []
+        aliases = []
         foreign_keys = []
         for column in columns.tokens:
             column_name = column.token_next(-1).value.lower()
@@ -193,14 +197,32 @@ def generate_models_from_sql(sql):
             else:
                 raise ValueError(' '.join(map(str, column.tokens)))
 
+            if column_name.endswith('date_year'):
+                composites.append((
+                    column_name.replace('_year', ''),
+                    'PartialDate',
+                    (column_name,
+                     column_name.replace('_year', '_month'),
+                     column_name.replace('_year', '_day'))
+                ))
+
+            attribute_name = column_name
             params = [column_type]
 
             foreign_key = parse_foreign_key(column, type)
             if foreign_key:
                 if foreign_key.endswith('.id'):
+                    attribute_name += '_id'
                     params.insert(0, repr(column_name))
-                    foreign_keys.append((column_name, foreign_key))
-                    column_name += '_id'
+                    foreign_keys.append((attribute_name, column_name, foreign_key))
+                    if table_name.startswith('l_') and column_name in ('entity0', 'entity1'):
+                        foreign_table_name = foreign_key.split('.')[0]
+                        if table_name == 'l_{0}_{0}'.format(foreign_table_name, foreign_table_name):
+                            aliases.append((column_name, foreign_table_name + column_name[-1]))
+                            aliases.append((attribute_name, foreign_table_name + column_name[-1] + '_id'))
+                        else:
+                            aliases.append((column_name, foreign_table_name))
+                            aliases.append((attribute_name, foreign_table_name + '_id'))
                 params.append('ForeignKey({0!r})'.format('musicbrainz.' + foreign_key))
 
             if is_not_null(column, type):
@@ -212,14 +234,25 @@ def generate_models_from_sql(sql):
             for name, value in column_attributes.iteritems():
                 params.append('{0}={1}'.format(name, value))
 
-            yield '    {0} = Column({1})'.format(column_name, ', '.join(params))
+            yield '    {0} = Column({1})'.format(attribute_name, ', '.join(params))
 
         if foreign_keys:
             yield ''
-            for column_name, foreign_key in foreign_keys:
+            for attribute_name, column_name, foreign_key in foreign_keys:
                 foreign_table_name, foreign_column_name = foreign_key.split('.')
                 foreign_model_name = format_class_name(foreign_table_name)
-                yield '    {0} = relationship({1!r}, foreign_keys=[{2}])'.format(column_name, foreign_model_name, column_name + '_id')
+                yield '    {0} = relationship({1!r}, foreign_keys=[{2}])'.format(column_name, foreign_model_name, attribute_name)
+
+        for old_name, new_name in aliases:
+            yield ''
+            yield '    @hybrid_property'
+            yield '    def {0}(self):'.format(new_name)
+            yield '        return self.{0}'.format(old_name)
+
+        if composites:
+            yield ''
+            for name, type, columns in composites:
+                yield '    {0} = composite({1}, {2})'.format(name, type, ', '.join(columns))
 
         yield ''
         yield ''

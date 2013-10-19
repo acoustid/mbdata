@@ -2,7 +2,7 @@ from flask import Blueprint, request, g, jsonify, abort
 from sqlalchemy.orm import joinedload, subqueryload_all, defer
 from mbdb.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag
 from mbdb.utils import defer_everything_but
-from mbdb.api.utils import get_param, response_ok, response_error
+from mbdb.api.utils import get_param, response_ok, response_error, serialize_partial_date
 
 blueprint = Blueprint('artist', __name__)
 
@@ -45,19 +45,8 @@ def artist_profile():
         'sort_name': artist.sort_name,
     }
 
-    if artist.begin_date_year:
-        d = data['begin_date'] = {'year': artist.begin_date_year}
-        if artist.begin_date_month:
-            d['month'] = artist.begin_date_month
-            if artist.begin_date_day:
-                d['day'] = artist.begin_date_day
-
-    if artist.end_date_year:
-        d = data['end_date'] = {'year': artist.end_date_year}
-        if artist.end_date_month:
-            d['month'] = artist.end_date_month
-            if artist.end_date_day:
-                d['day'] = artist.end_date_day
+    serialize_partial_date(data, 'begin_date', artist.begin_date)
+    serialize_partial_date(data, 'end_date', artist.end_date)
 
     if artist.ended:
         data['ended'] = True
@@ -85,11 +74,11 @@ def artist_urls():
     gid = get_param('id', type='uuid', required=True)
     artist = get_plain_artist_by_gid_or_error(gid)
 
-    query = g.db.query(LinkArtistURL).filter_by(entity0=artist).\
-        options(joinedload("entity1", innerjoin=True))
+    query = g.db.query(LinkArtistURL).filter_by(artist=artist).\
+        options(joinedload('url', innerjoin=True))
     data = []
     for link in query:
-        data.append(link.entity1.url)
+        data.append(link.url.url)
 
     return response_ok(urls=data)
 
@@ -100,9 +89,9 @@ def artist_tags():
     artist = get_plain_artist_by_gid_or_error(gid)
 
     query = g.db.query(ArtistTag).filter_by(artist=artist).\
-        options(joinedload("tag", innerjoin=True)).\
-        options(defer("last_updated")).\
-        options(defer("tag.ref_count"))
+        options(joinedload('tag', innerjoin=True)).\
+        options(defer('last_updated')).\
+        options(defer('tag.ref_count'))
     data = {}
     for artist_tag in query:
         data[artist_tag.tag.name] = artist_tag.count

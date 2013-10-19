@@ -3,7 +3,9 @@
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR
 from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, composite
+from sqlalchemy.ext.hybrid import hybrid_property
+from mbdb.types import PartialDate
 
 Base = declarative_base()
 
@@ -65,6 +67,9 @@ class Area(Base):
 
     type = relationship(u'AreaType', foreign_keys=[type_id])
 
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
 
 class AreaGIDRedirect(Base):
     __tablename__ = u'area_gid_redirect'
@@ -109,6 +114,9 @@ class AreaAlias(Base):
     area = relationship(u'Area', foreign_keys=[area_id])
     type = relationship(u'AreaAliasType', foreign_keys=[type_id])
 
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
 
 class AreaAnnotation(Base):
     __tablename__ = u'area_annotation'
@@ -150,6 +158,9 @@ class Artist(Base):
     gender = relationship(u'Gender', foreign_keys=[gender_id])
     begin_area = relationship(u'Area', foreign_keys=[begin_area_id])
     end_area = relationship(u'Area', foreign_keys=[end_area_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class ArtistDeletion(Base):
@@ -193,6 +204,9 @@ class ArtistAlias(Base):
 
     artist = relationship(u'Artist', foreign_keys=[artist_id])
     type = relationship(u'ArtistAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class ArtistAnnotation(Base):
@@ -745,6 +759,22 @@ class LinkAreaArea(Base):
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Area', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def area0(self):
+        return self.entity0
+
+    @hybrid_property
+    def area0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def area1(self):
+        return self.entity1
+
+    @hybrid_property
+    def area1_id(self):
+        return self.entity1_id
+
 
 class LinkAreaArtist(Base):
     __tablename__ = u'l_area_artist'
@@ -760,6 +790,22 @@ class LinkAreaArtist(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Artist', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def artist(self):
+        return self.entity1
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity1_id
 
 
 class LinkAreaLabel(Base):
@@ -777,6 +823,22 @@ class LinkAreaLabel(Base):
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Label', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def label(self):
+        return self.entity1
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity1_id
+
 
 class LinkAreaPlace(Base):
     __tablename__ = u'l_area_place'
@@ -792,6 +854,22 @@ class LinkAreaPlace(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place(self):
+        return self.entity1
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity1_id
 
 
 class LinkAreaRecording(Base):
@@ -809,6 +887,22 @@ class LinkAreaRecording(Base):
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
+
 
 class LinkAreaRelease(Base):
     __tablename__ = u'l_area_release'
@@ -824,6 +918,22 @@ class LinkAreaRelease(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
 
 
 class LinkAreaReleaseGroup(Base):
@@ -841,6 +951,22 @@ class LinkAreaReleaseGroup(Base):
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
 
 class LinkAreaURL(Base):
     __tablename__ = u'l_area_url'
@@ -856,6 +982,22 @@ class LinkAreaURL(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
 
 
 class LinkAreaWork(Base):
@@ -873,6 +1015,22 @@ class LinkAreaWork(Base):
     entity0 = relationship(u'Area', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
 
 class LinkArtistArtist(Base):
     __tablename__ = u'l_artist_artist'
@@ -888,6 +1046,22 @@ class LinkArtistArtist(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Artist', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def artist0(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def artist1(self):
+        return self.entity1
+
+    @hybrid_property
+    def artist1_id(self):
+        return self.entity1_id
 
 
 class LinkArtistLabel(Base):
@@ -905,6 +1079,22 @@ class LinkArtistLabel(Base):
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Label', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def label(self):
+        return self.entity1
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity1_id
+
 
 class LinkArtistPlace(Base):
     __tablename__ = u'l_artist_place'
@@ -920,6 +1110,22 @@ class LinkArtistPlace(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place(self):
+        return self.entity1
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity1_id
 
 
 class LinkArtistRecording(Base):
@@ -937,6 +1143,22 @@ class LinkArtistRecording(Base):
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
+
 
 class LinkArtistRelease(Base):
     __tablename__ = u'l_artist_release'
@@ -952,6 +1174,22 @@ class LinkArtistRelease(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
 
 
 class LinkArtistReleaseGroup(Base):
@@ -969,6 +1207,22 @@ class LinkArtistReleaseGroup(Base):
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
 
 class LinkArtistURL(Base):
     __tablename__ = u'l_artist_url'
@@ -984,6 +1238,22 @@ class LinkArtistURL(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
 
 
 class LinkArtistWork(Base):
@@ -1001,6 +1271,22 @@ class LinkArtistWork(Base):
     entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
 
 class LinkLabelLabel(Base):
     __tablename__ = u'l_label_label'
@@ -1016,6 +1302,22 @@ class LinkLabelLabel(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'Label', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def label0(self):
+        return self.entity0
+
+    @hybrid_property
+    def label0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def label1(self):
+        return self.entity1
+
+    @hybrid_property
+    def label1_id(self):
+        return self.entity1_id
 
 
 class LinkLabelPlace(Base):
@@ -1033,6 +1335,22 @@ class LinkLabelPlace(Base):
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'Place', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place(self):
+        return self.entity1
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity1_id
+
 
 class LinkLabelRecording(Base):
     __tablename__ = u'l_label_recording'
@@ -1048,6 +1366,22 @@ class LinkLabelRecording(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
 
 
 class LinkLabelRelease(Base):
@@ -1065,6 +1399,22 @@ class LinkLabelRelease(Base):
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
+
 
 class LinkLabelReleaseGroup(Base):
     __tablename__ = u'l_label_release_group'
@@ -1080,6 +1430,22 @@ class LinkLabelReleaseGroup(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
 
 
 class LinkLabelURL(Base):
@@ -1097,6 +1463,22 @@ class LinkLabelURL(Base):
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
 
 class LinkLabelWork(Base):
     __tablename__ = u'l_label_work'
@@ -1112,6 +1494,22 @@ class LinkLabelWork(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Label', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
 
 
 class LinkPlacePlace(Base):
@@ -1129,6 +1527,22 @@ class LinkPlacePlace(Base):
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'Place', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def place0(self):
+        return self.entity0
+
+    @hybrid_property
+    def place0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place1(self):
+        return self.entity1
+
+    @hybrid_property
+    def place1_id(self):
+        return self.entity1_id
+
 
 class LinkPlaceRecording(Base):
     __tablename__ = u'l_place_recording'
@@ -1144,6 +1558,22 @@ class LinkPlaceRecording(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
 
 
 class LinkPlaceRelease(Base):
@@ -1161,6 +1591,22 @@ class LinkPlaceRelease(Base):
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
+
 
 class LinkPlaceReleaseGroup(Base):
     __tablename__ = u'l_place_release_group'
@@ -1176,6 +1622,22 @@ class LinkPlaceReleaseGroup(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
 
 
 class LinkPlaceURL(Base):
@@ -1193,6 +1655,22 @@ class LinkPlaceURL(Base):
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
 
 class LinkPlaceWork(Base):
     __tablename__ = u'l_place_work'
@@ -1208,6 +1686,22 @@ class LinkPlaceWork(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Place', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
 
 
 class LinkRecordingRecording(Base):
@@ -1225,6 +1719,22 @@ class LinkRecordingRecording(Base):
     entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
     entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def recording0(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording1(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording1_id(self):
+        return self.entity1_id
+
 
 class LinkRecordingRelease(Base):
     __tablename__ = u'l_recording_release'
@@ -1240,6 +1750,22 @@ class LinkRecordingRelease(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def recording(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
 
 
 class LinkRecordingReleaseGroup(Base):
@@ -1257,6 +1783,22 @@ class LinkRecordingReleaseGroup(Base):
     entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def recording(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
 
 class LinkRecordingURL(Base):
     __tablename__ = u'l_recording_url'
@@ -1272,6 +1814,22 @@ class LinkRecordingURL(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def recording(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
 
 
 class LinkRecordingWork(Base):
@@ -1289,6 +1847,22 @@ class LinkRecordingWork(Base):
     entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def recording(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
 
 class LinkReleaseRelease(Base):
     __tablename__ = u'l_release_release'
@@ -1304,6 +1878,22 @@ class LinkReleaseRelease(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Release', foreign_keys=[entity0_id])
     entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def release0(self):
+        return self.entity0
+
+    @hybrid_property
+    def release0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release1(self):
+        return self.entity1
+
+    @hybrid_property
+    def release1_id(self):
+        return self.entity1_id
 
 
 class LinkReleaseReleaseGroup(Base):
@@ -1321,6 +1911,22 @@ class LinkReleaseReleaseGroup(Base):
     entity0 = relationship(u'Release', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def release(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
 
 class LinkReleaseURL(Base):
     __tablename__ = u'l_release_url'
@@ -1336,6 +1942,22 @@ class LinkReleaseURL(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Release', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def release(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
 
 
 class LinkReleaseWork(Base):
@@ -1353,6 +1975,22 @@ class LinkReleaseWork(Base):
     entity0 = relationship(u'Release', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def release(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
 
 class LinkReleaseGroupReleaseGroup(Base):
     __tablename__ = u'l_release_group_release_group'
@@ -1368,6 +2006,22 @@ class LinkReleaseGroupReleaseGroup(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
     entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def release_group0(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_group0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group1(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group1_id(self):
+        return self.entity1_id
 
 
 class LinkReleaseGroupURL(Base):
@@ -1385,6 +2039,22 @@ class LinkReleaseGroupURL(Base):
     entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def release_group(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
 
 class LinkReleaseGroupWork(Base):
     __tablename__ = u'l_release_group_work'
@@ -1400,6 +2070,22 @@ class LinkReleaseGroupWork(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
 
 
 class LinkURLURL(Base):
@@ -1417,6 +2103,22 @@ class LinkURLURL(Base):
     entity0 = relationship(u'URL', foreign_keys=[entity0_id])
     entity1 = relationship(u'URL', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def url0(self):
+        return self.entity0
+
+    @hybrid_property
+    def url0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url1(self):
+        return self.entity1
+
+    @hybrid_property
+    def url1_id(self):
+        return self.entity1_id
+
 
 class LinkURLWork(Base):
     __tablename__ = u'l_url_work'
@@ -1433,6 +2135,22 @@ class LinkURLWork(Base):
     entity0 = relationship(u'URL', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
 
+    @hybrid_property
+    def url(self):
+        return self.entity0
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
 
 class LinkWorkWork(Base):
     __tablename__ = u'l_work_work'
@@ -1448,6 +2166,22 @@ class LinkWorkWork(Base):
     link = relationship(u'Link', foreign_keys=[link_id])
     entity0 = relationship(u'Work', foreign_keys=[entity0_id])
     entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+
+    @hybrid_property
+    def work0(self):
+        return self.entity0
+
+    @hybrid_property
+    def work0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work1(self):
+        return self.entity1
+
+    @hybrid_property
+    def work1_id(self):
+        return self.entity1_id
 
 
 class Label(Base):
@@ -1474,6 +2208,9 @@ class Label(Base):
 
     type = relationship(u'LabelType', foreign_keys=[type_id])
     area = relationship(u'Area', foreign_keys=[area_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LabelDeletion(Base):
@@ -1542,6 +2279,9 @@ class LabelAlias(Base):
 
     label = relationship(u'Label', foreign_keys=[label_id])
     type = relationship(u'LabelAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LabelAnnotation(Base):
@@ -1652,6 +2392,9 @@ class Link(Base):
     ended = Column(Boolean, nullable=False)
 
     link_type = relationship(u'LinkType', foreign_keys=[link_type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LinkAttribute(Base):
@@ -1899,6 +2642,9 @@ class Place(Base):
     type = relationship(u'PlaceType', foreign_keys=[type_id])
     area = relationship(u'Area', foreign_keys=[area_id])
 
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
 
 class PlaceAlias(Base):
     __tablename__ = u'place_alias'
@@ -1923,6 +2669,9 @@ class PlaceAlias(Base):
 
     place = relationship(u'Place', foreign_keys=[place_id])
     type = relationship(u'PlaceAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class PlaceAliasType(Base):
@@ -2126,6 +2875,8 @@ class ReleaseCountry(Base):
 
     release = relationship(u'Release', foreign_keys=[release_id])
 
+    date = composite(PartialDate, date_year, date_month, date_day)
+
 
 class ReleaseUnknownCountry(Base):
     __tablename__ = u'release_unknown_country'
@@ -2137,6 +2888,8 @@ class ReleaseUnknownCountry(Base):
     date_day = Column(SMALLINT)
 
     release = relationship(u'Release', foreign_keys=[release_id])
+
+    date = composite(PartialDate, date_year, date_month, date_day)
 
 
 class ReleaseRaw(Base):
@@ -2335,6 +3088,8 @@ class ReleaseGroupMeta(Base):
     rating_count = Column(Integer)
 
     id = relationship(u'ReleaseGroup', foreign_keys=[id_id])
+
+    first_release_date = composite(PartialDate, first_release_date_year, first_release_date_month, first_release_date_day)
 
 
 class ReleaseGroupTag(Base):
@@ -2588,6 +3343,9 @@ class WorkAlias(Base):
 
     work = relationship(u'Work', foreign_keys=[work_id])
     type = relationship(u'WorkAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class WorkAnnotation(Base):
