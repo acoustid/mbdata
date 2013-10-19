@@ -1,7 +1,12 @@
 import re
 import xml.sax.saxutils
 from cStringIO import StringIO
-from flask import request, abort, jsonify, current_app
+from flask import request, abort, jsonify, current_app, json
+from mbdb.api.errors import (
+    SUCCESS,
+    INVALID_FORMAT_ERROR,
+    MISSING_PARAMETER_ERROR,
+)
 
 
 def to_uuid(s):
@@ -23,8 +28,25 @@ PARAM_TYPES = {
 def get_param(name, type=None, default=None, required=False):
     value = request.args.get(name, type=PARAM_TYPES.get(type, type), default=default)
     if value is None and request:
-        abort(response_error(1, 'missing parameter {0}'.format(name)))
+        abort(response_error(MISSING_PARAMETER_ERROR, 'missing parameter {0}'.format(name)))
     return value
+
+
+def singular(plural):
+    """
+    Take a plural English word and turn it into singular
+
+    Obviously, this doesn't work in general. It know just enough words to
+    generate XML tag names for list items. For example, if we have an element
+    called 'tracks' in the response, it will be serialized as a list without
+    named items in JSON, but we need names for items in XML, so those will be
+    called 'track'.
+    """
+    if plural.endswith('ies'):
+        return plural[:-3] + 'y'
+    if plural.endswith('s'):
+        return plural[:-1]
+    raise ValueError('unknown plural form %r' % (plural,))
 
 
 def dumpxml(output, name, value):
@@ -34,17 +56,18 @@ def dumpxml(output, name, value):
             dumpxml(output, sub_name, sub_value)
         output.write('</{0}>'.format(name))
     elif isinstance(value, list):
-        output.write('<{0}_list>'.format(name))
+        output.write('<{0}>'.format(name))
+        sub_name = singular(name)
         for sub_value in value:
-            dumpxml(output, name, sub_value)
-        output.write('</{0}_list>'.format(name))
+            dumpxml(output, sub_name, sub_value)
+        output.write('</{0}>'.format(name))
     else:
         output.write('<{0}>'.format(name))
-        output.write(xml.sax.saxutils.escape(unicode(value)))
+        output.write(xml.sax.saxutils.escape(unicode(value)).encode('utf8'))
         output.write('</{0}>'.format(name))
 
 
-def xmlify(data):
+def render_xml(data):
     output = StringIO()
     output.write('<?xml version="1.0" encoding="UTF-8"?>')
     for name, value in data.iteritems():
@@ -54,17 +77,12 @@ def xmlify(data):
                                       mimetype='application/xml')
 
 
-def response_ok(**data):
-    return serialize_response(0, 'success', data)
+def render_json(data):
+    return current_app.response_class(json.dumps(data, ensure_ascii=False, indent=True),
+                                      mimetype='application/json')
 
 
-def response_error(code, message, **data):
-    response = serialize_response(code, message, data)
-    response.status_code = 400
-    return response
-
-
-def serialize_response(code, message, data):
+def render_response(code, message, data):
     response = {
         'response': {
             'status': {
@@ -78,9 +96,21 @@ def serialize_response(code, message, data):
 
     format = get_param('format', type='enum', default='json')
     if format == 'xml':
-        return xmlify(response)
+        return render_xml(response)
+    elif format == 'json':
+        return render_json(response)
     else:
-        return jsonify(response)
+        abort(response_error(INVALID_FORMAT_ERROR, 'invalid format {0}'.format(format)))
+
+
+def response_ok(**data):
+    return render_response(SUCCESS, 'success', data)
+
+
+def response_error(code, message, **data):
+    response = render_response(code, message, data)
+    response.status_code = 400
+    return response
 
 
 def serialize_partial_date(data, name, date):

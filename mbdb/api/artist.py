@@ -92,9 +92,12 @@ def artist_tags():
         options(joinedload('tag', innerjoin=True)).\
         options(defer('last_updated')).\
         options(defer('tag.ref_count'))
-    data = {}
+    data = []
     for artist_tag in query:
-        data[artist_tag.tag.name] = artist_tag.count
+        data.append({
+            'name': artist_tag.tag.name,
+            'count': artist_tag.count
+        })
 
     return response_ok(tags=data)
 
