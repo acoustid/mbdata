@@ -58,12 +58,23 @@ def parse_type(tokens, types):
     types[name] = values
 
 
+def parse_search_path(tokens):
+    return str(tokens.token_next(2).value.strip("'"))
+
+
 def split_tables(all_tokens, types):
+    schema_name = 'musicbrainz'
+
     for token in all_tokens:
         tokens = group_tokens(token.flatten())
 
         create_token = tokens.token_next_match(0, T.DDL, 'CREATE')
         if create_token is None:
+            set_token = tokens.token_next_match(0, T.Keyword, 'SET')
+            if set_token is not None:
+                set_search_path = tokens.token_next_match(0, T.Name, 'search_path')
+                if set_search_path is not None:
+                    schema_name = parse_search_path(tokens)
             continue
 
         create_table_token = tokens.token_next_match(create_token, T.Keyword, 'TABLE')
@@ -76,7 +87,7 @@ def split_tables(all_tokens, types):
         table = tokens.token_next(create_table_token)
         columns = split_columns(tokens.token_next(table).tokens[1:-1])
 
-        yield table.value, columns
+        yield schema_name, str(table.value), columns
 
 
 def next_tokens_match(tokens, idx, texts):
@@ -111,17 +122,32 @@ def is_primary_key(tokens, idx):
 def parse_foreign_key(tokens, idx):
     token = tokens.token_next(idx)
     while token is not None:
-        if token.value.startswith('--') and 'references' in token.value:
-            match = re.search(r'references\s+(\S+)', token.value)
-            return match.group(1)
+        if token.value.startswith('--') and 'references' in token.value and not 'weakly references' in token.value:
+            match = re.search(r'references\s+([a-z0-9_.]+)', token.value)
+            return str(match.group(1))
         token = tokens.token_next(token)
 
 
-def generate_models_from_sql(sql):
+def split_foreign_key(foreign_key, schema_name=None):
+    parts = foreign_key.split('.')
+    if len(parts) == 1:
+        return schema_name, parts[0], 'id' # XXX this shouldn't happen, but there are errors in CreateTables.sql
+    elif len(parts) == 2:
+        return schema_name, parts[0], parts[1]
+    elif len(parts) == 3:
+        return parts[0], parts[1], parts[2]
+    raise ValueError('invalid foreign key {0}'.format(foreign_key))
+
+
+def join_foreign_key(schema_name, table_name, column_name):
+    return '{0}.{1}.{2}'.format(schema_name, table_name, column_name)
+
+
+def generate_models_header():
     yield '# Automatically generated, do not edit'
     yield ''
     yield 'from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR'
-    yield 'from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT'
+    yield 'from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.orm import relationship, composite'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
@@ -131,20 +157,22 @@ def generate_models_from_sql(sql):
     yield ''
     yield ''
 
+
+def generate_models_from_sql(sql):
     types = {}
     tokens = sqlparse.parse(sql)
-    for table_name, columns in split_tables(tokens, types):
+    for schema_name, table_name, columns in split_tables(tokens, types):
         model_name = format_class_name(table_name)
         yield 'class {0}(Base):'.format(model_name)
         yield '    __tablename__ = {0!r}'.format(table_name)
-        yield '    __table_args__ = { "schema" : "musicbrainz" }'
+        yield '    __table_args__ = {0!r}'.format({'schema': schema_name})
         yield ''
 
         composites = []
         aliases = []
         foreign_keys = []
         for column in columns.tokens:
-            column_name = column.token_next(-1).value.lower()
+            column_name = str(column.token_next(-1).value.lower())
             column_type = None
             column_attributes = {}
 
@@ -184,6 +212,8 @@ def generate_models_from_sql(sql):
                 column_type = 'UUID'
             elif type_name == 'SMALLINT':
                 column_type = 'SMALLINT'
+            elif type_name == 'BIGINT':
+                column_type = 'BIGINT'
             elif type_name == 'BOOLEAN':
                 column_type = 'Boolean'
             elif type_name == 'INTERVAL':
@@ -209,21 +239,33 @@ def generate_models_from_sql(sql):
             attribute_name = column_name
             params = [column_type]
 
+            if schema_name == 'cover_art_archive' and table_name == 'cover_art_type' and column_name == 'type_id':
+                attribute_name = 'type'
+
             foreign_key = parse_foreign_key(column, type)
             if foreign_key:
-                if foreign_key.endswith('.id'):
-                    attribute_name += '_id'
+                foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
+                if foreign_column_name == 'id':
+                    if attribute_name == 'id':
+                        if schema_name == 'cover_art_archive' and table_name == 'cover_art_type':
+                            relationship_name = 'cover_art'
+                        elif schema_name == 'documentation' and table_name.startswith('l_') and table_name.endswith('_example'):
+                            relationship_name = 'link'
+                        else:
+                            relationship_name = foreign_table_name
+                    else:
+                        relationship_name = attribute_name
+                        attribute_name += '_id'
                     params.insert(0, repr(column_name))
-                    foreign_keys.append((attribute_name, column_name, foreign_key))
+                    foreign_keys.append((attribute_name, relationship_name, foreign_key))
                     if table_name.startswith('l_') and column_name in ('entity0', 'entity1'):
-                        foreign_table_name = foreign_key.split('.')[0]
                         if table_name == 'l_{0}_{0}'.format(foreign_table_name, foreign_table_name):
                             aliases.append((column_name, foreign_table_name + column_name[-1]))
                             aliases.append((attribute_name, foreign_table_name + column_name[-1] + '_id'))
                         else:
                             aliases.append((column_name, foreign_table_name))
                             aliases.append((attribute_name, foreign_table_name + '_id'))
-                params.append('ForeignKey({0!r})'.format('musicbrainz.' + foreign_key))
+                params.append('ForeignKey({0!r})'.format(join_foreign_key(foreign_schema_name, foreign_table_name, foreign_column_name)))
 
             if is_not_null(column, type):
                 column_attributes['nullable'] = 'False'
@@ -239,7 +281,7 @@ def generate_models_from_sql(sql):
         if foreign_keys:
             yield ''
             for attribute_name, column_name, foreign_key in foreign_keys:
-                foreign_table_name, foreign_column_name = foreign_key.split('.')
+                foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
                 foreign_model_name = format_class_name(foreign_table_name)
                 yield '    {0} = relationship({1!r}, foreign_keys=[{2}])'.format(column_name, foreign_model_name, attribute_name)
 
@@ -262,12 +304,15 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('sql')
+    parser.add_argument('sql', nargs='+')
     args = parser.parse_args()
 
-    with open(args.sql, 'r') as file:
-        sql = file.read()
-
-    for line in generate_models_from_sql(sql):
+    for line in generate_models_header():
         print line
+
+    for file_name in args.sql:
+        with open(file_name, 'r') as file:
+            sql = file.read()
+        for line in generate_models_from_sql(sql):
+            print line
 

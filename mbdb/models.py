@@ -1,7 +1,7 @@
 # Automatically generated, do not edit
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR
-from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT
+from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, composite
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -11,49 +11,49 @@ Base = declarative_base()
 
 
 class Annotation(Base):
-    __tablename__ = u'annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     text = Column(String)
     changelog = Column(String(255))
     created = Column(DateTime(timezone=True))
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class Application(Base):
-    __tablename__ = u'application'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'application'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    owner_id = Column(u'owner', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    owner_id = Column('owner', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     name = Column(String, nullable=False)
     oauth_id = Column(String, nullable=False)
     oauth_secret = Column(String, nullable=False)
     oauth_redirect_uri = Column(String)
 
-    owner = relationship(u'Editor', foreign_keys=[owner_id])
+    owner = relationship('Editor', foreign_keys=[owner_id])
 
 
 class AreaType(Base):
-    __tablename__ = u'area_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class Area(Base):
-    __tablename__ = u'area'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
     sort_name = Column(String, nullable=False)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.area_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.area_type.id'))
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     begin_date_year = Column(SMALLINT)
@@ -65,42 +65,42 @@ class Area(Base):
     ended = Column(Boolean, nullable=False)
     comment = Column(String(255), nullable=False)
 
-    type = relationship(u'AreaType', foreign_keys=[type_id])
+    type = relationship('AreaType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class AreaGIDRedirect(Base):
-    __tablename__ = u'area_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Area', foreign_keys=[new_id_id])
+    new_id = relationship('Area', foreign_keys=[new_id_id])
 
 
 class AreaAliasType(Base):
-    __tablename__ = u'area_alias_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
 class AreaAlias(Base):
-    __tablename__ = u'area_alias'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.area_alias_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.area_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -111,27 +111,27 @@ class AreaAlias(Base):
     primary_for_locale = Column(Boolean, nullable=False)
     ended = Column(Boolean, nullable=False)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
-    type = relationship(u'AreaAliasType', foreign_keys=[type_id])
+    area = relationship('Area', foreign_keys=[area_id])
+    type = relationship('AreaAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class AreaAnnotation(Base):
-    __tablename__ = u'area_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'area_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    area = relationship('Area', foreign_keys=[area_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class Artist(Base):
-    __tablename__ = u'artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
@@ -143,29 +143,29 @@ class Artist(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.artist_type.id'))
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'))
-    gender_id = Column(u'gender', Integer, ForeignKey(u'musicbrainz.gender.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.artist_type.id'))
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
+    gender_id = Column('gender', Integer, ForeignKey('musicbrainz.gender.id'))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     ended = Column(Boolean, nullable=False)
-    begin_area_id = Column(u'begin_area', Integer, ForeignKey(u'musicbrainz.area.id'))
-    end_area_id = Column(u'end_area', Integer, ForeignKey(u'musicbrainz.area.id'))
+    begin_area_id = Column('begin_area', Integer, ForeignKey('musicbrainz.area.id'))
+    end_area_id = Column('end_area', Integer, ForeignKey('musicbrainz.area.id'))
 
-    type = relationship(u'ArtistType', foreign_keys=[type_id])
-    area = relationship(u'Area', foreign_keys=[area_id])
-    gender = relationship(u'Gender', foreign_keys=[gender_id])
-    begin_area = relationship(u'Area', foreign_keys=[begin_area_id])
-    end_area = relationship(u'Area', foreign_keys=[end_area_id])
+    type = relationship('ArtistType', foreign_keys=[type_id])
+    area = relationship('Area', foreign_keys=[area_id])
+    gender = relationship('Gender', foreign_keys=[gender_id])
+    begin_area = relationship('Area', foreign_keys=[begin_area_id])
+    end_area = relationship('Area', foreign_keys=[end_area_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class ArtistDeletion(Base):
-    __tablename__ = u'artist_deletion'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_deletion'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
     last_known_name = Column(String, nullable=False)
@@ -174,24 +174,24 @@ class ArtistDeletion(Base):
 
 
 class ArtistAliasType(Base):
-    __tablename__ = u'artist_alias_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
 class ArtistAlias(Base):
-    __tablename__ = u'artist_alias'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.artist_alias_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.artist_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -202,100 +202,100 @@ class ArtistAlias(Base):
     primary_for_locale = Column(Boolean, nullable=False)
     ended = Column(Boolean, nullable=False)
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    type = relationship(u'ArtistAliasType', foreign_keys=[type_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    type = relationship('ArtistAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class ArtistAnnotation(Base):
-    __tablename__ = u'artist_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class ArtistIPI(Base):
-    __tablename__ = u'artist_ipi'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_ipi'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
 
 
 class ArtistISNI(Base):
-    __tablename__ = u'artist_isni'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_isni'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
 
 
 class ArtistMeta(Base):
-    __tablename__ = u'artist_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    id = relationship(u'Artist', foreign_keys=[id_id])
+    artist = relationship('Artist', foreign_keys=[id])
 
 
 class ArtistTag(Base):
-    __tablename__ = u'artist_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ArtistRatingRaw(Base):
-    __tablename__ = u'artist_rating_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class ArtistTagRaw(Base):
-    __tablename__ = u'artist_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ArtistCredit(Base):
-    __tablename__ = u'artist_credit'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_credit'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
@@ -305,47 +305,47 @@ class ArtistCredit(Base):
 
 
 class ArtistCreditName(Base):
-    __tablename__ = u'artist_credit_name'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_credit_name'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_credit_id = Column(u'artist_credit', Integer, ForeignKey(u'musicbrainz.artist_credit.id'), primary_key=True, nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), primary_key=True, nullable=False)
     position = Column(SMALLINT, primary_key=True, nullable=False)
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     name = Column(String, nullable=False)
     join_phrase = Column(String, nullable=False)
 
-    artist_credit = relationship(u'ArtistCredit', foreign_keys=[artist_credit_id])
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
 
 
 class ArtistGIDRedirect(Base):
-    __tablename__ = u'artist_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Artist', foreign_keys=[new_id_id])
+    new_id = relationship('Artist', foreign_keys=[new_id_id])
 
 
 class ArtistType(Base):
-    __tablename__ = u'artist_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'artist_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class AutoeditorElection(Base):
-    __tablename__ = u'autoeditor_election'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'autoeditor_election'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    candidate_id = Column(u'candidate', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    proposer_id = Column(u'proposer', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    seconder_1_id = Column(u'seconder_1', Integer, ForeignKey(u'musicbrainz.editor.id'))
-    seconder_2_id = Column(u'seconder_2', Integer, ForeignKey(u'musicbrainz.editor.id'))
+    candidate_id = Column('candidate', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    proposer_id = Column('proposer', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    seconder_1_id = Column('seconder_1', Integer, ForeignKey('musicbrainz.editor.id'))
+    seconder_2_id = Column('seconder_2', Integer, ForeignKey('musicbrainz.editor.id'))
     status = Column(Integer, nullable=False)
     yes_votes = Column(Integer, nullable=False)
     no_votes = Column(Integer, nullable=False)
@@ -353,29 +353,29 @@ class AutoeditorElection(Base):
     open_time = Column(DateTime(timezone=True))
     close_time = Column(DateTime(timezone=True))
 
-    candidate = relationship(u'Editor', foreign_keys=[candidate_id])
-    proposer = relationship(u'Editor', foreign_keys=[proposer_id])
-    seconder_1 = relationship(u'Editor', foreign_keys=[seconder_1_id])
-    seconder_2 = relationship(u'Editor', foreign_keys=[seconder_2_id])
+    candidate = relationship('Editor', foreign_keys=[candidate_id])
+    proposer = relationship('Editor', foreign_keys=[proposer_id])
+    seconder_1 = relationship('Editor', foreign_keys=[seconder_1_id])
+    seconder_2 = relationship('Editor', foreign_keys=[seconder_2_id])
 
 
 class AutoeditorElectionVote(Base):
-    __tablename__ = u'autoeditor_election_vote'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'autoeditor_election_vote'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    autoeditor_election_id = Column(u'autoeditor_election', Integer, ForeignKey(u'musicbrainz.autoeditor_election.id'), nullable=False)
-    voter_id = Column(u'voter', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    autoeditor_election_id = Column('autoeditor_election', Integer, ForeignKey('musicbrainz.autoeditor_election.id'), nullable=False)
+    voter_id = Column('voter', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     vote = Column(Integer, nullable=False)
     vote_time = Column(DateTime(timezone=True), nullable=False)
 
-    autoeditor_election = relationship(u'AutoeditorElection', foreign_keys=[autoeditor_election_id])
-    voter = relationship(u'Editor', foreign_keys=[voter_id])
+    autoeditor_election = relationship('AutoeditorElection', foreign_keys=[autoeditor_election_id])
+    voter = relationship('Editor', foreign_keys=[voter_id])
 
 
 class CDTOC(Base):
-    __tablename__ = u'cdtoc'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'cdtoc'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     discid = Column(CHAR(28), nullable=False)
@@ -388,34 +388,34 @@ class CDTOC(Base):
 
 
 class CDTOCRaw(Base):
-    __tablename__ = u'cdtoc_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'cdtoc_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release_raw.id'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release_raw.id'), nullable=False)
     discid = Column(CHAR(28), nullable=False)
     track_count = Column(Integer, nullable=False)
     leadout_offset = Column(Integer, nullable=False)
     track_offset = Column(Integer, nullable=False)
 
-    release = relationship(u'ReleaseRaw', foreign_keys=[release_id])
+    release = relationship('ReleaseRaw', foreign_keys=[release_id])
 
 
 class CountryArea(Base):
-    __tablename__ = u'country_area'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'country_area'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), primary_key=True)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), primary_key=True)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class Edit(Base):
-    __tablename__ = u'edit'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     type = Column(SMALLINT, nullable=False)
     status = Column(SMALLINT, nullable=False)
     data = Column(String, nullable=False)
@@ -425,130 +425,131 @@ class Edit(Base):
     open_time = Column(DateTime(timezone=True))
     close_time = Column(DateTime(timezone=True))
     expire_time = Column(DateTime(timezone=True), nullable=False)
-    language = Column(Integer, ForeignKey(u'musicbrainz.language'))
+    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
     quality = Column(SMALLINT, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    language = relationship('Language', foreign_keys=[language_id])
 
 
 class EditNote(Base):
-    __tablename__ = u'edit_note'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_note'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     text = Column(String, nullable=False)
     post_time = Column(DateTime(timezone=True))
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
 
 
 class EditArea(Base):
-    __tablename__ = u'edit_area'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_area'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    area = relationship(u'Area', foreign_keys=[area_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class EditArtist(Base):
-    __tablename__ = u'edit_artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
 
 
 class EditLabel(Base):
-    __tablename__ = u'edit_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    label = relationship(u'Label', foreign_keys=[label_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    label = relationship('Label', foreign_keys=[label_id])
 
 
 class EditPlace(Base):
-    __tablename__ = u'edit_place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    place_id = Column(u'place', Integer, ForeignKey(u'musicbrainz.place.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    place = relationship(u'Place', foreign_keys=[place_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    place = relationship('Place', foreign_keys=[place_id])
 
 
 class EditRelease(Base):
-    __tablename__ = u'edit_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    release = relationship(u'Release', foreign_keys=[release_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    release = relationship('Release', foreign_keys=[release_id])
 
 
 class EditReleaseGroup(Base):
-    __tablename__ = u'edit_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
 
 
 class EditRecording(Base):
-    __tablename__ = u'edit_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
 
 
 class EditWork(Base):
-    __tablename__ = u'edit_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    work = relationship(u'Work', foreign_keys=[work_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    work = relationship('Work', foreign_keys=[work_id])
 
 
 class EditURL(Base):
-    __tablename__ = u'edit_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'edit_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), primary_key=True, nullable=False)
-    url_id = Column(u'url', Integer, ForeignKey(u'musicbrainz.url.id'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
+    url_id = Column('url', Integer, ForeignKey('musicbrainz.url.id'), primary_key=True, nullable=False)
 
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
-    url = relationship(u'URL', foreign_keys=[url_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+    url = relationship('URL', foreign_keys=[url_id])
 
 
 class Editor(Base):
-    __tablename__ = u'editor'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(64), nullable=False)
@@ -565,199 +566,199 @@ class Editor(Base):
     edits_failed = Column(Integer)
     last_updated = Column(DateTime(timezone=True))
     birth_date = Column(Date)
-    gender_id = Column(u'gender', Integer, ForeignKey(u'musicbrainz.gender.id'))
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'))
+    gender_id = Column('gender', Integer, ForeignKey('musicbrainz.gender.id'))
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     password = Column(String(128), nullable=False)
     ha1 = Column(CHAR(32), nullable=False)
     deleted = Column(Boolean, nullable=False)
 
-    gender = relationship(u'Gender', foreign_keys=[gender_id])
-    area = relationship(u'Area', foreign_keys=[area_id])
+    gender = relationship('Gender', foreign_keys=[gender_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class EditorLanguage(Base):
-    __tablename__ = u'editor_language'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_language'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    language_id = Column(u'language', Integer, ForeignKey(u'musicbrainz.language.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'), primary_key=True, nullable=False)
     fluency = Column(Enum(u'basic', u'intermediate', u'advanced', u'native', name=u'FLUENCY'), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    language = relationship(u'Language', foreign_keys=[language_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    language = relationship('Language', foreign_keys=[language_id])
 
 
 class EditorPreference(Base):
-    __tablename__ = u'editor_preference'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_preference'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     name = Column(String(50), nullable=False)
     value = Column(String(100), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class EditorSubscribeArtist(Base):
-    __tablename__ = u'editor_subscribe_artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    last_edit_sent_id = Column(u'last_edit_sent', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    last_edit_sent = relationship(u'Edit', foreign_keys=[last_edit_sent_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id])
 
 
 class EditorSubscribeArtistDeleted(Base):
-    __tablename__ = u'editor_subscribe_artist_deleted'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_artist_deleted'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    gid = Column(UUID, ForeignKey(u'musicbrainz.artist_deletion.gid'), primary_key=True, nullable=False)
-    deleted_by_id = Column(u'deleted_by', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey('musicbrainz.artist_deletion.gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    deleted_by = relationship(u'Edit', foreign_keys=[deleted_by_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id])
 
 
 class EditorSubscribeCollection(Base):
-    __tablename__ = u'editor_subscribe_collection'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_collection'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    collection = Column(Integer, ForeignKey(u'musicbrainz.collection'), nullable=False)
-    last_edit_sent = Column(Integer, ForeignKey(u'musicbrainz.edit'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    collection = Column(Integer, nullable=False)
+    last_edit_sent = Column(Integer, nullable=False)
     available = Column(Boolean, nullable=False)
     last_seen_name = Column(String(255))
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class EditorSubscribeLabel(Base):
-    __tablename__ = u'editor_subscribe_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    last_edit_sent_id = Column(u'last_edit_sent', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    label = relationship(u'Label', foreign_keys=[label_id])
-    last_edit_sent = relationship(u'Edit', foreign_keys=[last_edit_sent_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id])
 
 
 class EditorSubscribeLabelDeleted(Base):
-    __tablename__ = u'editor_subscribe_label_deleted'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_label_deleted'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    gid = Column(UUID, ForeignKey(u'musicbrainz.label_deletion.gid'), primary_key=True, nullable=False)
-    deleted_by_id = Column(u'deleted_by', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey('musicbrainz.label_deletion.gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    deleted_by = relationship(u'Edit', foreign_keys=[deleted_by_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id])
 
 
 class EditorSubscribeEditor(Base):
-    __tablename__ = u'editor_subscribe_editor'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_subscribe_editor'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    subscribed_editor_id = Column(u'subscribed_editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    last_edit_sent = Column(Integer, ForeignKey(u'musicbrainz.edit'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    subscribed_editor_id = Column('subscribed_editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    last_edit_sent = Column(Integer, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    subscribed_editor = relationship(u'Editor', foreign_keys=[subscribed_editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    subscribed_editor = relationship('Editor', foreign_keys=[subscribed_editor_id])
 
 
 class Gender(Base):
-    __tablename__ = u'gender'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'gender'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class ISO31661(Base):
-    __tablename__ = u'iso_3166_1'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'iso_3166_1'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     code = Column(CHAR(2), primary_key=True)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class ISO31662(Base):
-    __tablename__ = u'iso_3166_2'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'iso_3166_2'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     code = Column(String(10), primary_key=True)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class ISO31663(Base):
-    __tablename__ = u'iso_3166_3'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'iso_3166_3'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     code = Column(CHAR(4), primary_key=True)
 
-    area = relationship(u'Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
 
 class ISRC(Base):
-    __tablename__ = u'isrc'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'isrc'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     isrc = Column(CHAR(12), nullable=False)
     source = Column(SMALLINT)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
 
 
 class ISWC(Base):
-    __tablename__ = u'iswc'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'iswc'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True, nullable=False)
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     iswc = Column(CHAR(15))
     source = Column(SMALLINT)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True), nullable=False)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
+    work = relationship('Work', foreign_keys=[work_id])
 
 
 class LinkAreaArea(Base):
-    __tablename__ = u'l_area_area'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_area'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Area', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Area', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area0(self):
@@ -777,19 +778,19 @@ class LinkAreaArea(Base):
 
 
 class LinkAreaArtist(Base):
-    __tablename__ = u'l_area_artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Artist', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Artist', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -809,19 +810,19 @@ class LinkAreaArtist(Base):
 
 
 class LinkAreaLabel(Base):
-    __tablename__ = u'l_area_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Label', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -841,19 +842,19 @@ class LinkAreaLabel(Base):
 
 
 class LinkAreaPlace(Base):
-    __tablename__ = u'l_area_place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Place', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -873,19 +874,19 @@ class LinkAreaPlace(Base):
 
 
 class LinkAreaRecording(Base):
-    __tablename__ = u'l_area_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Recording', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -905,19 +906,19 @@ class LinkAreaRecording(Base):
 
 
 class LinkAreaRelease(Base):
-    __tablename__ = u'l_area_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -937,19 +938,19 @@ class LinkAreaRelease(Base):
 
 
 class LinkAreaReleaseGroup(Base):
-    __tablename__ = u'l_area_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -969,19 +970,19 @@ class LinkAreaReleaseGroup(Base):
 
 
 class LinkAreaURL(Base):
-    __tablename__ = u'l_area_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -1001,19 +1002,19 @@ class LinkAreaURL(Base):
 
 
 class LinkAreaWork(Base):
-    __tablename__ = u'l_area_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_area_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.area.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Area', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Area', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def area(self):
@@ -1033,19 +1034,19 @@ class LinkAreaWork(Base):
 
 
 class LinkArtistArtist(Base):
-    __tablename__ = u'l_artist_artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Artist', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Artist', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist0(self):
@@ -1065,19 +1066,19 @@ class LinkArtistArtist(Base):
 
 
 class LinkArtistLabel(Base):
-    __tablename__ = u'l_artist_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Label', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1097,19 +1098,19 @@ class LinkArtistLabel(Base):
 
 
 class LinkArtistPlace(Base):
-    __tablename__ = u'l_artist_place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Place', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1129,19 +1130,19 @@ class LinkArtistPlace(Base):
 
 
 class LinkArtistRecording(Base):
-    __tablename__ = u'l_artist_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Recording', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1161,19 +1162,19 @@ class LinkArtistRecording(Base):
 
 
 class LinkArtistRelease(Base):
-    __tablename__ = u'l_artist_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1193,19 +1194,19 @@ class LinkArtistRelease(Base):
 
 
 class LinkArtistReleaseGroup(Base):
-    __tablename__ = u'l_artist_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1225,19 +1226,19 @@ class LinkArtistReleaseGroup(Base):
 
 
 class LinkArtistURL(Base):
-    __tablename__ = u'l_artist_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1257,19 +1258,19 @@ class LinkArtistURL(Base):
 
 
 class LinkArtistWork(Base):
-    __tablename__ = u'l_artist_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_artist_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.artist.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Artist', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Artist', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def artist(self):
@@ -1289,19 +1290,19 @@ class LinkArtistWork(Base):
 
 
 class LinkLabelLabel(Base):
-    __tablename__ = u'l_label_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('Label', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label0(self):
@@ -1321,19 +1322,19 @@ class LinkLabelLabel(Base):
 
 
 class LinkLabelPlace(Base):
-    __tablename__ = u'l_label_place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('Place', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1353,19 +1354,19 @@ class LinkLabelPlace(Base):
 
 
 class LinkLabelRecording(Base):
-    __tablename__ = u'l_label_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('Recording', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1385,19 +1386,19 @@ class LinkLabelRecording(Base):
 
 
 class LinkLabelRelease(Base):
-    __tablename__ = u'l_label_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1417,19 +1418,19 @@ class LinkLabelRelease(Base):
 
 
 class LinkLabelReleaseGroup(Base):
-    __tablename__ = u'l_label_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1449,19 +1450,19 @@ class LinkLabelReleaseGroup(Base):
 
 
 class LinkLabelURL(Base):
-    __tablename__ = u'l_label_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1481,19 +1482,19 @@ class LinkLabelURL(Base):
 
 
 class LinkLabelWork(Base):
-    __tablename__ = u'l_label_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_label_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Label', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Label', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def label(self):
@@ -1513,19 +1514,19 @@ class LinkLabelWork(Base):
 
 
 class LinkPlacePlace(Base):
-    __tablename__ = u'l_place_place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('Place', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place0(self):
@@ -1545,19 +1546,19 @@ class LinkPlacePlace(Base):
 
 
 class LinkPlaceRecording(Base):
-    __tablename__ = u'l_place_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('Recording', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place(self):
@@ -1577,19 +1578,19 @@ class LinkPlaceRecording(Base):
 
 
 class LinkPlaceRelease(Base):
-    __tablename__ = u'l_place_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place(self):
@@ -1609,19 +1610,19 @@ class LinkPlaceRelease(Base):
 
 
 class LinkPlaceReleaseGroup(Base):
-    __tablename__ = u'l_place_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place(self):
@@ -1641,19 +1642,19 @@ class LinkPlaceReleaseGroup(Base):
 
 
 class LinkPlaceURL(Base):
-    __tablename__ = u'l_place_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place(self):
@@ -1673,19 +1674,19 @@ class LinkPlaceURL(Base):
 
 
 class LinkPlaceWork(Base):
-    __tablename__ = u'l_place_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_place_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Place', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Place', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def place(self):
@@ -1705,19 +1706,19 @@ class LinkPlaceWork(Base):
 
 
 class LinkRecordingRecording(Base):
-    __tablename__ = u'l_recording_recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_recording_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Recording', foreign_keys=[entity0_id])
+    entity1 = relationship('Recording', foreign_keys=[entity1_id])
 
     @hybrid_property
     def recording0(self):
@@ -1737,19 +1738,19 @@ class LinkRecordingRecording(Base):
 
 
 class LinkRecordingRelease(Base):
-    __tablename__ = u'l_recording_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_recording_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Recording', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def recording(self):
@@ -1769,19 +1770,19 @@ class LinkRecordingRelease(Base):
 
 
 class LinkRecordingReleaseGroup(Base):
-    __tablename__ = u'l_recording_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_recording_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Recording', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def recording(self):
@@ -1801,19 +1802,19 @@ class LinkRecordingReleaseGroup(Base):
 
 
 class LinkRecordingURL(Base):
-    __tablename__ = u'l_recording_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_recording_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Recording', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def recording(self):
@@ -1833,19 +1834,19 @@ class LinkRecordingURL(Base):
 
 
 class LinkRecordingWork(Base):
-    __tablename__ = u'l_recording_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_recording_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Recording', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Recording', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def recording(self):
@@ -1865,19 +1866,19 @@ class LinkRecordingWork(Base):
 
 
 class LinkReleaseRelease(Base):
-    __tablename__ = u'l_release_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Release', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Release', foreign_keys=[entity0_id])
+    entity1 = relationship('Release', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release0(self):
@@ -1897,19 +1898,19 @@ class LinkReleaseRelease(Base):
 
 
 class LinkReleaseReleaseGroup(Base):
-    __tablename__ = u'l_release_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Release', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Release', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release(self):
@@ -1929,19 +1930,19 @@ class LinkReleaseReleaseGroup(Base):
 
 
 class LinkReleaseURL(Base):
-    __tablename__ = u'l_release_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Release', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Release', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release(self):
@@ -1961,19 +1962,19 @@ class LinkReleaseURL(Base):
 
 
 class LinkReleaseWork(Base):
-    __tablename__ = u'l_release_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Release', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Release', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release(self):
@@ -1993,19 +1994,19 @@ class LinkReleaseWork(Base):
 
 
 class LinkReleaseGroupReleaseGroup(Base):
-    __tablename__ = u'l_release_group_release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_group_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship(u'ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release_group0(self):
@@ -2025,19 +2026,19 @@ class LinkReleaseGroupReleaseGroup(Base):
 
 
 class LinkReleaseGroupURL(Base):
-    __tablename__ = u'l_release_group_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_group_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release_group(self):
@@ -2057,19 +2058,19 @@ class LinkReleaseGroupURL(Base):
 
 
 class LinkReleaseGroupWork(Base):
-    __tablename__ = u'l_release_group_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_release_group_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def release_group(self):
@@ -2089,19 +2090,19 @@ class LinkReleaseGroupWork(Base):
 
 
 class LinkURLURL(Base):
-    __tablename__ = u'l_url_url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_url_url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'URL', foreign_keys=[entity0_id])
-    entity1 = relationship(u'URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('URL', foreign_keys=[entity0_id])
+    entity1 = relationship('URL', foreign_keys=[entity1_id])
 
     @hybrid_property
     def url0(self):
@@ -2121,19 +2122,19 @@ class LinkURLURL(Base):
 
 
 class LinkURLWork(Base):
-    __tablename__ = u'l_url_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_url_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'URL', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('URL', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def url(self):
@@ -2153,19 +2154,19 @@ class LinkURLWork(Base):
 
 
 class LinkWorkWork(Base):
-    __tablename__ = u'l_work_work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'l_work_work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), nullable=False)
-    entity0_id = Column(u'entity0', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
-    entity1_id = Column(u'entity1', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    entity0 = relationship(u'Work', foreign_keys=[entity0_id])
-    entity1 = relationship(u'Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    entity0 = relationship('Work', foreign_keys=[entity0_id])
+    entity1 = relationship('Work', foreign_keys=[entity1_id])
 
     @hybrid_property
     def work0(self):
@@ -2185,8 +2186,8 @@ class LinkWorkWork(Base):
 
 
 class Label(Base):
-    __tablename__ = u'label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
@@ -2199,23 +2200,23 @@ class Label(Base):
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
     label_code = Column(Integer)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.label_type.id'))
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.label_type.id'))
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     ended = Column(Boolean, nullable=False)
 
-    type = relationship(u'LabelType', foreign_keys=[type_id])
-    area = relationship(u'Area', foreign_keys=[area_id])
+    type = relationship('LabelType', foreign_keys=[type_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LabelDeletion(Base):
-    __tablename__ = u'label_deletion'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_deletion'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
     last_known_name = Column(String, nullable=False)
@@ -2224,49 +2225,49 @@ class LabelDeletion(Base):
 
 
 class LabelRatingRaw(Base):
-    __tablename__ = u'label_rating_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    label = relationship(u'Label', foreign_keys=[label_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class LabelTagRaw(Base):
-    __tablename__ = u'label_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    label = relationship(u'Label', foreign_keys=[label_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class LabelAliasType(Base):
-    __tablename__ = u'label_alias_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
 class LabelAlias(Base):
-    __tablename__ = u'label_alias'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.label_alias_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.label_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -2277,94 +2278,94 @@ class LabelAlias(Base):
     primary_for_locale = Column(Boolean, nullable=False)
     ended = Column(Boolean, nullable=False)
 
-    label = relationship(u'Label', foreign_keys=[label_id])
-    type = relationship(u'LabelAliasType', foreign_keys=[type_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    type = relationship('LabelAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LabelAnnotation(Base):
-    __tablename__ = u'label_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    label = relationship(u'Label', foreign_keys=[label_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class LabelIPI(Base):
-    __tablename__ = u'label_ipi'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_ipi'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    label = relationship(u'Label', foreign_keys=[label_id])
+    label = relationship('Label', foreign_keys=[label_id])
 
 
 class LabelISNI(Base):
-    __tablename__ = u'label_isni'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_isni'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    label = relationship(u'Label', foreign_keys=[label_id])
+    label = relationship('Label', foreign_keys=[label_id])
 
 
 class LabelMeta(Base):
-    __tablename__ = u'label_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    id = relationship(u'Label', foreign_keys=[id_id])
+    label = relationship('Label', foreign_keys=[id])
 
 
 class LabelGIDRedirect(Base):
-    __tablename__ = u'label_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.label.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Label', foreign_keys=[new_id_id])
+    new_id = relationship('Label', foreign_keys=[new_id_id])
 
 
 class LabelTag(Base):
-    __tablename__ = u'label_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    label = relationship(u'Label', foreign_keys=[label_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    label = relationship('Label', foreign_keys=[label_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class LabelType(Base):
-    __tablename__ = u'label_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'label_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class Language(Base):
-    __tablename__ = u'language'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'language'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     iso_code_2t = Column(CHAR(3))
@@ -2376,11 +2377,11 @@ class Language(Base):
 
 
 class Link(Base):
-    __tablename__ = u'link'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    link_type_id = Column(u'link_type', Integer, ForeignKey(u'musicbrainz.link_type.id'), nullable=False)
+    link_type_id = Column('link_type', Integer, ForeignKey('musicbrainz.link_type.id'), nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
     begin_date_day = Column(SMALLINT)
@@ -2391,67 +2392,67 @@ class Link(Base):
     created = Column(DateTime(timezone=True))
     ended = Column(Boolean, nullable=False)
 
-    link_type = relationship(u'LinkType', foreign_keys=[link_type_id])
+    link_type = relationship('LinkType', foreign_keys=[link_type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class LinkAttribute(Base):
-    __tablename__ = u'link_attribute'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_attribute'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), primary_key=True, nullable=False)
-    attribute_type_id = Column(u'attribute_type', Integer, ForeignKey(u'musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    link = relationship(u'Link', foreign_keys=[link_id])
-    attribute_type = relationship(u'LinkAttributeType', foreign_keys=[attribute_type_id])
+    link = relationship('Link', foreign_keys=[link_id])
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
 
 
 class LinkAttributeType(Base):
-    __tablename__ = u'link_attribute_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_attribute_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(u'parent', Integer, ForeignKey(u'musicbrainz.link_attribute_type.id'))
-    root_id = Column(u'root', Integer, ForeignKey(u'musicbrainz.link_attribute_type.id'), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.link_attribute_type.id'))
+    root_id = Column('root', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), nullable=False)
     child_order = Column(Integer, nullable=False)
     gid = Column(UUID, nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(String)
     last_updated = Column(DateTime(timezone=True))
 
-    parent = relationship(u'LinkAttributeType', foreign_keys=[parent_id])
-    root = relationship(u'LinkAttributeType', foreign_keys=[root_id])
+    parent = relationship('LinkAttributeType', foreign_keys=[parent_id])
+    root = relationship('LinkAttributeType', foreign_keys=[root_id])
 
 
 class LinkCreditableAttributeType(Base):
-    __tablename__ = u'link_creditable_attribute_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_creditable_attribute_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    attribute_type_id = Column(u'attribute_type', Integer, ForeignKey(u'musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
 
-    attribute_type = relationship(u'LinkAttributeType', foreign_keys=[attribute_type_id])
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
 
 
 class LinkAttributeCredit(Base):
-    __tablename__ = u'link_attribute_credit'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_attribute_credit'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    link_id = Column(u'link', Integer, ForeignKey(u'musicbrainz.link.id'), primary_key=True, nullable=False)
-    attribute_type = Column(Integer, ForeignKey(u'musicbrainz.link_creditable_attribute_type.attribute_type'), primary_key=True, nullable=False)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), primary_key=True, nullable=False)
+    attribute_type = Column(Integer, ForeignKey('musicbrainz.link_creditable_attribute_type.attribute_type'), primary_key=True, nullable=False)
     credited_as = Column(String, nullable=False)
 
-    link = relationship(u'Link', foreign_keys=[link_id])
+    link = relationship('Link', foreign_keys=[link_id])
 
 
 class LinkType(Base):
-    __tablename__ = u'link_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column(u'parent', Integer, ForeignKey(u'musicbrainz.link_type.id'))
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.link_type.id'))
     child_order = Column(Integer, nullable=False)
     gid = Column(UUID, nullable=False)
     entity_type0 = Column(String(50), nullable=False)
@@ -2465,55 +2466,55 @@ class LinkType(Base):
     last_updated = Column(DateTime(timezone=True))
     is_deprecated = Column(Boolean, nullable=False)
 
-    parent = relationship(u'LinkType', foreign_keys=[parent_id])
+    parent = relationship('LinkType', foreign_keys=[parent_id])
 
 
 class LinkTypeAttributeType(Base):
-    __tablename__ = u'link_type_attribute_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'link_type_attribute_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    link_type_id = Column(u'link_type', Integer, ForeignKey(u'musicbrainz.link_type.id'), primary_key=True, nullable=False)
-    attribute_type_id = Column(u'attribute_type', Integer, ForeignKey(u'musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
+    link_type_id = Column('link_type', Integer, ForeignKey('musicbrainz.link_type.id'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
     min = Column(SMALLINT)
     max = Column(SMALLINT)
     last_updated = Column(DateTime(timezone=True))
 
-    link_type = relationship(u'LinkType', foreign_keys=[link_type_id])
-    attribute_type = relationship(u'LinkAttributeType', foreign_keys=[attribute_type_id])
+    link_type = relationship('LinkType', foreign_keys=[link_type_id])
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
 
 
 class EditorCollection(Base):
-    __tablename__ = u'editor_collection'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_collection'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     name = Column(String, nullable=False)
     public = Column(Boolean, nullable=False)
     description = Column(String, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class EditorCollectionRelease(Base):
-    __tablename__ = u'editor_collection_release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_collection_release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    collection_id = Column(u'collection', Integer, ForeignKey(u'musicbrainz.editor_collection.id'), primary_key=True, nullable=False)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
 
-    collection = relationship(u'EditorCollection', foreign_keys=[collection_id])
-    release = relationship(u'Release', foreign_keys=[release_id])
+    collection = relationship('EditorCollection', foreign_keys=[collection_id])
+    release = relationship('Release', foreign_keys=[release_id])
 
 
 class EditorOauthToken(Base):
-    __tablename__ = u'editor_oauth_token'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_oauth_token'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    application_id = Column(u'application', Integer, ForeignKey(u'musicbrainz.application.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    application_id = Column('application', Integer, ForeignKey('musicbrainz.application.id'), nullable=False)
     authorization_code = Column(String)
     refresh_token = Column(String)
     access_token = Column(String)
@@ -2523,110 +2524,110 @@ class EditorOauthToken(Base):
     scope = Column(Integer, nullable=False)
     granted = Column(DateTime(timezone=True), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    application = relationship(u'Application', foreign_keys=[application_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    application = relationship('Application', foreign_keys=[application_id])
 
 
 class EditorWatchPreferences(Base):
-    __tablename__ = u'editor_watch_preferences'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_watch_preferences'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     notify_via_email = Column(Boolean, nullable=False)
     notification_timeframe = Column(Interval, nullable=False)
     last_checked = Column(DateTime(timezone=True), nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class EditorWatchArtist(Base):
-    __tablename__ = u'editor_watch_artist'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_watch_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column(u'artist', Integer, ForeignKey(u'musicbrainz.artist.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
 
-    artist = relationship(u'Artist', foreign_keys=[artist_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    artist = relationship('Artist', foreign_keys=[artist_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class EditorWatchReleaseGroupType(Base):
-    __tablename__ = u'editor_watch_release_group_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_watch_release_group_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    release_group_type_id = Column(u'release_group_type', Integer, ForeignKey(u'musicbrainz.release_group_primary_type.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    release_group_type_id = Column('release_group_type', Integer, ForeignKey('musicbrainz.release_group_primary_type.id'), primary_key=True, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    release_group_type = relationship(u'ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    release_group_type = relationship('ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id])
 
 
 class EditorWatchReleaseStatus(Base):
-    __tablename__ = u'editor_watch_release_status'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'editor_watch_release_status'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    release_status_id = Column(u'release_status', Integer, ForeignKey(u'musicbrainz.release_status.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    release_status_id = Column('release_status', Integer, ForeignKey('musicbrainz.release_status.id'), primary_key=True, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    release_status = relationship(u'ReleaseStatus', foreign_keys=[release_status_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    release_status = relationship('ReleaseStatus', foreign_keys=[release_status_id])
 
 
 class Medium(Base):
-    __tablename__ = u'medium'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'medium'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     position = Column(Integer, nullable=False)
-    format_id = Column(u'format', Integer, ForeignKey(u'musicbrainz.medium_format.id'))
+    format_id = Column('format', Integer, ForeignKey('musicbrainz.medium_format.id'))
     name = Column(String(255))
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     track_count = Column(Integer, nullable=False)
 
-    release = relationship(u'Release', foreign_keys=[release_id])
-    format = relationship(u'MediumFormat', foreign_keys=[format_id])
+    release = relationship('Release', foreign_keys=[release_id])
+    format = relationship('MediumFormat', foreign_keys=[format_id])
 
 
 class MediumCDTOC(Base):
-    __tablename__ = u'medium_cdtoc'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'medium_cdtoc'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    medium_id = Column(u'medium', Integer, ForeignKey(u'musicbrainz.medium.id'), nullable=False)
-    cdtoc_id = Column(u'cdtoc', Integer, ForeignKey(u'musicbrainz.cdtoc.id'), nullable=False)
+    medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), nullable=False)
+    cdtoc_id = Column('cdtoc', Integer, ForeignKey('musicbrainz.cdtoc.id'), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    medium = relationship(u'Medium', foreign_keys=[medium_id])
-    cdtoc = relationship(u'CDTOC', foreign_keys=[cdtoc_id])
+    medium = relationship('Medium', foreign_keys=[medium_id])
+    cdtoc = relationship('CDTOC', foreign_keys=[cdtoc_id])
 
 
 class MediumFormat(Base):
-    __tablename__ = u'medium_format'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'medium_format'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    parent_id = Column(u'parent', Integer, ForeignKey(u'musicbrainz.medium_format.id'))
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.medium_format.id'))
     child_order = Column(Integer, nullable=False)
     year = Column(SMALLINT)
     has_discids = Column(Boolean, nullable=False)
 
-    parent = relationship(u'MediumFormat', foreign_keys=[parent_id])
+    parent = relationship('MediumFormat', foreign_keys=[parent_id])
 
 
 class Place(Base):
-    __tablename__ = u'place'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.place_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.place_type.id'))
     address = Column(String, nullable=False)
-    area_id = Column(u'area', Integer, ForeignKey(u'musicbrainz.area.id'))
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     coordinates = Column(ARRAY(Float))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
@@ -2639,24 +2640,24 @@ class Place(Base):
     end_date_day = Column(SMALLINT)
     ended = Column(Boolean, nullable=False)
 
-    type = relationship(u'PlaceType', foreign_keys=[type_id])
-    area = relationship(u'Area', foreign_keys=[area_id])
+    type = relationship('PlaceType', foreign_keys=[type_id])
+    area = relationship('Area', foreign_keys=[area_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class PlaceAlias(Base):
-    __tablename__ = u'place_alias'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    place_id = Column(u'place', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.place_alias_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.place_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -2667,80 +2668,80 @@ class PlaceAlias(Base):
     primary_for_locale = Column(Boolean, nullable=False)
     ended = Column(Boolean, nullable=False)
 
-    place = relationship(u'Place', foreign_keys=[place_id])
-    type = relationship(u'PlaceAliasType', foreign_keys=[type_id])
+    place = relationship('Place', foreign_keys=[place_id])
+    type = relationship('PlaceAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class PlaceAliasType(Base):
-    __tablename__ = u'place_alias_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
 class PlaceAnnotation(Base):
-    __tablename__ = u'place_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    place_id = Column(u'place', Integer, ForeignKey(u'musicbrainz.place.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    place = relationship(u'Place', foreign_keys=[place_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    place = relationship('Place', foreign_keys=[place_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class PlaceGIDRedirect(Base):
-    __tablename__ = u'place_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.place.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Place', foreign_keys=[new_id_id])
+    new_id = relationship('Place', foreign_keys=[new_id_id])
 
 
 class PlaceTag(Base):
-    __tablename__ = u'place_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    place_id = Column(u'place', Integer, ForeignKey(u'musicbrainz.place.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    place = relationship(u'Place', foreign_keys=[place_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    place = relationship('Place', foreign_keys=[place_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class PlaceTagRaw(Base):
-    __tablename__ = u'place_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    place_id = Column(u'place', Integer, ForeignKey(u'musicbrainz.place.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    place = relationship(u'Place', foreign_keys=[place_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    place = relationship('Place', foreign_keys=[place_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class PlaceType(Base):
-    __tablename__ = u'place_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'place_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class ReplicationControl(Base):
-    __tablename__ = u'replication_control'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'replication_control'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     current_schema_sequence = Column(Integer, nullable=False)
@@ -2749,152 +2750,152 @@ class ReplicationControl(Base):
 
 
 class Recording(Base):
-    __tablename__ = u'recording'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column(u'artist_credit', Integer, ForeignKey(u'musicbrainz.artist_credit.id'), nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
     length = Column(Integer)
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     video = Column(Boolean, nullable=False)
 
-    artist_credit = relationship(u'ArtistCredit', foreign_keys=[artist_credit_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
 
 class RecordingRatingRaw(Base):
-    __tablename__ = u'recording_rating_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class RecordingTagRaw(Base):
-    __tablename__ = u'recording_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class RecordingAnnotation(Base):
-    __tablename__ = u'recording_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class RecordingMeta(Base):
-    __tablename__ = u'recording_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    id = relationship(u'Recording', foreign_keys=[id_id])
+    recording = relationship('Recording', foreign_keys=[id])
 
 
 class RecordingGIDRedirect(Base):
-    __tablename__ = u'recording_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Recording', foreign_keys=[new_id_id])
+    new_id = relationship('Recording', foreign_keys=[new_id_id])
 
 
 class RecordingTag(Base):
-    __tablename__ = u'recording_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'recording_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class Release(Base):
-    __tablename__ = u'release'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column(u'artist_credit', Integer, ForeignKey(u'musicbrainz.artist_credit.id'), nullable=False)
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
-    status_id = Column(u'status', Integer, ForeignKey(u'musicbrainz.release_status.id'))
-    packaging_id = Column(u'packaging', Integer, ForeignKey(u'musicbrainz.release_packaging.id'))
-    language_id = Column(u'language', Integer, ForeignKey(u'musicbrainz.language.id'))
-    script_id = Column(u'script', Integer, ForeignKey(u'musicbrainz.script.id'))
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
+    status_id = Column('status', Integer, ForeignKey('musicbrainz.release_status.id'))
+    packaging_id = Column('packaging', Integer, ForeignKey('musicbrainz.release_packaging.id'))
+    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
+    script_id = Column('script', Integer, ForeignKey('musicbrainz.script.id'))
     barcode = Column(String(255))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     quality = Column(SMALLINT, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    artist_credit = relationship(u'ArtistCredit', foreign_keys=[artist_credit_id])
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
-    status = relationship(u'ReleaseStatus', foreign_keys=[status_id])
-    packaging = relationship(u'ReleasePackaging', foreign_keys=[packaging_id])
-    language = relationship(u'Language', foreign_keys=[language_id])
-    script = relationship(u'Script', foreign_keys=[script_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    status = relationship('ReleaseStatus', foreign_keys=[status_id])
+    packaging = relationship('ReleasePackaging', foreign_keys=[packaging_id])
+    language = relationship('Language', foreign_keys=[language_id])
+    script = relationship('Script', foreign_keys=[script_id])
 
 
 class ReleaseCountry(Base):
-    __tablename__ = u'release_country'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_country'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
-    country = Column(Integer, ForeignKey(u'musicbrainz.country_area.area'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    country = Column(Integer, ForeignKey('musicbrainz.country_area.area'), primary_key=True, nullable=False)
     date_year = Column(SMALLINT)
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship(u'Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id])
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
 
 class ReleaseUnknownCountry(Base):
-    __tablename__ = u'release_unknown_country'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_unknown_country'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
     date_year = Column(SMALLINT)
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship(u'Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id])
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
 
 class ReleaseRaw(Base):
-    __tablename__ = u'release_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
@@ -2909,177 +2910,177 @@ class ReleaseRaw(Base):
 
 
 class ReleaseTagRaw(Base):
-    __tablename__ = u'release_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    release = relationship(u'Release', foreign_keys=[release_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    release = relationship('Release', foreign_keys=[release_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ReleaseAnnotation(Base):
-    __tablename__ = u'release_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    release = relationship(u'Release', foreign_keys=[release_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    release = relationship('Release', foreign_keys=[release_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class ReleaseGIDRedirect(Base):
-    __tablename__ = u'release_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Release', foreign_keys=[new_id_id])
+    new_id = relationship('Release', foreign_keys=[new_id_id])
 
 
 class ReleaseMeta(Base):
-    __tablename__ = u'release_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
     date_added = Column(DateTime(timezone=True))
     info_url = Column(String(255))
     amazon_asin = Column(String(10))
     amazon_store = Column(String(20))
     cover_art_presence = Column(Enum(u'absent', u'present', u'darkened', name=u'COVER_ART_PRESENCE'), nullable=False)
 
-    id = relationship(u'Release', foreign_keys=[id_id])
+    release = relationship('Release', foreign_keys=[id])
 
 
 class ReleaseCoverart(Base):
-    __tablename__ = u'release_coverart'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_coverart'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     cover_art_url = Column(String(255))
 
-    id = relationship(u'Release', foreign_keys=[id_id])
+    release = relationship('Release', foreign_keys=[id])
 
 
 class ReleaseLabel(Base):
-    __tablename__ = u'release_label'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_label'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), nullable=False)
-    label_id = Column(u'label', Integer, ForeignKey(u'musicbrainz.label.id'))
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'))
     catalog_number = Column(String(255))
     last_updated = Column(DateTime(timezone=True))
 
-    release = relationship(u'Release', foreign_keys=[release_id])
-    label = relationship(u'Label', foreign_keys=[label_id])
+    release = relationship('Release', foreign_keys=[release_id])
+    label = relationship('Label', foreign_keys=[label_id])
 
 
 class ReleasePackaging(Base):
-    __tablename__ = u'release_packaging'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_packaging'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class ReleaseStatus(Base):
-    __tablename__ = u'release_status'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_status'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class ReleaseTag(Base):
-    __tablename__ = u'release_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    release = relationship(u'Release', foreign_keys=[release_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    release = relationship('Release', foreign_keys=[release_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ReleaseGroup(Base):
-    __tablename__ = u'release_group'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column(u'artist_credit', Integer, ForeignKey(u'musicbrainz.artist_credit.id'), nullable=False)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.release_group_primary_type.id'))
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.release_group_primary_type.id'))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    artist_credit = relationship(u'ArtistCredit', foreign_keys=[artist_credit_id])
-    type = relationship(u'ReleaseGroupPrimaryType', foreign_keys=[type_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    type = relationship('ReleaseGroupPrimaryType', foreign_keys=[type_id])
 
 
 class ReleaseGroupRatingRaw(Base):
-    __tablename__ = u'release_group_rating_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class ReleaseGroupTagRaw(Base):
-    __tablename__ = u'release_group_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ReleaseGroupAnnotation(Base):
-    __tablename__ = u'release_group_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class ReleaseGroupGIDRedirect(Base):
-    __tablename__ = u'release_group_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.release_group.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'ReleaseGroup', foreign_keys=[new_id_id])
+    new_id = relationship('ReleaseGroup', foreign_keys=[new_id_id])
 
 
 class ReleaseGroupMeta(Base):
-    __tablename__ = u'release_group_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
     release_count = Column(Integer, nullable=False)
     first_release_date_year = Column(SMALLINT)
     first_release_date_month = Column(SMALLINT)
@@ -3087,54 +3088,55 @@ class ReleaseGroupMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    id = relationship(u'ReleaseGroup', foreign_keys=[id_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[id])
 
     first_release_date = composite(PartialDate, first_release_date_year, first_release_date_month, first_release_date_day)
 
 
 class ReleaseGroupTag(Base):
-    __tablename__ = u'release_group_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_group_id = Column(u'release_group', Integer, ForeignKey(u'musicbrainz.release_group.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    release_group = relationship(u'ReleaseGroup', foreign_keys=[release_group_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class ReleaseGroupPrimaryType(Base):
-    __tablename__ = u'release_group_primary_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_primary_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class ReleaseGroupSecondaryType(Base):
-    __tablename__ = u'release_group_secondary_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_secondary_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
 
 
 class ReleaseGroupSecondaryTypeJoin(Base):
-    __tablename__ = u'release_group_secondary_type_join'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'release_group_secondary_type_join'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    release_group = Column(Integer, ForeignKey(u'musicbrainz.release_group.id,'), primary_key=True, nullable=False)
-    secondary_type_id = Column(u'secondary_type', Integer, ForeignKey(u'musicbrainz.release_group_secondary_type.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    secondary_type_id = Column('secondary_type', Integer, ForeignKey('musicbrainz.release_group_secondary_type.id'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), nullable=False)
 
-    secondary_type = relationship(u'ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    secondary_type = relationship('ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id])
 
 
 class Script(Base):
-    __tablename__ = u'script'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'script'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     iso_code = Column(CHAR(4), nullable=False)
@@ -3144,21 +3146,21 @@ class Script(Base):
 
 
 class ScriptLanguage(Base):
-    __tablename__ = u'script_language'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'script_language'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    script_id = Column(u'script', Integer, ForeignKey(u'musicbrainz.script.id'), nullable=False)
-    language_id = Column(u'language', Integer, ForeignKey(u'musicbrainz.language.id'), nullable=False)
+    script_id = Column('script', Integer, ForeignKey('musicbrainz.script.id'), nullable=False)
+    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'), nullable=False)
     frequency = Column(Integer, nullable=False)
 
-    script = relationship(u'Script', foreign_keys=[script_id])
-    language = relationship(u'Language', foreign_keys=[language_id])
+    script = relationship('Script', foreign_keys=[script_id])
+    language = relationship('Language', foreign_keys=[language_id])
 
 
 class Tag(Base):
-    __tablename__ = u'tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
@@ -3166,76 +3168,76 @@ class Tag(Base):
 
 
 class TagRelation(Base):
-    __tablename__ = u'tag_relation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'tag_relation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    tag1_id = Column(u'tag1', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
-    tag2_id = Column(u'tag2', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    tag1_id = Column('tag1', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
+    tag2_id = Column('tag2', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     weight = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    tag1 = relationship(u'Tag', foreign_keys=[tag1_id])
-    tag2 = relationship(u'Tag', foreign_keys=[tag2_id])
+    tag1 = relationship('Tag', foreign_keys=[tag1_id])
+    tag2 = relationship('Tag', foreign_keys=[tag2_id])
 
 
 class Track(Base):
-    __tablename__ = u'track'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'track'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
-    recording_id = Column(u'recording', Integer, ForeignKey(u'musicbrainz.recording.id'), nullable=False)
-    medium_id = Column(u'medium', Integer, ForeignKey(u'musicbrainz.medium.id'), nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), nullable=False)
     position = Column(Integer, nullable=False)
     number = Column(String, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column(u'artist_credit', Integer, ForeignKey(u'musicbrainz.artist_credit.id'), nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
     length = Column(Integer)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    recording = relationship(u'Recording', foreign_keys=[recording_id])
-    medium = relationship(u'Medium', foreign_keys=[medium_id])
-    artist_credit = relationship(u'ArtistCredit', foreign_keys=[artist_credit_id])
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    medium = relationship('Medium', foreign_keys=[medium_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
 
 class TrackGIDRedirect(Base):
-    __tablename__ = u'track_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'track_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.track.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.track.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Track', foreign_keys=[new_id_id])
+    new_id = relationship('Track', foreign_keys=[new_id_id])
 
 
 class TrackRaw(Base):
-    __tablename__ = u'track_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'track_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column(u'release', Integer, ForeignKey(u'musicbrainz.release_raw.id'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release_raw.id'), nullable=False)
     title = Column(String(255), nullable=False)
     artist = Column(String(255))
     sequence = Column(Integer, nullable=False)
 
-    release = relationship(u'ReleaseRaw', foreign_keys=[release_id])
+    release = relationship('ReleaseRaw', foreign_keys=[release_id])
 
 
 class MediumIndex(Base):
-    __tablename__ = u'medium_index'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'medium_index'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    medium_id = Column(u'medium', Integer, ForeignKey(u'musicbrainz.medium.id'), primary_key=True)
+    medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), primary_key=True)
     toc = Column(String)
 
-    medium = relationship(u'Medium', foreign_keys=[medium_id])
+    medium = relationship('Medium', foreign_keys=[medium_id])
 
 
 class URL(Base):
-    __tablename__ = u'url'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'url'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
@@ -3245,92 +3247,92 @@ class URL(Base):
 
 
 class URLGIDRedirect(Base):
-    __tablename__ = u'url_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'url_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.url.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'URL', foreign_keys=[new_id_id])
+    new_id = relationship('URL', foreign_keys=[new_id_id])
 
 
 class Vote(Base):
-    __tablename__ = u'vote'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'vote'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), nullable=False)
-    edit_id = Column(u'edit', Integer, ForeignKey(u'musicbrainz.edit.id'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     vote = Column(SMALLINT, nullable=False)
     vote_time = Column(DateTime(timezone=True))
     superseded = Column(Boolean, nullable=False)
 
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    edit = relationship(u'Edit', foreign_keys=[edit_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
 
 
 class Work(Base):
-    __tablename__ = u'work'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.work_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.work_type.id'))
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    language_id = Column(u'language', Integer, ForeignKey(u'musicbrainz.language.id'))
+    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
 
-    type = relationship(u'WorkType', foreign_keys=[type_id])
-    language = relationship(u'Language', foreign_keys=[language_id])
+    type = relationship('WorkType', foreign_keys=[type_id])
+    language = relationship('Language', foreign_keys=[language_id])
 
 
 class WorkRatingRaw(Base):
-    __tablename__ = u'work_rating_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
 
 
 class WorkTagRaw(Base):
-    __tablename__ = u'work_tag_raw'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
-    editor_id = Column(u'editor', Integer, ForeignKey(u'musicbrainz.editor.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    editor = relationship(u'Editor', foreign_keys=[editor_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    editor = relationship('Editor', foreign_keys=[editor_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class WorkAliasType(Base):
-    __tablename__ = u'work_alias_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
 
 
 class WorkAlias(Base):
-    __tablename__ = u'work_alias'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
-    type_id = Column(u'type', Integer, ForeignKey(u'musicbrainz.work_alias_type.id'))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.work_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -3341,70 +3343,70 @@ class WorkAlias(Base):
     primary_for_locale = Column(Boolean, nullable=False)
     ended = Column(Boolean, nullable=False)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    type = relationship(u'WorkAliasType', foreign_keys=[type_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    type = relationship('WorkAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
 class WorkAnnotation(Base):
-    __tablename__ = u'work_annotation'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
-    annotation_id = Column(u'annotation', Integer, ForeignKey(u'musicbrainz.annotation.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id'), primary_key=True, nullable=False)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    annotation = relationship(u'Annotation', foreign_keys=[annotation_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    annotation = relationship('Annotation', foreign_keys=[annotation_id])
 
 
 class WorkGIDRedirect(Base):
-    __tablename__ = u'work_gid_redirect'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column(u'new_id', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
+    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship(u'Work', foreign_keys=[new_id_id])
+    new_id = relationship('Work', foreign_keys=[new_id_id])
 
 
 class WorkMeta(Base):
-    __tablename__ = u'work_meta'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    id_id = Column(u'id', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    id = relationship(u'Work', foreign_keys=[id_id])
+    work = relationship('Work', foreign_keys=[id])
 
 
 class WorkTag(Base):
-    __tablename__ = u'work_tag'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
 
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), primary_key=True, nullable=False)
-    tag_id = Column(u'tag', Integer, ForeignKey(u'musicbrainz.tag.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    tag = relationship(u'Tag', foreign_keys=[tag_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    tag = relationship('Tag', foreign_keys=[tag_id])
 
 
 class WorkType(Base):
-    __tablename__ = u'work_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
 
 
 class WorkAttributeType(Base):
-    __tablename__ = u'work_attribute_type'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_attribute_type'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
@@ -3413,28 +3415,627 @@ class WorkAttributeType(Base):
 
 
 class WorkAttributeTypeAllowedValue(Base):
-    __tablename__ = u'work_attribute_type_allowed_value'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_attribute_type_allowed_value'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    work_attribute_type_id = Column(u'work_attribute_type', Integer, ForeignKey(u'musicbrainz.work_attribute_type.id'), nullable=False)
+    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('musicbrainz.work_attribute_type.id'), nullable=False)
     value = Column(String)
 
-    work_attribute_type = relationship(u'WorkAttributeType', foreign_keys=[work_attribute_type_id])
+    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id])
 
 
 class WorkAttribute(Base):
-    __tablename__ = u'work_attribute'
-    __table_args__ = { "schema" : "musicbrainz" }
+    __tablename__ = 'work_attribute'
+    __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    work_id = Column(u'work', Integer, ForeignKey(u'musicbrainz.work.id'), nullable=False)
-    work_attribute_type_id = Column(u'work_attribute_type', Integer, ForeignKey(u'musicbrainz.work_attribute_type.id'), nullable=False)
-    work_attribute_type_allowed_value_id = Column(u'work_attribute_type_allowed_value', Integer, ForeignKey(u'musicbrainz.work_attribute_type_allowed_value.id'))
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
+    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('musicbrainz.work_attribute_type.id'), nullable=False)
+    work_attribute_type_allowed_value_id = Column('work_attribute_type_allowed_value', Integer, ForeignKey('musicbrainz.work_attribute_type_allowed_value.id'))
     work_attribute_text = Column(String)
 
-    work = relationship(u'Work', foreign_keys=[work_id])
-    work_attribute_type = relationship(u'WorkAttributeType', foreign_keys=[work_attribute_type_id])
-    work_attribute_type_allowed_value = relationship(u'WorkAttributeTypeAllowedValue', foreign_keys=[work_attribute_type_allowed_value_id])
+    work = relationship('Work', foreign_keys=[work_id])
+    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id])
+    work_attribute_type_allowed_value = relationship('WorkAttributeTypeAllowedValue', foreign_keys=[work_attribute_type_allowed_value_id])
+
+
+class ArtType(Base):
+    __tablename__ = 'art_type'
+    __table_args__ = {'schema': 'cover_art_archive'}
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String, nullable=False)
+
+
+class ImageType(Base):
+    __tablename__ = 'image_type'
+    __table_args__ = {'schema': 'cover_art_archive'}
+
+    mime_type = Column(String, primary_key=True, nullable=False)
+    suffix = Column(String, nullable=False)
+
+
+class CoverArt(Base):
+    __tablename__ = 'cover_art'
+    __table_args__ = {'schema': 'cover_art_archive'}
+
+    id = Column(BIGINT, primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    comment = Column(String, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
+    ordering = Column(Integer, nullable=False)
+    date_uploaded = Column(DateTime(timezone=True), nullable=False)
+    edits_pending = Column(Integer, nullable=False)
+    mime_type = Column(String, ForeignKey('cover_art_archive.image_type.mime_type'), nullable=False)
+
+    release = relationship('Release', foreign_keys=[release_id])
+    edit = relationship('Edit', foreign_keys=[edit_id])
+
+
+class CoverArtType(Base):
+    __tablename__ = 'cover_art_type'
+    __table_args__ = {'schema': 'cover_art_archive'}
+
+    id = Column('id', BIGINT, ForeignKey('cover_art_archive.cover_art.id'), primary_key=True, nullable=False)
+    type_id = Column('type_id', Integer, ForeignKey('cover_art_archive.art_type.id'), primary_key=True, nullable=False)
+
+    cover_art = relationship('CoverArt', foreign_keys=[id])
+    type = relationship('ArtType', foreign_keys=[type_id])
+
+
+class ReleaseGroupCoverArt(Base):
+    __tablename__ = 'release_group_cover_art'
+    __table_args__ = {'schema': 'cover_art_archive'}
+
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    release = relationship('Release', foreign_keys=[release_id])
+
+
+class WikidocsIndex(Base):
+    __tablename__ = 'wikidocs_index'
+    __table_args__ = {'schema': 'wikidocs'}
+
+    page_name = Column(String, primary_key=True, nullable=False)
+    revision = Column(Integer, nullable=False)
+
+
+class LinkAreaAreaExample(Base):
+    __tablename__ = 'l_area_area_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_area.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaArea', foreign_keys=[id])
+
+
+class LinkAreaArtistExample(Base):
+    __tablename__ = 'l_area_artist_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_artist.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaArtist', foreign_keys=[id])
+
+
+class LinkAreaLabelExample(Base):
+    __tablename__ = 'l_area_label_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_label.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaLabel', foreign_keys=[id])
+
+
+class LinkAreaPlaceExample(Base):
+    __tablename__ = 'l_area_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_place.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaPlace', foreign_keys=[id])
+
+
+class LinkAreaRecordingExample(Base):
+    __tablename__ = 'l_area_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_recording.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaRecording', foreign_keys=[id])
+
+
+class LinkAreaReleaseExample(Base):
+    __tablename__ = 'l_area_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaRelease', foreign_keys=[id])
+
+
+class LinkAreaReleaseGroupExample(Base):
+    __tablename__ = 'l_area_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaReleaseGroup', foreign_keys=[id])
+
+
+class LinkAreaURLExample(Base):
+    __tablename__ = 'l_area_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaURL', foreign_keys=[id])
+
+
+class LinkAreaWorkExample(Base):
+    __tablename__ = 'l_area_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaWork', foreign_keys=[id])
+
+
+class LinkArtistArtistExample(Base):
+    __tablename__ = 'l_artist_artist_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_artist.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistArtist', foreign_keys=[id])
+
+
+class LinkArtistLabelExample(Base):
+    __tablename__ = 'l_artist_label_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_label.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistLabel', foreign_keys=[id])
+
+
+class LinkArtistPlaceExample(Base):
+    __tablename__ = 'l_artist_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_place.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistPlace', foreign_keys=[id])
+
+
+class LinkArtistRecordingExample(Base):
+    __tablename__ = 'l_artist_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_recording.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistRecording', foreign_keys=[id])
+
+
+class LinkArtistReleaseExample(Base):
+    __tablename__ = 'l_artist_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistRelease', foreign_keys=[id])
+
+
+class LinkArtistReleaseGroupExample(Base):
+    __tablename__ = 'l_artist_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistReleaseGroup', foreign_keys=[id])
+
+
+class LinkArtistURLExample(Base):
+    __tablename__ = 'l_artist_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistURL', foreign_keys=[id])
+
+
+class LinkArtistWorkExample(Base):
+    __tablename__ = 'l_artist_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistWork', foreign_keys=[id])
+
+
+class LinkLabelLabelExample(Base):
+    __tablename__ = 'l_label_label_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_label.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelLabel', foreign_keys=[id])
+
+
+class LinkLabelPlaceExample(Base):
+    __tablename__ = 'l_label_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_place.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelPlace', foreign_keys=[id])
+
+
+class LinkLabelRecordingExample(Base):
+    __tablename__ = 'l_label_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_recording.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelRecording', foreign_keys=[id])
+
+
+class LinkLabelReleaseExample(Base):
+    __tablename__ = 'l_label_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelRelease', foreign_keys=[id])
+
+
+class LinkLabelReleaseGroupExample(Base):
+    __tablename__ = 'l_label_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelReleaseGroup', foreign_keys=[id])
+
+
+class LinkLabelURLExample(Base):
+    __tablename__ = 'l_label_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelURL', foreign_keys=[id])
+
+
+class LinkLabelWorkExample(Base):
+    __tablename__ = 'l_label_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelWork', foreign_keys=[id])
+
+
+class LinkPlacePlaceExample(Base):
+    __tablename__ = 'l_place_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_place.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlacePlace', foreign_keys=[id])
+
+
+class LinkPlaceRecordingExample(Base):
+    __tablename__ = 'l_place_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_recording.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceRecording', foreign_keys=[id])
+
+
+class LinkPlaceReleaseExample(Base):
+    __tablename__ = 'l_place_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceRelease', foreign_keys=[id])
+
+
+class LinkPlaceReleaseGroupExample(Base):
+    __tablename__ = 'l_place_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceReleaseGroup', foreign_keys=[id])
+
+
+class LinkPlaceURLExample(Base):
+    __tablename__ = 'l_place_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceURL', foreign_keys=[id])
+
+
+class LinkPlaceWorkExample(Base):
+    __tablename__ = 'l_place_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceWork', foreign_keys=[id])
+
+
+class LinkRecordingRecordingExample(Base):
+    __tablename__ = 'l_recording_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_recording.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingRecording', foreign_keys=[id])
+
+
+class LinkRecordingReleaseExample(Base):
+    __tablename__ = 'l_recording_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingRelease', foreign_keys=[id])
+
+
+class LinkRecordingReleaseGroupExample(Base):
+    __tablename__ = 'l_recording_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingReleaseGroup', foreign_keys=[id])
+
+
+class LinkRecordingURLExample(Base):
+    __tablename__ = 'l_recording_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingURL', foreign_keys=[id])
+
+
+class LinkRecordingWorkExample(Base):
+    __tablename__ = 'l_recording_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingWork', foreign_keys=[id])
+
+
+class LinkReleaseReleaseExample(Base):
+    __tablename__ = 'l_release_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_release.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseRelease', foreign_keys=[id])
+
+
+class LinkReleaseReleaseGroupExample(Base):
+    __tablename__ = 'l_release_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseReleaseGroup', foreign_keys=[id])
+
+
+class LinkReleaseURLExample(Base):
+    __tablename__ = 'l_release_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseURL', foreign_keys=[id])
+
+
+class LinkReleaseWorkExample(Base):
+    __tablename__ = 'l_release_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseWork', foreign_keys=[id])
+
+
+class LinkReleaseGroupReleaseGroupExample(Base):
+    __tablename__ = 'l_release_group_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_group_release_group.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseGroupReleaseGroup', foreign_keys=[id])
+
+
+class LinkReleaseGroupURLExample(Base):
+    __tablename__ = 'l_release_group_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_group_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseGroupURL', foreign_keys=[id])
+
+
+class LinkReleaseGroupWorkExample(Base):
+    __tablename__ = 'l_release_group_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_group_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseGroupWork', foreign_keys=[id])
+
+
+class LinkURLURLExample(Base):
+    __tablename__ = 'l_url_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_url_url.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkURLURL', foreign_keys=[id])
+
+
+class LinkURLWorkExample(Base):
+    __tablename__ = 'l_url_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_url_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkURLWork', foreign_keys=[id])
+
+
+class LinkWorkWorkExample(Base):
+    __tablename__ = 'l_work_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_work_work.id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkWorkWork', foreign_keys=[id])
+
+
+class LinkTypeDocumentation(Base):
+    __tablename__ = 'link_type_documentation'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.link_type.id'), primary_key=True, nullable=False)
+    documentation = Column(String, nullable=False)
+    examples_deleted = Column(SMALLINT, nullable=False)
+
+    link_type = relationship('LinkType', foreign_keys=[id])
+
+
+class LogStatistic(Base):
+    __tablename__ = 'log_statistic'
+    __table_args__ = {'schema': 'statistics'}
+
+    name = Column(String, primary_key=True, nullable=False)
+    category = Column(String, primary_key=True, nullable=False)
+    timestamp = Column(DateTime(timezone=True), primary_key=True, nullable=False)
+    data = Column(String, nullable=False)
+
+
+class Statistic(Base):
+    __tablename__ = 'statistic'
+    __table_args__ = {'schema': 'statistics'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    value = Column(Integer, nullable=False)
+    date_collected = Column(Date, nullable=False)
+
+
+class StatisticEvent(Base):
+    __tablename__ = 'statistic_event'
+    __table_args__ = {'schema': 'statistics'}
+
+    date = Column(Date, primary_key=True, nullable=False)
+    title = Column(String, nullable=False)
+    link = Column(String, nullable=False)
+    description = Column(String, nullable=False)
 
 
