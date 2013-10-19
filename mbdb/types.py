@@ -1,3 +1,6 @@
+import re
+from sqlalchemy.types import UserDefinedType, String
+
 
 class PartialDate(object):
 
@@ -30,4 +33,45 @@ class PartialDate(object):
 
     def __nonzero__(self):
         return bool(self.year or self.month or self.day)
+
+
+class Point(UserDefinedType):
+
+    def get_col_spec(self):
+        return 'POINT'
+
+    def bind_processor(self, dialect):
+        def process(value):
+            if value is None:
+                return None
+            return '({0},{1})'.format(*value)
+        return process
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if value is None:
+                return None
+            match = re.match(r'\((-?[0-9.]+),(-?[0-9.]+)\)', value)
+            return tuple(map(float, match.groups()))
+        return process
+
+
+class Cube(UserDefinedType):
+
+    def get_col_spec(self):
+        return 'CUBE'
+
+    def bind_processor(self, dialect):
+        def process(value):
+            if value is None:
+                return None
+            return value
+        return process
+
+    def result_processor(self, dialect, coltype):
+        def process(value):
+            if value is None:
+                return None
+            return value
+        return process
 

@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, composite
 from sqlalchemy.ext.hybrid import hybrid_property
-from mbdb.types import PartialDate
+from mbdb.types import PartialDate, Point, Cube
 
 Base = declarative_base()
 
@@ -2628,7 +2628,7 @@ class Place(Base):
     type_id = Column('type', Integer, ForeignKey('musicbrainz.place_type.id'))
     address = Column(String, nullable=False)
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
-    coordinates = Column(ARRAY(Float))
+    coordinates = Column(Point)
     comment = Column(String(255), nullable=False)
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
@@ -3230,7 +3230,7 @@ class MediumIndex(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), primary_key=True)
-    toc = Column(String)
+    toc = Column(Cube)
 
     medium = relationship('Medium', foreign_keys=[medium_id])
 

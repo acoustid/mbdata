@@ -151,7 +151,7 @@ def generate_models_header():
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.orm import relationship, composite'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
-    yield 'from mbdb.types import PartialDate'
+    yield 'from mbdb.types import PartialDate, Point, Cube'
     yield ''
     yield 'Base = declarative_base()'
     yield ''
@@ -219,9 +219,9 @@ def generate_models_from_sql(sql):
             elif type_name == 'INTERVAL':
                 column_type = 'Interval'
             elif type_name == 'POINT':
-                column_type = 'ARRAY(Float)'
+                column_type = 'Point'
             elif type_name == 'CUBE':
-                column_type = 'String' # XXX
+                column_type = 'Cube'
             elif type_name in types:
                 column_type = 'Enum({0}, name={1!r})'.format(', '.join(('{0!r}'.format(t) for t in types[type_name])), type_name)
             else:
