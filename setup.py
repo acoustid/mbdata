@@ -11,6 +11,7 @@ setup(name='mbdata',
       packages=[
           'mbdata',
           'mbdata.api',
+          'mbdata.api.blueprints',
           'mbdata.tools',
           'mbdata.web',
       ],

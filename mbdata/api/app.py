@@ -4,9 +4,9 @@
 from flask import Flask, g, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from mbdata.api.artist import blueprint as artist_blueprint
-from mbdata.api.place import blueprint as place_blueprint
-from mbdata.api.release import blueprint as release_blueprint
+from mbdata.api.blueprints.artist import blueprint as artist_blueprint
+from mbdata.api.blueprints.place import blueprint as place_blueprint
+from mbdata.api.blueprints.release import blueprint as release_blueprint
 
 
 app = Flask(__name__)
