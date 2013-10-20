@@ -10,11 +10,11 @@ var app = angular.module('mbdata', ['ngRoute']).
         $routeProvider.
             when('/', {
                 controller: 'SearchCtrl',
-                templateUrl: '/static/search.html'
+                templateUrl: '/static/partial/search.html'
             }).
             when('/artist/:id', {
                 controller: 'ArtistCtrl',
-                templateUrl: '/static/artist.html',
+                templateUrl: '/static/partial/artist.html',
                 resolve: {
                     artist: function ($route, MB) {
                         return MB.artist.details({id: $route.current.params.id}).then(function (data) {
@@ -25,7 +25,7 @@ var app = angular.module('mbdata', ['ngRoute']).
             }).
             when('/place/:id', {
                 controller: 'PlaceCtrl',
-                templateUrl: '/static/place.html',
+                templateUrl: '/static/partial/place.html',
                 resolve: {
                     place: function ($route, MB) {
                         return MB.place.details({id: $route.current.params.id}).then(function (data) {
@@ -36,7 +36,7 @@ var app = angular.module('mbdata', ['ngRoute']).
             }).
             when('/release/:id', {
                 controller: 'ReleaseCtrl',
-                templateUrl: '/static/release.html',
+                templateUrl: '/static/partial/release.html',
                 resolve: {
                     release: function ($route, MB) {
                         var params = {
@@ -51,7 +51,7 @@ var app = angular.module('mbdata', ['ngRoute']).
             }).
             when('/release-group/:id', {
                 controller: 'ReleaseGroupCtrl',
-                templateUrl: '/static/release_group.html',
+                templateUrl: '/static/partial/release_group.html',
                 resolve: {
                     releaseGroup: function ($route, MB) {
                         var params = {
