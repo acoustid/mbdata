@@ -76,10 +76,18 @@ class AreaGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Area', foreign_keys=[new_id_id])
+    redirect = relationship('Area', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def area(self):
+        return self.redirect
 
 
 class AreaAliasType(Base):
@@ -323,10 +331,18 @@ class ArtistGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Artist', foreign_keys=[new_id_id])
+    redirect = relationship('Artist', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def artist(self):
+        return self.redirect
 
 
 class ArtistType(Base):
@@ -2336,10 +2352,18 @@ class LabelGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Label', foreign_keys=[new_id_id])
+    redirect = relationship('Label', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def label(self):
+        return self.redirect
 
 
 class LabelTag(Base):
@@ -2699,10 +2723,18 @@ class PlaceGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Place', foreign_keys=[new_id_id])
+    redirect = relationship('Place', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def place(self):
+        return self.redirect
 
 
 class PlaceTag(Base):
@@ -2818,10 +2850,18 @@ class RecordingGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Recording', foreign_keys=[new_id_id])
+    redirect = relationship('Recording', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def recording(self):
+        return self.redirect
 
 
 class RecordingTag(Base):
@@ -2938,10 +2978,18 @@ class ReleaseGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Release', foreign_keys=[new_id_id])
+    redirect = relationship('Release', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def release(self):
+        return self.redirect
 
 
 class ReleaseMeta(Base):
@@ -3070,10 +3118,18 @@ class ReleaseGroupGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('ReleaseGroup', foreign_keys=[new_id_id])
+    redirect = relationship('ReleaseGroup', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.redirect
 
 
 class ReleaseGroupMeta(Base):
@@ -3206,10 +3262,18 @@ class TrackGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.track.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.track.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Track', foreign_keys=[new_id_id])
+    redirect = relationship('Track', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def track(self):
+        return self.redirect
 
 
 class TrackRaw(Base):
@@ -3251,10 +3315,18 @@ class URLGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('URL', foreign_keys=[new_id_id])
+    redirect = relationship('URL', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def url(self):
+        return self.redirect
 
 
 class Vote(Base):
@@ -3366,10 +3438,18 @@ class WorkGIDRedirect(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    new_id_id = Column('new_id', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     created = Column(DateTime(timezone=True))
 
-    new_id = relationship('Work', foreign_keys=[new_id_id])
+    redirect = relationship('Work', foreign_keys=[redirect_id])
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def work(self):
+        return self.redirect
 
 
 class WorkMeta(Base):

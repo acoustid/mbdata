@@ -245,6 +245,8 @@ def generate_models_from_sql(sql):
 
             if schema_name == 'cover_art_archive' and table_name == 'cover_art_type' and column_name == 'type_id':
                 attribute_name = 'type'
+            if schema_name == 'musicbrainz' and table_name.endswith('_gid_redirect') and column_name == 'new_id':
+                attribute_name = 'redirect'
 
             foreign_key = parse_foreign_key(column, type)
             if foreign_key:
@@ -286,6 +288,10 @@ def generate_models_from_sql(sql):
                         else:
                             aliases.append((column_name, foreign_table_name))
                             aliases.append((attribute_name, foreign_table_name + '_id'))
+                    if table_name.endswith('_gid_redirect') and column_name == 'new_id':
+                        aliases.append((attribute_name, column_name))
+                        aliases.append((relationship_name, foreign_table_name))
+
                 params.append('ForeignKey({0!r})'.format(join_foreign_key(foreign_schema_name, foreign_table_name, foreign_column_name)))
 
             if is_not_null(column, type):
