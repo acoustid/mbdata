@@ -34,6 +34,17 @@ var app = angular.module('mbdata', []).
                     }
                 }
             }).
+            when('/release/:id', {
+                controller: 'ReleaseCtrl',
+                templateUrl: '/static/release.html',
+                resolve: {
+                    release: function ($route, MB) {
+                        return MB.release.details({id: $route.current.params.id}).then(function (data) {
+                            return data.release;
+                        });
+                    }
+                }
+            }).
             otherwise({redirectTo: '/'});
     });
 

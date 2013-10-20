@@ -26,3 +26,8 @@ app.controller('PlaceCtrl', function ($scope, place, MB) {
     $scope.place = place;
 });
 
+app.controller('ReleaseCtrl', function ($scope, release, MB) {
+    $scope.$root.title = release.name;
+    $scope.release = release;
+});
+

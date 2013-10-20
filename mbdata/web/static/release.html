@@ -1,0 +1,17 @@
+<div class="container">
+  <h1>{{ release.name }}</h1>
+
+  <p ng-show="release.release_group.type">Type: {{ release.release_group.type }} <span ng-show="release.release_group.secondary_types.join"> + {{ release.release_group.secondary_types.join(', ') }}</span></p>
+  <p ng-show="release.status">Status: {{ release.status }}</p>
+  <p ng-show="release.language">Language: {{ release.language }}</p>
+  <p ng-show="release.script">Script: {{ release.script }}</p>
+
+  <div ng-repeat="medium in release.mediums">
+    <h3>Medium {{ medium.position }} <span ng-show="medium.format">({{ medium.format }})</span></h3>
+    <div ng-repeat="track in medium.tracks">
+      {{ track.number || track.position }}. {{ track.name }} ({{ track.length | duration }})
+    </div>
+  </div>
+
+  <p class="text-muted"><small>See this release at <a href="//musicbrainz.org/release/{{ release.id }}">MusicBrainz</a></small></p>
+</div>
