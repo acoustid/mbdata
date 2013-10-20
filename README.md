@@ -9,6 +9,7 @@ data, you can use the `mbdata.models` module to get
 
 Example:
 
+    #!python
     >>> from sqlalchemy import create_engine
     >>> from sqlalchemy.orm import sessionmaker
     >>> from mbdata.models import Artist
@@ -27,6 +28,7 @@ MusicBrainz PostgreSQL database.
 
 Installation:
 
+    #!sh
     virtualenv --system-site-packages e
     . e/bin/activate
     pip install -r requirements.txt
@@ -34,15 +36,18 @@ Installation:
 
 Configuration:
 
+    #!sh
 	cp settings.py.sample settings.py
 	vim settings.py
 
 Start the development server:
 
+    #!sh
     MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.api.app
 
 Query the API:
 
+    #!sh
     curl http://127.0.0.1:5000/1.0/artist/details -F id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d
 
 For production use, you should use server software like
@@ -57,4 +62,5 @@ application that uses the HTTP API and allows you to browse database.
 
 Start the development server:
 
+    #!sh
     MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.web.app
