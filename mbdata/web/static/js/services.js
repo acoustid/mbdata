@@ -23,6 +23,11 @@ app.factory('MB', function ($http, API_URL) {
         var apiMethod = humps.decamelize(method);
         MB[entity] = MB[entity] || {};
         MB[entity][method] = function (params) {
+            if (Array.isArray(params.include)) {
+                for (var i = 0; i < params.include.length; i++) {
+                    params.include[i] = humps.decamelize(params.include[i]);
+                }
+            }
             return MB.get(apiEntity, apiMethod, params);
         };
     };
