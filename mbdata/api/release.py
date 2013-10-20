@@ -1,14 +1,11 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
-from flask import Blueprint, request, g, abort
-from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
+from flask import Blueprint, g, abort
+from sqlalchemy.orm import joinedload, subqueryload
 from mbdata.models import (
     Release,
     ReleaseGIDRedirect,
-    ReleaseGroupSecondaryTypeJoin,
-    Medium,
-    Track,
 )
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import (

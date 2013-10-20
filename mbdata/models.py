@@ -1,7 +1,11 @@
 # Automatically generated, do not edit
 
-from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR
-from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT
+# pylint: disable=C0103
+# pylint: disable=C0302
+# pylint: disable=W0232
+
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR
+from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref

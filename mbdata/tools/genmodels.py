@@ -4,7 +4,7 @@
 import re
 import sqlparse
 from sqlparse import tokens as T
-from sqlparse.sql import Function, Parenthesis, TokenList
+from sqlparse.sql import TokenList
 
 
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
@@ -150,8 +150,12 @@ def join_foreign_key(schema_name, table_name, column_name):
 def generate_models_header():
     yield '# Automatically generated, do not edit'
     yield ''
-    yield 'from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR'
-    yield 'from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT'
+    yield '# pylint: disable=C0103'
+    yield '# pylint: disable=C0302'
+    yield '# pylint: disable=W0232'
+    yield ''
+    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR'
+    yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
     yield 'from sqlalchemy.orm import relationship, composite, backref'
@@ -229,7 +233,7 @@ def generate_models_from_sql(sql):
             elif type_name in types:
                 column_type = 'Enum({0}, name={1!r})'.format(', '.join(('{0!r}'.format(t) for t in types[type_name])), type_name)
             else:
-                raise ValueError(' '.join(map(str, column.tokens)))
+                raise ValueError(' '.join([str(x) for x in column.tokens]))
 
             if column_name.endswith('date_year'):
                 composites.append((
@@ -252,7 +256,7 @@ def generate_models_from_sql(sql):
             if foreign_key:
                 foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
                 if foreign_column_name == 'id':
-                    backref=None
+                    backref = None
                     if schema_name == 'musicbrainz' and table_name == 'artist_credit_name' and column_name == 'artist_credit':
                         backref = 'artists', 'order_by="ArtistCreditName.position"'
                     if schema_name == 'musicbrainz' and table_name == 'track' and column_name == 'medium':

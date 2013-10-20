@@ -1,9 +1,9 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
-from flask import Blueprint, request, g, jsonify, abort
+from flask import Blueprint, g, abort
 from sqlalchemy.orm import joinedload, subqueryload_all, defer
-from mbdata.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag
+from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
 

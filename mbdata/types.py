@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 import re
-from sqlalchemy.types import UserDefinedType, String
+from sqlalchemy.types import UserDefinedType
 
 
 class PartialDate(object):
@@ -40,6 +40,9 @@ class PartialDate(object):
 
 class Point(UserDefinedType):
 
+    # pylint: disable=W0223
+    # pylint: disable=R0201
+
     def get_col_spec(self):
         return 'POINT'
 
@@ -47,7 +50,7 @@ class Point(UserDefinedType):
         def process(value):
             if value is None:
                 return None
-            return '({0},{1})'.format(*value)
+            return '({0},{1})'.format(value[0], value[1])
         return process
 
     def result_processor(self, dialect, coltype):
@@ -55,11 +58,14 @@ class Point(UserDefinedType):
             if value is None:
                 return None
             match = re.match(r'\((-?[0-9.]+),(-?[0-9.]+)\)', value)
-            return tuple(map(float, match.groups()))
+            return tuple([float(x) for x in match.groups()])
         return process
 
 
 class Cube(UserDefinedType):
+
+    # pylint: disable=W0223
+    # pylint: disable=R0201
 
     def get_col_spec(self):
         return 'CUBE'

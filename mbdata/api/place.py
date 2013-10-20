@@ -1,10 +1,10 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
-from flask import Blueprint, request, g, abort
-from sqlalchemy.orm import joinedload, joinedload_all, subqueryload_all, defer
+from flask import Blueprint, g, abort
+from sqlalchemy.orm import joinedload
 from mbdata.models import Place, PlaceGIDRedirect, LinkPlaceURL
-from mbdata.utils import defer_everything_but, get_something_by_gid
+from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
 from mbdata.api.errors import NOT_FOUND_ERROR
 
