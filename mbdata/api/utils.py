@@ -26,12 +26,22 @@ PARAM_TYPES = {
     'uuid': to_uuid,
     'enum': to_enum,
     'int': int,
+    'text': unicode,
 }
 
-def get_param(name, type=None, default=None, required=False):
-    value = request.args.get(name, type=PARAM_TYPES.get(type, type), default=default)
-    if value is None and request:
-        abort(response_error(MISSING_PARAMETER_ERROR, 'missing parameter {0}'.format(name)))
+def get_param(name, type=None, default=None, required=False, container=None):
+    if type and type.endswith('+'):
+        assert default is None
+        type = type[:-1]
+        value = request.args.getlist(name, type=PARAM_TYPES.get(type, type))
+        if not value and required:
+            abort(response_error(MISSING_PARAMETER_ERROR, 'missing parameter {0}'.format(name)))
+        if container is not None:
+            value = container(value)
+    else:
+        value = request.args.get(name, type=PARAM_TYPES.get(type, type), default=default)
+        if value is None and required:
+            abort(response_error(MISSING_PARAMETER_ERROR, 'missing parameter {0}'.format(name)))
     return value
 
 
@@ -125,4 +135,36 @@ def serialize_partial_date(data, name, date):
         if date.day:
             d['day'] = date.day
     return True
+
+
+class Includes(object):
+
+    def __init__(self, allowed_includes, includes):
+        self._allowed_includes = allowed_includes
+        self._includes = set(includes)
+
+    def __getattr__(self, name):
+        if name not in self._allowed_includes:
+            raise AttributeError(name)
+
+        return bool(name in self._includes)
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            self.__dict__[name] = value
+            return
+
+        if name not in self._allowed_includes:
+            raise AttributeError(name)
+
+        if value and name not in self._includes:
+            self._includes.add(name)
+        elif not value and name in self._includes:
+            self._includes.remove(name)
+
+
+def make_includes(*allowed_includes):
+    def inner(includes):
+        return Includes(allowed_includes, includes)
+    return inner
 

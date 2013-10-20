@@ -39,7 +39,11 @@ var app = angular.module('mbdata', ['ngRoute']).
                 templateUrl: '/static/release.html',
                 resolve: {
                     release: function ($route, MB) {
-                        return MB.release.details({id: $route.current.params.id}).then(function (data) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['release_group', 'mediums', 'tracks', 'artist_names']
+                        };
+                        return MB.release.details(params).then(function (data) {
                             return data.release;
                         });
                     }

@@ -11,8 +11,14 @@ from mbdata.models import (
     Track,
 )
 from mbdata.utils import defer_everything_but, get_something_by_gid
-from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
-from mbdata.api.errors import NOT_FOUND_ERROR
+from mbdata.api.utils import (
+    get_param,
+    response_ok,
+    response_error,
+    serialize_partial_date,
+    make_includes,
+)
+from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
 
 blueprint = Blueprint('release', __name__)
 
@@ -30,45 +36,72 @@ def get_plain_release_by_gid_or_error(gid):
     return release
 
 
-@blueprint.route('/details')
-def release_details():
-    gid = get_param('id', type='uuid', required=True)
+def serialize_track(track, include):
+    data = {
+        'id': track.gid,
+        'name': track.name,
+        'position': track.position,
+    }
 
-    query = g.db.query(Release).\
-        options(joinedload("status")).\
-        options(joinedload("packaging")).\
-        options(joinedload("language")).\
-        options(joinedload("script")).\
-        options(joinedload("artist_credit", innerjoin=True)).\
-        options(joinedload("release_group", innerjoin=True)).\
-        options(joinedload("release_group.type")).\
-        options(subqueryload("release_group.secondary_types")).\
-        options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True)).\
-        options(subqueryload("mediums")).\
-        options(joinedload("mediums.format")).\
-        options(subqueryload("mediums.tracks")).\
-        options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
+    if str(track.position) != track.number:
+        data['number'] = track.number
 
-    release = get_release_by_gid(query, gid)
-    if release is None:
-        abort(response_error(NOT_FOUND_ERROR, 'release not found'))
+    if track.length:
+        data['length'] = track.length / 1000.0
 
+    if include.artist_names:
+        data['artist'] = track.artist_credit.name
+
+    return data
+
+
+def serialize_medium(medium, include):
+    data = {
+        'position': medium.position,
+    }
+
+    if medium.name:
+        data['name'] = medium.name
+
+    if medium.format:
+        data['format'] = medium.format.name
+
+    if include.tracks:
+        tracks_data = []
+        for track in medium.tracks:
+            tracks_data.append(serialize_track(track, include))
+        data['tracks'] = tracks_data
+    else:
+        data['track_count'] = medium.track_count
+
+    return data
+
+
+def serialize_release_group(release_group, include):
+    data = {
+        'id': release_group.gid,
+        'name': release_group.name,
+    }
+
+    if release_group.type:
+        data['type'] = release_group.type.name
+
+    if release_group.secondary_types:
+        data['secondary_types'] = []
+        for type in release_group.secondary_type:
+            data['secondary_types'].append(type.secondary_type.name)
+
+    if include.artist_names:
+        data['artist'] = release_group.artist_credit.name
+
+    return data
+
+
+def serialize_release(release, include):
     data = {
         'id': release.gid,
         'name': release.name,
-        'release_group': {
-            'id': release.release_group.gid,
-            'name': release.release_group.name,
-        }
     }
-
-    if release.release_group.type:
-        data['release_group']['type'] = release.release_group.type.name
-
-    if release.release_group.secondary_types:
-        data['release_group']['secondary_types'] = []
-        for type in release.release_group.secondary_type:
-            data['release_group']['secondary_types'].append(type.secondary_type.name)
 
     if release.status:
         data['status'] = release.status.name
@@ -82,28 +115,64 @@ def release_details():
     if release.script:
         data['script'] = release.script.name
 
-    data['mediums'] = []
-    for medium in release.mediums:
-        medium_data ={
-            'position': medium.position,
-            'tracks': [],
-        }
-        if medium.name:
-            medium_data['name'] = medium.name
-        if medium.format:
-            medium_data['format'] = medium.format.name
-        for track in medium.tracks:
-            track_data = {
-                'id': track.gid,
-                'name': track.name,
-                'position': track.position,
-            }
-            if str(track.position) != track.number:
-                track_data['number'] = track.number
-            if track.length:
-                track_data['length'] = track.length / 1000.0
-            medium_data['tracks'].append(track_data)
-        data['mediums'].append(medium_data)
+    if include.artist_names:
+        data['artist'] = release.artist_credit.name
 
-    return response_ok(release=data)
+    if include.release_group:
+        data['release_group'] = serialize_release_group(release.release_group, include)
+
+    if include.mediums:
+        mediums_data = []
+        for medium in release.mediums:
+            mediums_data.append(serialize_medium(medium, include))
+        data['mediums'] = mediums_data
+
+    return data
+
+
+@blueprint.route('/details')
+def release_details():
+    gid = get_param('id', type='uuid', required=True)
+
+    includes_class = make_includes('mediums', 'tracks', 'release_group', 'artist_names', 'artist_credits')
+    include = get_param('include', type='enum+', container=includes_class)
+
+    if include.artist_names and include.artist_credits:
+        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))
+
+    query = g.db.query(Release).\
+        options(joinedload("status")).\
+        options(joinedload("packaging")).\
+        options(joinedload("language")).\
+        options(joinedload("script"))
+
+    if include.artist_names:
+        query = query.options(joinedload("artist_credit", innerjoin=True))
+
+    if include.release_group:
+        query = query.\
+            options(joinedload("release_group.type")).\
+            options(subqueryload("release_group.secondary_types")).\
+            options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
+
+        if include.artist_names:
+            query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
+
+    if include.mediums:
+        query = query.options(joinedload("mediums.format"))
+
+    if include.tracks:
+        if not include.mediums:
+            abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=mediums requires include=tracks'))
+
+        query = query.options(subqueryload("mediums.tracks"))
+
+        if include.artist_names:
+            query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
+
+    release = get_release_by_gid(query, gid)
+    if release is None:
+        abort(response_error(NOT_FOUND_ERROR, 'release not found'))
+
+    return response_ok(release=serialize_release(release, include))
 
