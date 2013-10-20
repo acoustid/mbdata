@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from mbdata.api.blueprints.artist import blueprint as artist_blueprint
 from mbdata.api.blueprints.place import blueprint as place_blueprint
 from mbdata.api.blueprints.release import blueprint as release_blueprint
+from mbdata.api.blueprints.release_group import blueprint as release_group_blueprint
 
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ app.config.from_envvar('MBDATA_API_SETTINGS')
 app.register_blueprint(artist_blueprint, url_prefix='/1.0/artist')
 app.register_blueprint(place_blueprint, url_prefix='/1.0/place')
 app.register_blueprint(release_blueprint, url_prefix='/1.0/release')
+app.register_blueprint(release_group_blueprint, url_prefix='/1.0/release_group')
 
 engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
 Session = sessionmaker(bind=engine)

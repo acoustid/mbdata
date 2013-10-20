@@ -31,3 +31,8 @@ app.controller('ReleaseCtrl', function ($scope, release, MB) {
     $scope.release = release;
 });
 
+app.controller('ReleaseGroupCtrl', function ($scope, releaseGroup, MB) {
+    $scope.$root.title = releaseGroup.name;
+    $scope.releaseGroup = releaseGroup;
+});
+

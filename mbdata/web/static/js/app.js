@@ -49,6 +49,21 @@ var app = angular.module('mbdata', ['ngRoute']).
                     }
                 }
             }).
+            when('/release-group/:id', {
+                controller: 'ReleaseGroupCtrl',
+                templateUrl: '/static/release_group.html',
+                resolve: {
+                    releaseGroup: function ($route, MB) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['artist_credits']
+                        };
+                        return MB.release_group.details(params).then(function (data) {
+                            return data.release_group;
+                        });
+                    }
+                }
+            }).
             otherwise({redirectTo: '/'});
     });
 
