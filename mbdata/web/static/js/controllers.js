@@ -16,23 +16,24 @@ app.controller('SearchCtrl', function ($scope) {
     };
 });
 
-app.controller('ArtistCtrl', function ($scope, artist, MB) {
+app.controller('ArtistCtrl', function ($scope, artist) {
     $scope.$root.title = artist.name;
     $scope.artist = artist;
 });
 
-app.controller('PlaceCtrl', function ($scope, place, MB) {
+app.controller('PlaceCtrl', function ($scope, place) {
     $scope.$root.title = place.name;
     $scope.place = place;
 });
 
-app.controller('ReleaseCtrl', function ($scope, release, MB) {
+app.controller('ReleaseCtrl', function ($scope, release) {
     $scope.$root.title = release.name;
     $scope.release = release;
 });
 
-app.controller('ReleaseGroupCtrl', function ($scope, releaseGroup, MB) {
+app.controller('ReleaseGroupCtrl', function ($scope, releaseGroup, releases) {
     $scope.$root.title = releaseGroup.name;
     $scope.releaseGroup = releaseGroup;
+    $scope.releases = releases;
 });
 

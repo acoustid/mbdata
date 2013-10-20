@@ -3,5 +3,9 @@
 
   <p ng-show="releaseGroup.type">Type: {{ releaseGroup.type }} <span ng-show="releaseGroup.secondaryTypes.join"> + {{ releaseGroup.secondaryTypes.join(', ') }}</span></p>
 
+  <p ng-repeat="release in releases">
+    <a href="/release/{{ release.id }}">{{ release.name }}</a>
+  </p>
+
   <p class="text-muted"><small>See this release group at <a href="//musicbrainz.org/release-group/{{ releaseGroup.id }}">MusicBrainz</a></small></p>
 </div>

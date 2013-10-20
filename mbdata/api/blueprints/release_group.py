@@ -4,6 +4,7 @@
 from flask import Blueprint, g, abort
 from sqlalchemy.orm import joinedload, subqueryload
 from mbdata.models import (
+    Release,
     ReleaseGroup,
     ReleaseGroupGIDRedirect,
 )
@@ -15,7 +16,7 @@ from mbdata.api.utils import (
     make_includes,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
-from mbdata.api.serialize import serialize_release_group
+from mbdata.api.serialize import serialize_release_group, serialize_release
 
 blueprint = Blueprint('release_group', __name__)
 
@@ -25,7 +26,7 @@ def get_release_group_by_gid(query, gid):
 
 
 @blueprint.route('/details')
-def release_group_details():
+def details():
     gid = get_param('id', type='uuid', required=True)
 
     includes_class = make_includes('artist_names', 'artist_credits')
@@ -51,4 +52,36 @@ def release_group_details():
         abort(response_error(NOT_FOUND_ERROR, 'release group not found'))
 
     return response_ok(release_group=serialize_release_group(release_group, include))
+
+
+@blueprint.route('/list_releases')
+def list_releases():
+    gid = get_param('id', type='uuid', required=True)
+
+    includes_class = make_includes('artist_names', 'artist_credits')
+    include = get_param('include', type='enum+', container=includes_class)
+
+    if include.artist_names and include.artist_credits:
+        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))
+
+    release_group_query = g.db.query(ReleaseGroup.id).filter_by(gid=gid)
+    query = g.db.query(Release).\
+        filter(Release.release_group_id.in_(release_group_query)).\
+        options(joinedload("status")).\
+        options(joinedload("packaging")).\
+        options(joinedload("language")).\
+        options(joinedload("script"))
+
+    if include.artist_names or include.artist_credits:
+        query = query.options(joinedload("artist_credit", innerjoin=True))
+    if include.artist_credits:
+        query = query.\
+            options(subqueryload("artist_credit.artists")).\
+            options(joinedload("artist_credit.artists.artist", innerjoin=True))
+
+    releases_data = []
+    for release in query:
+        releases_data.append(serialize_release(release, include, no_release_group=True, no_mediums=True))
+
+    return response_ok(releases=releases_data)
 

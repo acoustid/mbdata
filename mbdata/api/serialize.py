@@ -86,7 +86,7 @@ def serialize_release_group(release_group, include):
     return data
 
 
-def serialize_release(release, include):
+def serialize_release(release, include, no_release_group=False, no_mediums=False):
     data = {
         'id': release.gid,
         'name': release.name,
@@ -109,10 +109,10 @@ def serialize_release(release, include):
     elif include.artist_credits:
         data['artists'] = serialize_artist_credit(release.artist_credit)
 
-    if include.release_group:
+    if not no_release_group and include.release_group:
         data['release_group'] = serialize_release_group(release.release_group, include)
 
-    if include.mediums:
+    if not no_mediums and include.mediums:
         mediums_data = []
         for medium in release.mediums:
             mediums_data.append(serialize_medium(medium, include))

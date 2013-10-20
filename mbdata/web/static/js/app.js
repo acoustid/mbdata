@@ -61,6 +61,15 @@ var app = angular.module('mbdata', ['ngRoute']).
                         return MB.releaseGroup.details(params).then(function (data) {
                             return data.releaseGroup;
                         });
+                    },
+                    releases: function ($route, MB) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['artistCredits']
+                        };
+                        return MB.releaseGroup.listReleases(params).then(function (data) {
+                            return data.releases;
+                        });
                     }
                 }
             }).

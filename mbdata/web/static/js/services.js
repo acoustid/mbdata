@@ -50,7 +50,7 @@ app.factory('MB', function ($http, API_URL) {
         place: ['details'],
         recording: ['details'],
         release: ['details'],
-        releaseGroup: ['details'],
+        releaseGroup: ['details', 'listReleases'],
         work: ['details']
     });
 
