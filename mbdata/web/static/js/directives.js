@@ -11,9 +11,9 @@ app.directive('mbArtistCredit', function () {
         template:
             '<span ng-repeat="artist in artists">' +
                 '<a href="/artist/{{ artist.id }}">' +
-                    '{{ artist.credited_name || artist.name }}' +
+                    '{{ artist.creditedName || artist.name }}' +
                 '</a>' +
-                '{{ artist.join_phrase }}' +
+                '{{ artist.joinPhrase }}' +
             '</span>'
     };
 });

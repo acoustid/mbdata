@@ -13,15 +13,17 @@ app.factory('MB', function ($http, API_URL) {
                 url: API_URL + '/' + API_VERSION + '/' + entity + '/' + method,
                 params: params
             }).then(function (response) {
-                return response.data.response;
+                return humps.camelizeKeys(response.data.response);
             });
         }
     };
 
     function generateEntityMethod(entity, method) {
+        var apiEntity = humps.decamelize(entity);
+        var apiMethod = humps.decamelize(method);
         MB[entity] = MB[entity] || {};
         MB[entity][method] = function (params) {
-            return MB.get(entity, method, params);
+            return MB.get(apiEntity, apiMethod, params);
         };
     };
 
@@ -43,7 +45,7 @@ app.factory('MB', function ($http, API_URL) {
         place: ['details'],
         recording: ['details'],
         release: ['details'],
-        release_group: ['details'],
+        releaseGroup: ['details'],
         work: ['details']
     });
 

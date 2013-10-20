@@ -4,13 +4,13 @@
 'use strict';
 
 app.filter('duration', function () {
-    return function (total_seconds) {
-        if (!total_seconds) {
+    return function (totalSeconds) {
+        if (!totalSeconds) {
             return '?:??';
         }
 
-        var minutes = Math.round(total_seconds / 60);
-        var seconds = Math.round(total_seconds % 60);
+        var minutes = Math.round(totalSeconds / 60);
+        var seconds = Math.round(totalSeconds % 60);
 
         var text = minutes.toString() + ':';
         if (seconds < 10) {

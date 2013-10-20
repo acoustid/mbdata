@@ -1,7 +1,7 @@
 <div class="container">
   <h1><span mb-artist-credit="release.artists"></span> &ndash; {{ release.name }}</h1>
 
-  <p ng-show="release.release_group.type">Type: {{ release.release_group.type }} <span ng-show="release.release_group.secondary_types.join"> + {{ release.release_group.secondary_types.join(', ') }}</span></p>
+  <p ng-show="release.releaseGroup.type">Type: {{ release.releaseGroup.type }} <span ng-show="release.releaseGroup.secondaryTypes.join"> + {{ release.releaseGroup.secondaryTypes.join(', ') }}</span></p>
   <p ng-show="release.status">Status: {{ release.status }}</p>
   <p ng-show="release.language">Language: {{ release.language }}</p>
   <p ng-show="release.script">Script: {{ release.script }}</p>
