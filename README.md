@@ -22,6 +22,8 @@ Example:
 HTTP API
 --------
 
+**Note:** This is very much a work in progress. It is not ready to use yet. Any help is welcome.
+
 There is also a HTTP API, which you can use to access the MusicBrainz data using
 JSON or XML formats over HTTP. This is useful if you want to abstract away the
 MusicBrainz PostgreSQL database.
