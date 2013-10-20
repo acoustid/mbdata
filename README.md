@@ -5,7 +5,7 @@ Installation:
 
     virtualenv --system-site-packages e
     . e/bin/activate
-    pip install -r requirementst
+    pip install -r requirements.txt
     python setup.py develop
 
 Configuration:
