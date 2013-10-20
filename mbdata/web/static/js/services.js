@@ -35,7 +35,7 @@ app.factory('MB', function ($http, API_URL) {
     }
 
     generateEntities({
-        artist: ['profile', 'urls', 'tags'],
+        artist: ['details', 'urls', 'tags'],
         place: ['details']
     });
 

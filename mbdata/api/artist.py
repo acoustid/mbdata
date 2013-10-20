@@ -20,8 +20,8 @@ def get_plain_artist_by_gid_or_error(gid):
     return artist
 
 
-@blueprint.route('/profile')
-def artist_profile():
+@blueprint.route('/details')
+def artist_details():
     gid = get_param('id', type='uuid', required=True)
 
     query = g.db.query(Artist).\

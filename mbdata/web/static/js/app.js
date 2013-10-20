@@ -12,7 +12,7 @@ var app = angular.module('mbdata', []).
                 templateUrl: '/static/artist.html',
                 resolve: {
                     artist: function ($route, MB) {
-                        return MB.artist.profile({id: $route.current.params.id}).then(function (data) {
+                        return MB.artist.details({id: $route.current.params.id}).then(function (data) {
                             return data.artist;
                         });
                     }
