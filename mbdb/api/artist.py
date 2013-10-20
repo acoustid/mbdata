@@ -1,18 +1,14 @@
 from flask import Blueprint, request, g, jsonify, abort
 from sqlalchemy.orm import joinedload, subqueryload_all, defer
 from mbdb.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag
-from mbdb.utils import defer_everything_but
+from mbdb.utils import defer_everything_but, get_something_by_gid
 from mbdb.api.utils import get_param, response_ok, response_error, serialize_partial_date
 
 blueprint = Blueprint('artist', __name__)
 
 
 def get_artist_by_gid(query, gid):
-    artist = query.filter_by(gid=gid).first()
-    if artist is None:
-        subquery = g.db.query(ArtistGIDRedirect.new_id_id).filter_by(gid=gid)
-        artist = query.filter(Artist.id.in_(subquery)).first()
-    return artist
+    return get_something_by_gid(query, ArtistGIDRedirect, gid)
 
 
 def get_plain_artist_by_gid_or_error(gid):

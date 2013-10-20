@@ -1,7 +1,8 @@
-from flask import Flask, g
+from flask import Flask, g, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from mbdb.api.artist import blueprint as artist_blueprint
+from mbdb.api.place import blueprint as place_blueprint
 
 
 app = Flask(__name__)
@@ -9,6 +10,7 @@ app.config.from_object('mbdb.api.commonsettings')
 app.config.from_envvar('MBDB_API_SETTINGS')
 
 app.register_blueprint(artist_blueprint, url_prefix='/1.0/artist')
+app.register_blueprint(place_blueprint, url_prefix='/1.0/place')
 
 engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
 Session = sessionmaker(bind=engine)
@@ -22,6 +24,15 @@ def before_request():
 @app.teardown_request
 def teardown_request(exception):
     g.db.close()
+
+
+@app.after_request
+def after_request(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    headers = request.headers.get('Access-Control-Request-Headers')
+    if headers is not None:
+        response.headers['Access-Control-Allow-Headers'] = headers
+    return response
 
 
 if __name__ == "__main__":
