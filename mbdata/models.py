@@ -322,7 +322,7 @@ class ArtistCreditName(Base):
     name = Column(String, nullable=False)
     join_phrase = Column(String, nullable=False)
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], backref=backref('artists'))
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], backref=backref('artists', order_by="ArtistCreditName.position"))
     artist = relationship('Artist', foreign_keys=[artist_id])
 
 
@@ -2610,7 +2610,7 @@ class Medium(Base):
     last_updated = Column(DateTime(timezone=True))
     track_count = Column(Integer, nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id], backref=backref('mediums'))
+    release = relationship('Release', foreign_keys=[release_id], backref=backref('mediums', order_by="Medium.position"))
     format = relationship('MediumFormat', foreign_keys=[format_id])
 
 
@@ -3252,8 +3252,8 @@ class Track(Base):
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    recording = relationship('Recording', foreign_keys=[recording_id], backref=backref('tracks'))
-    medium = relationship('Medium', foreign_keys=[medium_id], backref=backref('tracks'))
+    recording = relationship('Recording', foreign_keys=[recording_id])
+    medium = relationship('Medium', foreign_keys=[medium_id], backref=backref('tracks', order_by="Track.position"))
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
 

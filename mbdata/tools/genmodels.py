@@ -254,13 +254,11 @@ def generate_models_from_sql(sql):
                 if foreign_column_name == 'id':
                     backref=None
                     if schema_name == 'musicbrainz' and table_name == 'artist_credit_name' and column_name == 'artist_credit':
-                        backref = 'artists'
+                        backref = 'artists', 'order_by="ArtistCreditName.position"'
                     if schema_name == 'musicbrainz' and table_name == 'track' and column_name == 'medium':
-                        backref = 'tracks'
-                    if schema_name == 'musicbrainz' and table_name == 'track' and column_name == 'recording':
-                        backref = 'tracks'
+                        backref = 'tracks', 'order_by="Track.position"'
                     if schema_name == 'musicbrainz' and table_name == 'medium' and column_name == 'release':
-                        backref = 'mediums'
+                        backref = 'mediums', 'order_by="Medium.position"'
                     if schema_name == 'musicbrainz' and table_name == 'release' and column_name == 'release_group':
                         backref = 'releases'
                     if schema_name == 'musicbrainz' and table_name == 'isrc' and column_name == 'recording':
