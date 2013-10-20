@@ -1,5 +1,5 @@
 <div class="container">
-  <h1>{{ release.artist }} &ndash; {{ release.name }}</h1>
+  <h1><span mb-artist-credit="release.artists"></span> &ndash; {{ release.name }}</h1>
 
   <p ng-show="release.release_group.type">Type: {{ release.release_group.type }} <span ng-show="release.release_group.secondary_types.join"> + {{ release.release_group.secondary_types.join(', ') }}</span></p>
   <p ng-show="release.status">Status: {{ release.status }}</p>

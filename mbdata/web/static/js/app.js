@@ -41,7 +41,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     release: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['release_group', 'mediums', 'tracks', 'artist_names']
+                            include: ['release_group', 'mediums', 'tracks', 'artist_credits']
                         };
                         return MB.release.details(params).then(function (data) {
                             return data.release;

@@ -36,6 +36,25 @@ def get_plain_release_by_gid_or_error(gid):
     return release
 
 
+def serialize_artist_credit(artist_credit):
+    data = []
+    for artist_credit_name in artist_credit.artists:
+        artist_credit_data = {
+            'id': artist_credit_name.artist.gid,
+            'name': artist_credit_name.artist.name,
+        }
+
+        if artist_credit_name.name != artist_credit_name.artist.name:
+            artist_credit_name['credited_name'] = artist_credit_name.name
+
+        if artist_credit_name.join_phrase:
+            artist_credit_data['join_phrase'] = artist_credit_name.join_phrase
+
+        data.append(artist_credit_data)
+
+    return data
+
+
 def serialize_track(track, include):
     data = {
         'id': track.gid,
@@ -51,6 +70,8 @@ def serialize_track(track, include):
 
     if include.artist_names:
         data['artist'] = track.artist_credit.name
+    elif include.artist_credits:
+        data['artists'] = serialize_artist_credit(track.artist_credit)
 
     return data
 
@@ -93,6 +114,8 @@ def serialize_release_group(release_group, include):
 
     if include.artist_names:
         data['artist'] = release_group.artist_credit.name
+    elif include.artist_credits:
+        data['artists'] = serialize_artist_credit(release_group.artist_credit)
 
     return data
 
@@ -117,6 +140,8 @@ def serialize_release(release, include):
 
     if include.artist_names:
         data['artist'] = release.artist_credit.name
+    elif include.artist_credits:
+        data['artists'] = serialize_artist_credit(release.artist_credit)
 
     if include.release_group:
         data['release_group'] = serialize_release_group(release.release_group, include)
@@ -146,8 +171,12 @@ def release_details():
         options(joinedload("language")).\
         options(joinedload("script"))
 
-    if include.artist_names:
+    if include.artist_names or include.artist_credits:
         query = query.options(joinedload("artist_credit", innerjoin=True))
+    if include.artist_credits:
+        query = query.\
+            options(subqueryload("artist_credit.artists")).\
+            options(joinedload("artist_credit.artists.artist", innerjoin=True))
 
     if include.release_group:
         query = query.\
@@ -155,8 +184,12 @@ def release_details():
             options(subqueryload("release_group.secondary_types")).\
             options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
 
-        if include.artist_names:
+        if include.artist_names or include.artist_credits:
             query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
+        if include.artist_credits:
+            query = query.\
+                options(subqueryload("release_group.artist_credit.artists")).\
+                options(joinedload("release_group.artist_credit.artists.artist", innerjoin=True))
 
     if include.mediums:
         query = query.options(joinedload("mediums.format"))
@@ -167,8 +200,12 @@ def release_details():
 
         query = query.options(subqueryload("mediums.tracks"))
 
-        if include.artist_names:
+        if include.artist_names or include.artist_credits:
             query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
+        if include.artist_credits:
+            query = query.\
+                options(subqueryload("mediums.tracks.artist_credit.artists")).\
+                options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))
 
     release = get_release_by_gid(query, gid)
     if release is None:
