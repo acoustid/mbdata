@@ -1,0 +1,8 @@
+<div class="container">
+  <h1>{{ artist.name }}</h1>
+
+  <p ng-show="artist.type">Type: {{ artist.type }} <span ng-show="artist.gender">({{ artist.gender }})</span></p>
+  <p ng-show-"artist.area">Area: {{ artist.area }}</p>
+
+  <p class="text-muted"><small>See this artist at <a href="//musicbrainz.org/artist/{{ artist.id }}">MusicBrainz</a></small></p>
+</div>

@@ -1,0 +1,15 @@
+<div class="container">
+  <h1>Search</h1>
+  <form class="form-inline" role="form">
+    <div class="form-group">
+      <input type="search" class="form-control" ng-model="query">
+    </div>
+    <button class="btn btn-default" ng-click="search()">Search</button>
+  </form>
+  <div ng-show="results">
+    <h2>Results</h2>
+    <p ng-repeat="result in results">
+      <a href="#/{{ result.type }}/{{ result.id }}"><b>{{ result.name }}</b></a>
+    </p>
+  </div>
+</div>
