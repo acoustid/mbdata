@@ -3,8 +3,8 @@
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR
 from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, composite
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship, composite, backref
 from mbdata.types import PartialDate, Point, Cube
 
 Base = declarative_base()
@@ -252,7 +252,7 @@ class ArtistMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    artist = relationship('Artist', foreign_keys=[id])
+    artist = relationship('Artist', foreign_keys=[id], backref=backref('meta', uselist=False))
 
 
 class ArtistTag(Base):
@@ -314,7 +314,7 @@ class ArtistCreditName(Base):
     name = Column(String, nullable=False)
     join_phrase = Column(String, nullable=False)
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], backref=backref('artists'))
     artist = relationship('Artist', foreign_keys=[artist_id])
 
 
@@ -728,7 +728,7 @@ class ISRC(Base):
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True))
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], backref=backref('isrcs'))
 
 
 class ISWC(Base):
@@ -742,7 +742,7 @@ class ISWC(Base):
     edits_pending = Column(Integer, nullable=False)
     created = Column(DateTime(timezone=True), nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id])
+    work = relationship('Work', foreign_keys=[work_id], backref=backref('iswcs'))
 
 
 class LinkAreaArea(Base):
@@ -2328,7 +2328,7 @@ class LabelMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    label = relationship('Label', foreign_keys=[id])
+    label = relationship('Label', foreign_keys=[id], backref=backref('meta', uselist=False))
 
 
 class LabelGIDRedirect(Base):
@@ -2586,7 +2586,7 @@ class Medium(Base):
     last_updated = Column(DateTime(timezone=True))
     track_count = Column(Integer, nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id], backref=backref('mediums'))
     format = relationship('MediumFormat', foreign_keys=[format_id])
 
 
@@ -2810,7 +2810,7 @@ class RecordingMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    recording = relationship('Recording', foreign_keys=[id])
+    recording = relationship('Recording', foreign_keys=[id], backref=backref('meta', uselist=False))
 
 
 class RecordingGIDRedirect(Base):
@@ -2857,7 +2857,7 @@ class Release(Base):
     last_updated = Column(DateTime(timezone=True))
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('releases'))
     status = relationship('ReleaseStatus', foreign_keys=[status_id])
     packaging = relationship('ReleasePackaging', foreign_keys=[packaging_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -2955,10 +2955,10 @@ class ReleaseMeta(Base):
     amazon_store = Column(String(20))
     cover_art_presence = Column(Enum(u'absent', u'present', u'darkened', name=u'COVER_ART_PRESENCE'), nullable=False)
 
-    release = relationship('Release', foreign_keys=[id])
+    release = relationship('Release', foreign_keys=[id], backref=backref('meta', uselist=False))
 
 
-class ReleaseCoverart(Base):
+class ReleaseCoverArt(Base):
     __tablename__ = 'release_coverart'
     __table_args__ = {'schema': 'musicbrainz'}
 
@@ -3088,7 +3088,7 @@ class ReleaseGroupMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[id], backref=backref('meta', uselist=False))
 
     first_release_date = composite(PartialDate, first_release_date_year, first_release_date_month, first_release_date_day)
 
@@ -3196,8 +3196,8 @@ class Track(Base):
     edits_pending = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True))
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    medium = relationship('Medium', foreign_keys=[medium_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], backref=backref('tracks'))
+    medium = relationship('Medium', foreign_keys=[medium_id], backref=backref('tracks'))
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
 
@@ -3380,7 +3380,7 @@ class WorkMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    work = relationship('Work', foreign_keys=[id])
+    work = relationship('Work', foreign_keys=[id], backref=backref('meta', uselist=False))
 
 
 class WorkTag(Base):

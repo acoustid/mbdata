@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, request, g, abort
-from sqlalchemy.orm import joinedload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
 from mbdata.models import (
     Release,
     ReleaseGIDRedirect,
@@ -39,9 +39,12 @@ def release_details():
         options(joinedload("packaging")).\
         options(joinedload("language")).\
         options(joinedload("script")).\
-        options(joinedload("artist_credit")).\
-        options(joinedload("release_group")).\
-        options(joinedload("release_group.type"))
+        options(joinedload("artist_credit", innerjoin=True)).\
+        options(joinedload("release_group", innerjoin=True)).\
+        options(joinedload("release_group.type")).\
+        options(subqueryload("mediums")).\
+        options(subqueryload("mediums.tracks")).\
+        options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
 
     release = get_release_by_gid(query, gid)
     if release is None:
@@ -79,13 +82,8 @@ def release_details():
     if release.script:
         data['script'] = release.script.name
 
-    query = g.db.query(Medium).\
-        filter_by(release=release).\
-        options(joinedload("format")).\
-        order_by(Medium.position)
     data['mediums'] = []
-    medium_data_by_id = {}
-    for medium in query:
+    for medium in release.mediums:
         medium_data ={
             'position': medium.position,
             'tracks': [],
@@ -94,24 +92,18 @@ def release_details():
             medium_data['name'] = medium.name
         if medium.format:
             medium_data['format'] = medium.format.name
-        medium_data_by_id[medium.id] = medium_data
+        for track in medium.tracks:
+            track_data = {
+                'id': track.gid,
+                'name': track.name,
+                'position': track.position,
+            }
+            if str(track.position) != track.number:
+                track_data['number'] = track.number
+            if track.length:
+                track_data['length'] = track.length / 1000.0
+            medium_data['tracks'].append(track_data)
         data['mediums'].append(medium_data)
-
-    query = g.db.query(Track).\
-        filter(Track.medium_id.in_(medium_data_by_id.keys())).\
-        options(joinedload("artist_credit")).\
-        order_by(Track.position)
-    for track in query:
-        track_data = {
-            'id': track.gid,
-            'name': track.name,
-            'position': track.position,
-        }
-        if str(track.position) != track.number:
-            track_data['number'] = track.number
-        if track.length:
-            track_data['length'] = track.length / 1000.0
-        medium_data_by_id[track.medium_id]['tracks'].append(track_data)
 
     return response_ok(release=data)
 

@@ -8,12 +8,13 @@ from sqlparse.sql import Function, Parenthesis, TokenList
 
 
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
+SPECIAL_NAMES = {'coverart': 'CoverArt'}
 
 
 def capitalize(word):
     if word in ACRONYMS:
         return word.upper()
-    return word.title()
+    return SPECIAL_NAMES.get(word, word.title())
 
 
 def format_class_name(table_name):
@@ -152,8 +153,8 @@ def generate_models_header():
     yield 'from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, DateTime, Date, Enum, Interval, Float, CHAR'
     yield 'from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
-    yield 'from sqlalchemy.orm import relationship, composite'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
+    yield 'from sqlalchemy.orm import relationship, composite, backref'
     yield 'from mbdata.types import PartialDate, Point, Cube'
     yield ''
     yield 'Base = declarative_base()'
@@ -249,6 +250,23 @@ def generate_models_from_sql(sql):
             if foreign_key:
                 foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
                 if foreign_column_name == 'id':
+                    backref=None
+                    if schema_name == 'musicbrainz' and table_name == 'artist_credit_name' and column_name == 'artist_credit':
+                        backref = 'artists'
+                    if schema_name == 'musicbrainz' and table_name == 'track' and column_name == 'medium':
+                        backref = 'tracks'
+                    if schema_name == 'musicbrainz' and table_name == 'track' and column_name == 'recording':
+                        backref = 'tracks'
+                    if schema_name == 'musicbrainz' and table_name == 'medium' and column_name == 'release':
+                        backref = 'mediums'
+                    if schema_name == 'musicbrainz' and table_name == 'release' and column_name == 'release_group':
+                        backref = 'releases'
+                    if schema_name == 'musicbrainz' and table_name == 'isrc' and column_name == 'recording':
+                        backref = 'isrcs'
+                    if schema_name == 'musicbrainz' and table_name == 'iswc' and column_name == 'work':
+                        backref = 'iswcs'
+                    if schema_name == 'musicbrainz' and table_name.endswith('_meta') and column_name == 'id':
+                        backref = 'meta', 'uselist=False'
                     if attribute_name == 'id':
                         if schema_name == 'cover_art_archive' and table_name == 'cover_art_type':
                             relationship_name = 'cover_art'
@@ -260,7 +278,7 @@ def generate_models_from_sql(sql):
                         relationship_name = attribute_name
                         attribute_name += '_id'
                     params.insert(0, repr(column_name))
-                    foreign_keys.append((attribute_name, relationship_name, foreign_key))
+                    foreign_keys.append((attribute_name, relationship_name, foreign_key, backref))
                     if table_name.startswith('l_') and column_name in ('entity0', 'entity1'):
                         if table_name == 'l_{0}_{0}'.format(foreign_table_name, foreign_table_name):
                             aliases.append((column_name, foreign_table_name + column_name[-1]))
@@ -283,10 +301,19 @@ def generate_models_from_sql(sql):
 
         if foreign_keys:
             yield ''
-            for attribute_name, column_name, foreign_key in foreign_keys:
+            for attribute_name, relationship_name, foreign_key, backref in foreign_keys:
                 foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
                 foreign_model_name = format_class_name(foreign_table_name)
-                yield '    {0} = relationship({1!r}, foreign_keys=[{2}])'.format(column_name, foreign_model_name, attribute_name)
+                relationship_params = [
+                    repr(foreign_model_name),
+                    'foreign_keys=[{0}]'.format(attribute_name)
+                ]
+                if backref:
+                    if isinstance(backref, basestring):
+                        relationship_params.append('backref=backref({0!r})'.format(backref))
+                    else:
+                        relationship_params.append('backref=backref({0!r}, {1})'.format(backref[0], ', '.join(backref[1:])))
+                yield '    {0} = relationship({1})'.format(relationship_name, ', '.join(relationship_params))
 
         for old_name, new_name in aliases:
             yield ''
