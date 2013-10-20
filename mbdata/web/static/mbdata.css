@@ -1,0 +1,36 @@
+h1 {
+    font-size: 31.5px;
+}
+
+h2 {
+    font-size: 25.5px;
+}
+
+a {
+    color: #1A4D7C;
+}
+
+a:hover {
+    color: #6589ab;
+}
+
+.table-release td,
+.table-release th {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.table .column-track {
+    width: 1em;
+    text-align: right;
+}
+
+.table .column-length {
+    width: 4em;
+    text-align: right;
+}
+
+.table .column-cover {
+    width: 50px;
+}
+

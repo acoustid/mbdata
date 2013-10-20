@@ -3,7 +3,7 @@
 
 'use strict';
 
-var app = angular.module('mbdata', []).
+var app = angular.module('mbdata', ['ngRoute']).
     constant('API_URL', '/api').
     config(function ($locationProvider, $routeProvider) {
         $locationProvider.html5Mode(true);
