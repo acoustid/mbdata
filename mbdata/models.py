@@ -3186,7 +3186,7 @@ class ReleaseGroupSecondaryTypeJoin(Base):
     secondary_type_id = Column('secondary_type', Integer, ForeignKey('musicbrainz.release_group_secondary_type.id'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('secondary_types'))
     secondary_type = relationship('ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id])
 
 

@@ -267,6 +267,8 @@ def generate_models_from_sql(sql):
                         backref = 'isrcs'
                     if schema_name == 'musicbrainz' and table_name == 'iswc' and column_name == 'work':
                         backref = 'iswcs'
+                    if schema_name == 'musicbrainz' and table_name == 'release_group_secondary_type_join' and column_name == 'release_group':
+                        backref = 'secondary_types'
                     if schema_name == 'musicbrainz' and table_name.endswith('_meta') and column_name == 'id':
                         backref = 'meta', 'uselist=False'
                     if attribute_name == 'id':

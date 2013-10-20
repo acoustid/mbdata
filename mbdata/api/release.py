@@ -42,7 +42,10 @@ def release_details():
         options(joinedload("artist_credit", innerjoin=True)).\
         options(joinedload("release_group", innerjoin=True)).\
         options(joinedload("release_group.type")).\
+        options(subqueryload("release_group.secondary_types")).\
+        options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True)).\
         options(subqueryload("mediums")).\
+        options(joinedload("mediums.format")).\
         options(subqueryload("mediums.tracks")).\
         options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
 
@@ -62,13 +65,10 @@ def release_details():
     if release.release_group.type:
         data['release_group']['type'] = release.release_group.type.name
 
-    query = g.db.query(ReleaseGroupSecondaryTypeJoin).\
-        options(joinedload("secondary_type", innerjoin=True)).\
-        filter_by(release_group=release.release_group)
-    for row in query:
-        if 'secondary_types' not in data['release_group']:
-            data['release_group']['secondary_types'] = []
-        data['release_group']['secondary_types'].append(row.secondary_type.name)
+    if release.release_group.secondary_types:
+        data['release_group']['secondary_types'] = []
+        for type in release.release_group.secondary_type:
+            data['release_group']['secondary_types'].append(type.secondary_type.name)
 
     if release.status:
         data['status'] = release.status.name
