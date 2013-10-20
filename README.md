@@ -4,8 +4,16 @@ MusicBrainz Database Tools
 SQLAlchemy Models
 -----------------
 
-If you are developing a Python application that needs data to the MusicBrainz
-data, you can use the `mbdata.models` module to get 
+If you are developing a Python application that needs access to the MusicBrainz
+data, you can use the `mbdata.models` module to get [SQLAlchemy](http://www.sqlalchemy.org/)
+models mapped to the MusicBrainz database tables.
+
+All tables from the MusicBrainz database are mapped, all foreign keys have one-way
+relationships set up and some models, where it's essential to access their
+related models, have two-way relationships (collections) set up.
+
+In order to work with the relationships efficiently, you should use the appropriate
+kind of [eager loading](http://docs.sqlalchemy.org/en/rel_0_8/orm/loading.html).
 
 Example:
 
