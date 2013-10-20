@@ -2,11 +2,11 @@
 
 from distutils.core import setup
 
-setup(name='mbdb',
+setup(name='mbdata',
       version='1.0',
       description='MusicBrainz Database Tools',
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
-      url='https://bitbucket.org/lalinsky/mbdb',
-      packages=['mbdb'],
+      url='https://bitbucket.org/lalinsky/mbdata',
+      packages=['mbdata'],
      )

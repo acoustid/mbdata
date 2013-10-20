@@ -1,13 +1,13 @@
 from flask import Flask, g, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from mbdb.api.artist import blueprint as artist_blueprint
-from mbdb.api.place import blueprint as place_blueprint
+from mbdata.api.artist import blueprint as artist_blueprint
+from mbdata.api.place import blueprint as place_blueprint
 
 
 app = Flask(__name__)
-app.config.from_object('mbdb.api.commonsettings')
-app.config.from_envvar('MBDB_API_SETTINGS')
+app.config.from_object('mbdata.api.commonsettings')
+app.config.from_envvar('MBDATA_API_SETTINGS')
 
 app.register_blueprint(artist_blueprint, url_prefix='/1.0/artist')
 app.register_blueprint(place_blueprint, url_prefix='/1.0/place')

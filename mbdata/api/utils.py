@@ -2,7 +2,7 @@ import re
 import xml.sax.saxutils
 from cStringIO import StringIO
 from flask import request, abort, jsonify, current_app, json
-from mbdb.api.errors import (
+from mbdata.api.errors import (
     SUCCESS,
     INVALID_FORMAT_ERROR,
     MISSING_PARAMETER_ERROR,

@@ -1,8 +1,8 @@
 from flask import Blueprint, request, g, jsonify, abort
 from sqlalchemy.orm import joinedload, subqueryload_all, defer
-from mbdb.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag
-from mbdb.utils import defer_everything_but, get_something_by_gid
-from mbdb.api.utils import get_param, response_ok, response_error, serialize_partial_date
+from mbdata.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag
+from mbdata.utils import defer_everything_but, get_something_by_gid
+from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
 
 blueprint = Blueprint('artist', __name__)
 

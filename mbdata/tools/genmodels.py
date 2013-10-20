@@ -151,7 +151,7 @@ def generate_models_header():
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.orm import relationship, composite'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
-    yield 'from mbdb.types import PartialDate, Point, Cube'
+    yield 'from mbdata.types import PartialDate, Point, Cube'
     yield ''
     yield 'Base = declarative_base()'
     yield ''

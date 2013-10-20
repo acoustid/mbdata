@@ -1,9 +1,9 @@
 from flask import Blueprint, request, g, abort
 from sqlalchemy.orm import joinedload, joinedload_all, subqueryload_all, defer
-from mbdb.models import Place, PlaceGIDRedirect, LinkPlaceURL
-from mbdb.utils import defer_everything_but, get_something_by_gid
-from mbdb.api.utils import get_param, response_ok, response_error, serialize_partial_date
-from mbdb.api.errors import NOT_FOUND_ERROR
+from mbdata.models import Place, PlaceGIDRedirect, LinkPlaceURL
+from mbdata.utils import defer_everything_but, get_something_by_gid
+from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
+from mbdata.api.errors import NOT_FOUND_ERROR
 
 blueprint = Blueprint('place', __name__)
 

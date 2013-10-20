@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgres import ARRAY, UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, composite
 from sqlalchemy.ext.hybrid import hybrid_property
-from mbdb.types import PartialDate, Point, Cube
+from mbdata.types import PartialDate, Point, Cube
 
 Base = declarative_base()
 
