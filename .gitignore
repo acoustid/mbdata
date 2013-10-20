@@ -1,2 +1,4 @@
 *.pyc
+e/
+mbdata.egg-info/
 settings.py

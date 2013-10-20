@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='mbdata',
       version='1.0',
@@ -8,5 +8,5 @@ setup(name='mbdata',
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
       url='https://bitbucket.org/lalinsky/mbdata',
-      packages=['mbdata'],
+      packages=['mbdata', 'mbdata.api', 'mbdata.web'],
      )
