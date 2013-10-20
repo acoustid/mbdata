@@ -6,7 +6,7 @@
 var app = angular.module('mbdata', []).
     constant('API_URL', '/api').
     config(function ($locationProvider, $routeProvider) {
-        $locationProvider.html5Mode(false); // TODO
+        $locationProvider.html5Mode(true);
         $routeProvider.
             when('/', {
                 controller: 'SearchCtrl',

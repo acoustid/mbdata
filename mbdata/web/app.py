@@ -3,12 +3,16 @@
 
 from flask import Flask
 
-app = Flask(__name__, static_url_path='/static')
+app = Flask(__name__)
 
 
-@app.route("/")
+@app.route('/')
+@app.route('/<path:path>')
 def main(path=None):
-    return app.send_static_file('index.html')
+    filename = 'index.html'
+    if path and path.startswith('/static/'):
+        filename = path[8:]
+    return app.send_static_file(filename)
 
 
 if __name__ == '__main__':
