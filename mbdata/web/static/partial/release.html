@@ -1,26 +1,24 @@
-<div class="container">
-  <h1><span mb-artist-credit="release.artists"></span> &ndash; {{ release.name }}</h1>
+<h1><span mb-artist-credit="release.artists"></span> &ndash; {{ release.name }}</h1>
 
-  <p ng-show="release.releaseGroup.type">Type: {{ release.releaseGroup.type }} <span ng-show="release.releaseGroup.secondaryTypes.join"> + {{ release.releaseGroup.secondaryTypes.join(', ') }}</span></p>
-  <p ng-show="release.status">Status: {{ release.status }}</p>
-  <p ng-show="release.language">Language: {{ release.language }}</p>
-  <p ng-show="release.script">Script: {{ release.script }}</p>
+<p ng-show="release.releaseGroup.type">Type: {{ release.releaseGroup.type }} <span ng-show="release.releaseGroup.secondaryTypes.join"> + {{ release.releaseGroup.secondaryTypes.join(', ') }}</span></p>
+<p ng-show="release.status">Status: {{ release.status }}</p>
+<p ng-show="release.language">Language: {{ release.language }}</p>
+<p ng-show="release.script">Script: {{ release.script }}</p>
 
-  <table class="table table-striped table-condensed table-release">
-    <thead ng-repeat-start="medium in release.mediums">
-      <tr>
-        <th></th>
-        <th colspan="2">Medium {{ medium.position }} <span ng-show="medium.format">({{ medium.format }})</span></th>
-      </tr>
-    </thead>
-    <tbody ng-repeat-end>
-      <tr ng-repeat="track in medium.tracks">
-        <td class="column-track text-muted">{{ track.number || track.position }}.</td>
-        <td class="column-title">{{ track.name }}</td>
-        <td class="column-length text-muted">{{ track.length | duration }}</td>
-      </tr>
-    </tbody>
-  </table>
+<table class="table table-striped table-condensed table-release">
+  <thead ng-repeat-start="medium in release.mediums">
+    <tr>
+      <th></th>
+      <th colspan="2">Medium {{ medium.position }} <span ng-show="medium.format">({{ medium.format }})</span></th>
+    </tr>
+  </thead>
+  <tbody ng-repeat-end>
+    <tr ng-repeat="track in medium.tracks">
+      <td class="column-track text-muted">{{ track.number || track.position }}.</td>
+      <td class="column-title">{{ track.name }}</td>
+      <td class="column-length text-muted">{{ track.length | duration }}</td>
+    </tr>
+  </tbody>
+</table>
 
-  <p class="text-muted"><small>See this release at <a href="//musicbrainz.org/release/{{ release.id }}">MusicBrainz</a></small></p>
-</div>
+<p class="text-muted"><small>See this release at <a href="//musicbrainz.org/release/{{ release.id }}">MusicBrainz</a></small></p>
