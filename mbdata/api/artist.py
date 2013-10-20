@@ -1,3 +1,6 @@
+# Copyright (C) 2013 Lukas Lalinsky
+# Distributed under the MIT license, see the LICENSE file for details.
+
 from flask import Blueprint, request, g, jsonify, abort
 from sqlalchemy.orm import joinedload, subqueryload_all, defer
 from mbdata.models import Artist, ArtistGIDRedirect, Area, LinkArtistURL, ArtistTag

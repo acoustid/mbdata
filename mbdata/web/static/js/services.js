@@ -1,3 +1,6 @@
+// Copyright (C) 2013 Lukas Lalinsky
+// Distributed under the MIT license, see the LICENSE file for details.
+
 'use strict';
 
 app.factory('MB', function ($http, API_URL) {

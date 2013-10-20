@@ -1,3 +1,8 @@
+// Copyright (C) 2013 Lukas Lalinsky
+// Distributed under the MIT license, see the LICENSE file for details.
+
+'use strict';
+
 var app = angular.module('mbdata', []).
     constant('API_URL', '/api').
     config(function ($locationProvider, $routeProvider) {

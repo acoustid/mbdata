@@ -1,3 +1,6 @@
+# Copyright (C) 2013 Lukas Lalinsky
+# Distributed under the MIT license, see the LICENSE file for details.
+
 import re
 import xml.sax.saxutils
 from cStringIO import StringIO

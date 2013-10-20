@@ -1,3 +1,6 @@
+# Copyright (C) 2013 Lukas Lalinsky
+# Distributed under the MIT license, see the LICENSE file for details.
+
 from flask import Flask
 
 app = Flask(__name__, static_url_path='/static')
