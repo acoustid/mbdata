@@ -151,7 +151,7 @@ def generate_models_header():
     yield '# pylint: disable=C0302'
     yield '# pylint: disable=W0232'
     yield ''
-    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR'
+    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, sql'
     yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
@@ -268,6 +268,18 @@ def generate_models_from_sql(sql):
 
             if column.primary_key:
                 column_attributes['primary_key'] = 'True'
+
+            if column.default:
+                default = str(column.default.lower())
+                if default != "null":
+                    if default in ("-1", "0", "1") or (default[0] == "'" and default[-1] == "'"):
+                        column_attributes['default'] = default
+                    elif default in ("true", "false"):
+                        column_attributes['default'] = default.title()
+                    if default == "now()":
+                        column_attributes['server_default'] = 'sql.func.now()'
+                    else:
+                        column_attributes['server_default'] = 'sql.text({0!r})'.format(default)
 
             for name, value in column_attributes.iteritems():
                 params.append('{0}={1}'.format(name, value))

@@ -4,7 +4,7 @@
 # pylint: disable=C0302
 # pylint: disable=W0232
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, sql
 from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -22,7 +22,7 @@ class Annotation(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     text = Column(String)
     changelog = Column(String(255))
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     editor = relationship('Editor', foreign_keys=[editor_id])
 
@@ -58,16 +58,16 @@ class Area(Base):
     name = Column(String, nullable=False)
     sort_name = Column(String, nullable=False)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.area_type.id'))
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
     begin_date_day = Column(SMALLINT)
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    ended = Column(Boolean, nullable=False)
-    comment = Column(String(255), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
 
     type = relationship('AreaType', foreign_keys=[type_id])
 
@@ -81,7 +81,7 @@ class AreaGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Area', foreign_keys=[redirect_id])
 
@@ -110,8 +110,8 @@ class AreaAlias(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     type_id = Column('type', Integer, ForeignKey('musicbrainz.area_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
@@ -120,8 +120,8 @@ class AreaAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, nullable=False)
-    ended = Column(Boolean, nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     area = relationship('Area', foreign_keys=[area_id])
     type = relationship('AreaAliasType', foreign_keys=[type_id])
@@ -158,10 +158,10 @@ class Artist(Base):
     type_id = Column('type', Integer, ForeignKey('musicbrainz.artist_type.id'))
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     gender_id = Column('gender', Integer, ForeignKey('musicbrainz.gender.id'))
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
-    ended = Column(Boolean, nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
     begin_area_id = Column('begin_area', Integer, ForeignKey('musicbrainz.area.id'))
     end_area_id = Column('end_area', Integer, ForeignKey('musicbrainz.area.id'))
 
@@ -182,7 +182,7 @@ class ArtistDeletion(Base):
     gid = Column(UUID, primary_key=True, nullable=False)
     last_known_name = Column(String, nullable=False)
     last_known_comment = Column(String, nullable=False)
-    deleted_at = Column(DateTime(timezone=True), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
 
 class ArtistAliasType(Base):
@@ -201,8 +201,8 @@ class ArtistAlias(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     type_id = Column('type', Integer, ForeignKey('musicbrainz.artist_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
@@ -211,8 +211,8 @@ class ArtistAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, nullable=False)
-    ended = Column(Boolean, nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id])
     type = relationship('ArtistAliasType', foreign_keys=[type_id])
@@ -238,8 +238,8 @@ class ArtistIPI(Base):
 
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist = relationship('Artist', foreign_keys=[artist_id])
 
@@ -250,8 +250,8 @@ class ArtistISNI(Base):
 
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist = relationship('Artist', foreign_keys=[artist_id])
 
@@ -274,7 +274,7 @@ class ArtistTag(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist = relationship('Artist', foreign_keys=[artist_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -312,8 +312,8 @@ class ArtistCredit(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     artist_count = Column(SMALLINT, nullable=False)
-    ref_count = Column(Integer)
-    created = Column(DateTime(timezone=True))
+    ref_count = Column(Integer, default=0, server_default=sql.text('0'))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
 class ArtistCreditName(Base):
@@ -324,7 +324,7 @@ class ArtistCreditName(Base):
     position = Column(SMALLINT, primary_key=True, nullable=False)
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     name = Column(String, nullable=False)
-    join_phrase = Column(String, nullable=False)
+    join_phrase = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], backref=backref('artists', order_by="ArtistCreditName.position"))
     artist = relationship('Artist', foreign_keys=[artist_id])
@@ -336,7 +336,7 @@ class ArtistGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Artist', foreign_keys=[redirect_id])
 
@@ -366,10 +366,10 @@ class AutoeditorElection(Base):
     proposer_id = Column('proposer', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     seconder_1_id = Column('seconder_1', Integer, ForeignKey('musicbrainz.editor.id'))
     seconder_2_id = Column('seconder_2', Integer, ForeignKey('musicbrainz.editor.id'))
-    status = Column(Integer, nullable=False)
-    yes_votes = Column(Integer, nullable=False)
-    no_votes = Column(Integer, nullable=False)
-    propose_time = Column(DateTime(timezone=True), nullable=False)
+    status = Column(Integer, default=1, server_default=sql.text('1'), nullable=False)
+    yes_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    no_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    propose_time = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
     open_time = Column(DateTime(timezone=True))
     close_time = Column(DateTime(timezone=True))
 
@@ -387,7 +387,7 @@ class AutoeditorElectionVote(Base):
     autoeditor_election_id = Column('autoeditor_election', Integer, ForeignKey('musicbrainz.autoeditor_election.id'), nullable=False)
     voter_id = Column('voter', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     vote = Column(Integer, nullable=False)
-    vote_time = Column(DateTime(timezone=True), nullable=False)
+    vote_time = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     autoeditor_election = relationship('AutoeditorElection', foreign_keys=[autoeditor_election_id])
     voter = relationship('Editor', foreign_keys=[voter_id])
@@ -403,8 +403,8 @@ class CDTOC(Base):
     track_count = Column(Integer, nullable=False)
     leadout_offset = Column(Integer, nullable=False)
     track_offset = Column(Integer, nullable=False)
-    degraded = Column(Boolean, nullable=False)
-    created = Column(DateTime(timezone=True))
+    degraded = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
 class CDTOCRaw(Base):
@@ -439,14 +439,14 @@ class Edit(Base):
     type = Column(SMALLINT, nullable=False)
     status = Column(SMALLINT, nullable=False)
     data = Column(String, nullable=False)
-    yes_votes = Column(Integer, nullable=False)
-    no_votes = Column(Integer, nullable=False)
-    autoedit = Column(SMALLINT, nullable=False)
-    open_time = Column(DateTime(timezone=True))
+    yes_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    no_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    autoedit = Column(SMALLINT, default=0, server_default=sql.text('0'), nullable=False)
+    open_time = Column(DateTime(timezone=True), server_default=sql.func.now())
     close_time = Column(DateTime(timezone=True))
     expire_time = Column(DateTime(timezone=True), nullable=False)
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
-    quality = Column(SMALLINT, nullable=False)
+    quality = Column(SMALLINT, default=1, server_default=sql.text('1'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -460,7 +460,7 @@ class EditNote(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     text = Column(String, nullable=False)
-    post_time = Column(DateTime(timezone=True))
+    post_time = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     edit = relationship('Edit', foreign_keys=[edit_id])
@@ -573,24 +573,24 @@ class Editor(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(64), nullable=False)
-    privs = Column(Integer)
+    privs = Column(Integer, default=0, server_default=sql.text('0'))
     email = Column(String(64))
     website = Column(String(255))
     bio = Column(String)
-    member_since = Column(DateTime(timezone=True))
+    member_since = Column(DateTime(timezone=True), server_default=sql.func.now())
     email_confirm_date = Column(DateTime(timezone=True))
-    last_login_date = Column(DateTime(timezone=True))
-    edits_accepted = Column(Integer)
-    edits_rejected = Column(Integer)
-    auto_edits_accepted = Column(Integer)
-    edits_failed = Column(Integer)
-    last_updated = Column(DateTime(timezone=True))
+    last_login_date = Column(DateTime(timezone=True), server_default=sql.func.now())
+    edits_accepted = Column(Integer, default=0, server_default=sql.text('0'))
+    edits_rejected = Column(Integer, default=0, server_default=sql.text('0'))
+    auto_edits_accepted = Column(Integer, default=0, server_default=sql.text('0'))
+    edits_failed = Column(Integer, default=0, server_default=sql.text('0'))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     birth_date = Column(Date)
     gender_id = Column('gender', Integer, ForeignKey('musicbrainz.gender.id'))
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     password = Column(String(128), nullable=False)
     ha1 = Column(CHAR(32), nullable=False)
-    deleted = Column(Boolean, nullable=False)
+    deleted = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     gender = relationship('Gender', foreign_keys=[gender_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -654,7 +654,7 @@ class EditorSubscribeCollection(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     collection = Column(Integer, nullable=False)
     last_edit_sent = Column(Integer, nullable=False)
-    available = Column(Boolean, nullable=False)
+    available = Column(Boolean, default=True, server_default=sql.text('true'), nullable=False)
     last_seen_name = Column(String(255))
 
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -745,8 +745,8 @@ class ISRC(Base):
     recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     isrc = Column(CHAR(12), nullable=False)
     source = Column(SMALLINT)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     recording = relationship('Recording', foreign_keys=[recording_id], backref=backref('isrcs'))
 
@@ -759,8 +759,8 @@ class ISWC(Base):
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     iswc = Column(CHAR(15))
     source = Column(SMALLINT)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id], backref=backref('iswcs'))
 
@@ -773,8 +773,8 @@ class LinkAreaArea(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -805,8 +805,8 @@ class LinkAreaArtist(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -837,8 +837,8 @@ class LinkAreaLabel(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -869,8 +869,8 @@ class LinkAreaPlace(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -901,8 +901,8 @@ class LinkAreaRecording(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -933,8 +933,8 @@ class LinkAreaRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -965,8 +965,8 @@ class LinkAreaReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -997,8 +997,8 @@ class LinkAreaURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -1029,8 +1029,8 @@ class LinkAreaWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Area', foreign_keys=[entity0_id])
@@ -1061,8 +1061,8 @@ class LinkArtistArtist(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1093,8 +1093,8 @@ class LinkArtistLabel(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1125,8 +1125,8 @@ class LinkArtistPlace(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1157,8 +1157,8 @@ class LinkArtistRecording(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1189,8 +1189,8 @@ class LinkArtistRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1221,8 +1221,8 @@ class LinkArtistReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1253,8 +1253,8 @@ class LinkArtistURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1285,8 +1285,8 @@ class LinkArtistWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Artist', foreign_keys=[entity0_id])
@@ -1317,8 +1317,8 @@ class LinkLabelLabel(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1349,8 +1349,8 @@ class LinkLabelPlace(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1381,8 +1381,8 @@ class LinkLabelRecording(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1413,8 +1413,8 @@ class LinkLabelRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1445,8 +1445,8 @@ class LinkLabelReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1477,8 +1477,8 @@ class LinkLabelURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1509,8 +1509,8 @@ class LinkLabelWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Label', foreign_keys=[entity0_id])
@@ -1541,8 +1541,8 @@ class LinkPlacePlace(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1573,8 +1573,8 @@ class LinkPlaceRecording(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1605,8 +1605,8 @@ class LinkPlaceRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1637,8 +1637,8 @@ class LinkPlaceReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1669,8 +1669,8 @@ class LinkPlaceURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1701,8 +1701,8 @@ class LinkPlaceWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Place', foreign_keys=[entity0_id])
@@ -1733,8 +1733,8 @@ class LinkRecordingRecording(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Recording', foreign_keys=[entity0_id])
@@ -1765,8 +1765,8 @@ class LinkRecordingRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Recording', foreign_keys=[entity0_id])
@@ -1797,8 +1797,8 @@ class LinkRecordingReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Recording', foreign_keys=[entity0_id])
@@ -1829,8 +1829,8 @@ class LinkRecordingURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Recording', foreign_keys=[entity0_id])
@@ -1861,8 +1861,8 @@ class LinkRecordingWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Recording', foreign_keys=[entity0_id])
@@ -1893,8 +1893,8 @@ class LinkReleaseRelease(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Release', foreign_keys=[entity0_id])
@@ -1925,8 +1925,8 @@ class LinkReleaseReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Release', foreign_keys=[entity0_id])
@@ -1957,8 +1957,8 @@ class LinkReleaseURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Release', foreign_keys=[entity0_id])
@@ -1989,8 +1989,8 @@ class LinkReleaseWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Release', foreign_keys=[entity0_id])
@@ -2021,8 +2021,8 @@ class LinkReleaseGroupReleaseGroup(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
@@ -2053,8 +2053,8 @@ class LinkReleaseGroupURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
@@ -2085,8 +2085,8 @@ class LinkReleaseGroupWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
@@ -2117,8 +2117,8 @@ class LinkURLURL(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('URL', foreign_keys=[entity0_id])
@@ -2149,8 +2149,8 @@ class LinkURLWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('URL', foreign_keys=[entity0_id])
@@ -2181,8 +2181,8 @@ class LinkWorkWork(Base):
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), nullable=False)
     entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     entity0 = relationship('Work', foreign_keys=[entity0_id])
@@ -2222,10 +2222,10 @@ class Label(Base):
     label_code = Column(Integer)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.label_type.id'))
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
-    ended = Column(Boolean, nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     type = relationship('LabelType', foreign_keys=[type_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -2241,7 +2241,7 @@ class LabelDeletion(Base):
     gid = Column(UUID, primary_key=True, nullable=False)
     last_known_name = Column(String, nullable=False)
     last_known_comment = Column(String, nullable=False)
-    deleted_at = Column(DateTime(timezone=True), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
 
 class LabelRatingRaw(Base):
@@ -2285,8 +2285,8 @@ class LabelAlias(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     type_id = Column('type', Integer, ForeignKey('musicbrainz.label_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
@@ -2295,8 +2295,8 @@ class LabelAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, nullable=False)
-    ended = Column(Boolean, nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id])
     type = relationship('LabelAliasType', foreign_keys=[type_id])
@@ -2322,8 +2322,8 @@ class LabelIPI(Base):
 
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     label = relationship('Label', foreign_keys=[label_id])
 
@@ -2334,8 +2334,8 @@ class LabelISNI(Base):
 
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     label = relationship('Label', foreign_keys=[label_id])
 
@@ -2357,7 +2357,7 @@ class LabelGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.label.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Label', foreign_keys=[redirect_id])
 
@@ -2377,7 +2377,7 @@ class LabelTag(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     label = relationship('Label', foreign_keys=[label_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -2400,7 +2400,7 @@ class Language(Base):
     iso_code_2b = Column(CHAR(3))
     iso_code_1 = Column(CHAR(2))
     name = Column(String(100), nullable=False)
-    frequency = Column(Integer, nullable=False)
+    frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     iso_code_3 = Column(CHAR(3))
 
 
@@ -2416,9 +2416,9 @@ class Link(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    attribute_count = Column(Integer, nullable=False)
-    created = Column(DateTime(timezone=True))
-    ended = Column(Boolean, nullable=False)
+    attribute_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     link_type = relationship('LinkType', foreign_keys=[link_type_id])
 
@@ -2432,7 +2432,7 @@ class LinkAttribute(Base):
 
     link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id'), primary_key=True, nullable=False)
     attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id])
     attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
@@ -2445,11 +2445,11 @@ class LinkAttributeType(Base):
     id = Column(Integer, primary_key=True)
     parent_id = Column('parent', Integer, ForeignKey('musicbrainz.link_attribute_type.id'))
     root_id = Column('root', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), nullable=False)
-    child_order = Column(Integer, nullable=False)
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     gid = Column(UUID, nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(String)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     parent = relationship('LinkAttributeType', foreign_keys=[parent_id])
     root = relationship('LinkAttributeType', foreign_keys=[root_id])
@@ -2481,7 +2481,7 @@ class LinkType(Base):
 
     id = Column(Integer, primary_key=True)
     parent_id = Column('parent', Integer, ForeignKey('musicbrainz.link_type.id'))
-    child_order = Column(Integer, nullable=False)
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     gid = Column(UUID, nullable=False)
     entity_type0 = Column(String(50), nullable=False)
     entity_type1 = Column(String(50), nullable=False)
@@ -2490,9 +2490,9 @@ class LinkType(Base):
     link_phrase = Column(String(255), nullable=False)
     reverse_link_phrase = Column(String(255), nullable=False)
     long_link_phrase = Column(String(255), nullable=False)
-    priority = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
-    is_deprecated = Column(Boolean, nullable=False)
+    priority = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    is_deprecated = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     parent = relationship('LinkType', foreign_keys=[parent_id])
 
@@ -2505,7 +2505,7 @@ class LinkTypeAttributeType(Base):
     attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
     min = Column(SMALLINT)
     max = Column(SMALLINT)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link_type = relationship('LinkType', foreign_keys=[link_type_id])
     attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
@@ -2519,8 +2519,8 @@ class EditorCollection(Base):
     gid = Column(UUID, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     name = Column(String, nullable=False)
-    public = Column(Boolean, nullable=False)
-    description = Column(String, nullable=False)
+    public = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    description = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
 
@@ -2549,8 +2549,8 @@ class EditorOauthToken(Base):
     mac_key = Column(String)
     mac_time_diff = Column(Integer)
     expire_time = Column(DateTime(timezone=True), nullable=False)
-    scope = Column(Integer, nullable=False)
-    granted = Column(DateTime(timezone=True), nullable=False)
+    scope = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    granted = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     application = relationship('Application', foreign_keys=[application_id])
@@ -2561,9 +2561,9 @@ class EditorWatchPreferences(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
-    notify_via_email = Column(Boolean, nullable=False)
-    notification_timeframe = Column(Interval, nullable=False)
-    last_checked = Column(DateTime(timezone=True), nullable=False)
+    notify_via_email = Column(Boolean, default=True, server_default=sql.text('true'), nullable=False)
+    notification_timeframe = Column(Interval, default='1 week', server_default=sql.text("'1 week'"), nullable=False)
+    last_checked = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
 
@@ -2610,9 +2610,9 @@ class Medium(Base):
     position = Column(Integer, nullable=False)
     format_id = Column('format', Integer, ForeignKey('musicbrainz.medium_format.id'))
     name = Column(String(255))
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
-    track_count = Column(Integer, nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    track_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id], backref=backref('mediums', order_by="Medium.position"))
     format = relationship('MediumFormat', foreign_keys=[format_id])
@@ -2625,8 +2625,8 @@ class MediumCDTOC(Base):
     id = Column(Integer, primary_key=True)
     medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), nullable=False)
     cdtoc_id = Column('cdtoc', Integer, ForeignKey('musicbrainz.cdtoc.id'), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     medium = relationship('Medium', foreign_keys=[medium_id])
     cdtoc = relationship('CDTOC', foreign_keys=[cdtoc_id])
@@ -2639,9 +2639,9 @@ class MediumFormat(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     parent_id = Column('parent', Integer, ForeignKey('musicbrainz.medium_format.id'))
-    child_order = Column(Integer, nullable=False)
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     year = Column(SMALLINT)
-    has_discids = Column(Boolean, nullable=False)
+    has_discids = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     parent = relationship('MediumFormat', foreign_keys=[parent_id])
 
@@ -2654,19 +2654,19 @@ class Place(Base):
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.place_type.id'))
-    address = Column(String, nullable=False)
+    address = Column(String, default='', server_default=sql.text("''"), nullable=False)
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'))
     coordinates = Column(Point)
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
     begin_date_day = Column(SMALLINT)
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    ended = Column(Boolean, nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     type = relationship('PlaceType', foreign_keys=[type_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -2683,8 +2683,8 @@ class PlaceAlias(Base):
     place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     type_id = Column('type', Integer, ForeignKey('musicbrainz.place_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
@@ -2693,8 +2693,8 @@ class PlaceAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, nullable=False)
-    ended = Column(Boolean, nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     place = relationship('Place', foreign_keys=[place_id])
     type = relationship('PlaceAliasType', foreign_keys=[type_id])
@@ -2728,7 +2728,7 @@ class PlaceGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.place.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Place', foreign_keys=[redirect_id])
 
@@ -2748,7 +2748,7 @@ class PlaceTag(Base):
     place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     place = relationship('Place', foreign_keys=[place_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -2794,10 +2794,10 @@ class Recording(Base):
     name = Column(String, nullable=False)
     artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
     length = Column(Integer)
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
-    video = Column(Boolean, nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    video = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
@@ -2855,7 +2855,7 @@ class RecordingGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.recording.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Recording', foreign_keys=[redirect_id])
 
@@ -2875,7 +2875,7 @@ class RecordingTag(Base):
     recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     recording = relationship('Recording', foreign_keys=[recording_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -2895,10 +2895,10 @@ class Release(Base):
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
     script_id = Column('script', Integer, ForeignKey('musicbrainz.script.id'))
     barcode = Column(String(255))
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    quality = Column(SMALLINT, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    quality = Column(SMALLINT, default=-1, server_default=sql.text('-1'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('releases'))
@@ -2944,13 +2944,13 @@ class ReleaseRaw(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(255), nullable=False)
     artist = Column(String(255))
-    added = Column(DateTime(timezone=True))
-    last_modified = Column(DateTime(timezone=True))
-    lookup_count = Column(Integer)
-    modify_count = Column(Integer)
-    source = Column(Integer)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    last_modified = Column(DateTime(timezone=True), server_default=sql.func.now())
+    lookup_count = Column(Integer, default=0, server_default=sql.text('0'))
+    modify_count = Column(Integer, default=0, server_default=sql.text('0'))
+    source = Column(Integer, default=0, server_default=sql.text('0'))
     barcode = Column(String(255))
-    comment = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
 
 
 class ReleaseTagRaw(Base):
@@ -2983,7 +2983,7 @@ class ReleaseGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Release', foreign_keys=[redirect_id])
 
@@ -3001,11 +3001,11 @@ class ReleaseMeta(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column('id', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
-    date_added = Column(DateTime(timezone=True))
+    date_added = Column(DateTime(timezone=True), server_default=sql.func.now())
     info_url = Column(String(255))
     amazon_asin = Column(String(10))
     amazon_store = Column(String(20))
-    cover_art_presence = Column(Enum('absent', 'present', 'darkened', name='COVER_ART_PRESENCE'), nullable=False)
+    cover_art_presence = Column(Enum('absent', 'present', 'darkened', name='COVER_ART_PRESENCE'), default='absent', server_default=sql.text("'absent'"), nullable=False)
 
     release = relationship('Release', foreign_keys=[id], backref=backref('meta', uselist=False))
 
@@ -3029,7 +3029,7 @@ class ReleaseLabel(Base):
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'))
     catalog_number = Column(String(255))
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     release = relationship('Release', foreign_keys=[release_id])
     label = relationship('Label', foreign_keys=[label_id])
@@ -3058,7 +3058,7 @@ class ReleaseTag(Base):
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     release = relationship('Release', foreign_keys=[release_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -3073,9 +3073,9 @@ class ReleaseGroup(Base):
     name = Column(String, nullable=False)
     artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.release_group_primary_type.id'))
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
     type = relationship('ReleaseGroupPrimaryType', foreign_keys=[type_id])
@@ -3123,7 +3123,7 @@ class ReleaseGroupGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release_group.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('ReleaseGroup', foreign_keys=[redirect_id])
 
@@ -3141,7 +3141,7 @@ class ReleaseGroupMeta(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column('id', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
-    release_count = Column(Integer, nullable=False)
+    release_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     first_release_date_year = Column(SMALLINT)
     first_release_date_month = Column(SMALLINT)
     first_release_date_day = Column(SMALLINT)
@@ -3160,7 +3160,7 @@ class ReleaseGroupTag(Base):
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -3188,7 +3188,7 @@ class ReleaseGroupSecondaryTypeJoin(Base):
 
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
     secondary_type_id = Column('secondary_type', Integer, ForeignKey('musicbrainz.release_group_secondary_type.id'), primary_key=True, nullable=False)
-    created = Column(DateTime(timezone=True), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('secondary_types'))
     secondary_type = relationship('ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id])
@@ -3202,7 +3202,7 @@ class Script(Base):
     iso_code = Column(CHAR(4), nullable=False)
     iso_number = Column(CHAR(3), nullable=False)
     name = Column(String(100), nullable=False)
-    frequency = Column(Integer, nullable=False)
+    frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
 
 class ScriptLanguage(Base):
@@ -3212,7 +3212,7 @@ class ScriptLanguage(Base):
     id = Column(Integer, primary_key=True)
     script_id = Column('script', Integer, ForeignKey('musicbrainz.script.id'), nullable=False)
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'), nullable=False)
-    frequency = Column(Integer, nullable=False)
+    frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     script = relationship('Script', foreign_keys=[script_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -3224,7 +3224,7 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    ref_count = Column(Integer, nullable=False)
+    ref_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
 
 class TagRelation(Base):
@@ -3234,7 +3234,7 @@ class TagRelation(Base):
     tag1_id = Column('tag1', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     tag2_id = Column('tag2', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     weight = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     tag1 = relationship('Tag', foreign_keys=[tag1_id])
     tag2 = relationship('Tag', foreign_keys=[tag2_id])
@@ -3253,8 +3253,8 @@ class Track(Base):
     name = Column(String, nullable=False)
     artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), nullable=False)
     length = Column(Integer)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     recording = relationship('Recording', foreign_keys=[recording_id])
     medium = relationship('Medium', foreign_keys=[medium_id], backref=backref('tracks', order_by="Track.position"))
@@ -3267,7 +3267,7 @@ class TrackGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.track.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Track', foreign_keys=[redirect_id])
 
@@ -3310,8 +3310,8 @@ class URL(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     url = Column(String, nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
 class URLGIDRedirect(Base):
@@ -3320,7 +3320,7 @@ class URLGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.url.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('URL', foreign_keys=[redirect_id])
 
@@ -3341,8 +3341,8 @@ class Vote(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), nullable=False)
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     vote = Column(SMALLINT, nullable=False)
-    vote_time = Column(DateTime(timezone=True))
-    superseded = Column(Boolean, nullable=False)
+    vote_time = Column(DateTime(timezone=True), server_default=sql.func.now())
+    superseded = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     edit = relationship('Edit', foreign_keys=[edit_id])
@@ -3356,9 +3356,9 @@ class Work(Base):
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.work_type.id'))
-    comment = Column(String(255), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'))
 
     type = relationship('WorkType', foreign_keys=[type_id])
@@ -3406,8 +3406,8 @@ class WorkAlias(Base):
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
-    edits_pending = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     type_id = Column('type', Integer, ForeignKey('musicbrainz.work_alias_type.id'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
@@ -3416,8 +3416,8 @@ class WorkAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, nullable=False)
-    ended = Column(Boolean, nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id])
     type = relationship('WorkAliasType', foreign_keys=[type_id])
@@ -3443,7 +3443,7 @@ class WorkGIDRedirect(Base):
 
     gid = Column(UUID, primary_key=True, nullable=False)
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.work.id'), nullable=False)
-    created = Column(DateTime(timezone=True))
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Work', foreign_keys=[redirect_id])
 
@@ -3474,7 +3474,7 @@ class WorkTag(Base):
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
-    last_updated = Column(DateTime(timezone=True))
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     work = relationship('Work', foreign_keys=[work_id])
     tag = relationship('Tag', foreign_keys=[tag_id])
@@ -3494,7 +3494,7 @@ class WorkAttributeType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    comment = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     free_text = Column(Boolean, nullable=False)
 
 
@@ -3546,11 +3546,11 @@ class CoverArt(Base):
 
     id = Column(BIGINT, primary_key=True, nullable=False)
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
-    comment = Column(String, nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     ordering = Column(Integer, nullable=False)
-    date_uploaded = Column(DateTime(timezone=True), nullable=False)
-    edits_pending = Column(Integer, nullable=False)
+    date_uploaded = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     mime_type = Column(String, ForeignKey('cover_art_archive.image_type.mime_type'), nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id])
@@ -4088,7 +4088,7 @@ class LinkTypeDocumentation(Base):
 
     id = Column('id', Integer, ForeignKey('musicbrainz.link_type.id'), primary_key=True, nullable=False)
     documentation = Column(String, nullable=False)
-    examples_deleted = Column(SMALLINT, nullable=False)
+    examples_deleted = Column(SMALLINT, default=0, server_default=sql.text('0'), nullable=False)
 
     link_type = relationship('LinkType', foreign_keys=[id])
 
@@ -4099,7 +4099,7 @@ class LogStatistic(Base):
 
     name = Column(String, primary_key=True, nullable=False)
     category = Column(String, primary_key=True, nullable=False)
-    timestamp = Column(DateTime(timezone=True), primary_key=True, nullable=False)
+    timestamp = Column(DateTime(timezone=True), server_default=sql.func.now(), primary_key=True, nullable=False)
     data = Column(String, nullable=False)
 
 
@@ -4110,7 +4110,7 @@ class Statistic(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     value = Column(Integer, nullable=False)
-    date_collected = Column(Date, nullable=False)
+    date_collected = Column(Date, server_default=sql.func.now(), nullable=False)
 
 
 class StatisticEvent(Base):
