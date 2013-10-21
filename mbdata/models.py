@@ -66,7 +66,7 @@ class Area(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
 
     type = relationship('AreaType', foreign_keys=[type_id])
@@ -120,8 +120,8 @@ class AreaAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     area = relationship('Area', foreign_keys=[area_id])
     type = relationship('AreaAliasType', foreign_keys=[type_id])
@@ -161,7 +161,7 @@ class Artist(Base):
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     begin_area_id = Column('begin_area', Integer, ForeignKey('musicbrainz.area.id', name='artist_fk_begin_area'))
     end_area_id = Column('end_area', Integer, ForeignKey('musicbrainz.area.id', name='artist_fk_end_area'))
 
@@ -211,8 +211,8 @@ class ArtistAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id])
     type = relationship('ArtistAliasType', foreign_keys=[type_id])
@@ -403,7 +403,7 @@ class CDTOC(Base):
     track_count = Column(Integer, nullable=False)
     leadout_offset = Column(Integer, nullable=False)
     track_offset = Column(Integer, nullable=False)
-    degraded = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    degraded = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
@@ -590,7 +590,7 @@ class Editor(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='editor_fk_area'))
     password = Column(String(128), nullable=False)
     ha1 = Column(CHAR(32), nullable=False)
-    deleted = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    deleted = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     gender = relationship('Gender', foreign_keys=[gender_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -654,7 +654,7 @@ class EditorSubscribeCollection(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_subscribe_collection_fk_editor'), nullable=False)
     collection = Column(Integer, nullable=False)
     last_edit_sent = Column(Integer, nullable=False)
-    available = Column(Boolean, default=True, server_default=sql.text('true'), nullable=False)
+    available = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
     last_seen_name = Column(String(255))
 
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -2225,7 +2225,7 @@ class Label(Base):
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     type = relationship('LabelType', foreign_keys=[type_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -2295,8 +2295,8 @@ class LabelAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id])
     type = relationship('LabelAliasType', foreign_keys=[type_id])
@@ -2418,7 +2418,7 @@ class Link(Base):
     end_date_day = Column(SMALLINT)
     attribute_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     link_type = relationship('LinkType', foreign_keys=[link_type_id])
 
@@ -2492,7 +2492,7 @@ class LinkType(Base):
     long_link_phrase = Column(String(255), nullable=False)
     priority = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    is_deprecated = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    is_deprecated = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     parent = relationship('LinkType', foreign_keys=[parent_id])
 
@@ -2519,7 +2519,7 @@ class EditorCollection(Base):
     gid = Column(UUID, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_collection_fk_editor'), nullable=False)
     name = Column(String, nullable=False)
-    public = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    public = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     description = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -2561,7 +2561,7 @@ class EditorWatchPreferences(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_watch_preferences_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
-    notify_via_email = Column(Boolean, default=True, server_default=sql.text('true'), nullable=False)
+    notify_via_email = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
     notification_timeframe = Column(Interval, default='1 week', server_default=sql.text("'1 week'"), nullable=False)
     last_checked = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
@@ -2641,7 +2641,7 @@ class MediumFormat(Base):
     parent_id = Column('parent', Integer, ForeignKey('musicbrainz.medium_format.id', name='medium_format_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     year = Column(SMALLINT)
-    has_discids = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    has_discids = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     parent = relationship('MediumFormat', foreign_keys=[parent_id])
 
@@ -2666,7 +2666,7 @@ class Place(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     type = relationship('PlaceType', foreign_keys=[type_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -2693,8 +2693,8 @@ class PlaceAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     place = relationship('Place', foreign_keys=[place_id])
     type = relationship('PlaceAliasType', foreign_keys=[type_id])
@@ -2797,7 +2797,7 @@ class Recording(Base):
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    video = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    video = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
 
@@ -3342,7 +3342,7 @@ class Vote(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='vote_fk_edit'), nullable=False)
     vote = Column(SMALLINT, nullable=False)
     vote_time = Column(DateTime(timezone=True), server_default=sql.func.now())
-    superseded = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    superseded = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     edit = relationship('Edit', foreign_keys=[edit_id])
@@ -3416,8 +3416,8 @@ class WorkAlias(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    primary_for_locale = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
-    ended = Column(Boolean, default=False, server_default=sql.text('false'), nullable=False)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id])
     type = relationship('WorkAliasType', foreign_keys=[type_id])

@@ -287,6 +287,8 @@ def generate_models_from_sql(sql):
                         column_attributes['default'] = default.title()
                     if default == "now()":
                         column_attributes['server_default'] = 'sql.func.now()'
+                    elif default in ("true", "false"):
+                        column_attributes['server_default'] = 'sql.{0}()'.format(default)
                     else:
                         column_attributes['server_default'] = 'sql.text({0!r})'.format(default)
 
