@@ -260,7 +260,7 @@ class ArtistMeta(Base):
     __tablename__ = 'artist_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.artist.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -320,9 +320,9 @@ class ArtistCreditName(Base):
     __tablename__ = 'artist_credit_name'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id'), primary_key=True, nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey('musicbrainz.artist_credit.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     position = Column(SMALLINT, primary_key=True, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', ondelete='CASCADE'), nullable=False)
     name = Column(String, nullable=False)
     join_phrase = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
@@ -471,7 +471,7 @@ class EditArea(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -482,7 +482,7 @@ class EditArtist(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
@@ -494,7 +494,7 @@ class EditLabel(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
@@ -506,7 +506,7 @@ class EditPlace(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     place = relationship('Place', foreign_keys=[place_id])
@@ -517,7 +517,7 @@ class EditRelease(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     release = relationship('Release', foreign_keys=[release_id])
@@ -528,7 +528,7 @@ class EditReleaseGroup(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
@@ -539,7 +539,7 @@ class EditRecording(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     recording = relationship('Recording', foreign_keys=[recording_id])
@@ -550,7 +550,7 @@ class EditWork(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     work = relationship('Work', foreign_keys=[work_id])
@@ -561,7 +561,7 @@ class EditURL(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), primary_key=True, nullable=False)
-    url_id = Column('url', Integer, ForeignKey('musicbrainz.url.id'), primary_key=True, nullable=False)
+    url_id = Column('url', Integer, ForeignKey('musicbrainz.url.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id])
     url = relationship('URL', foreign_keys=[url_id])
@@ -2344,7 +2344,7 @@ class LabelMeta(Base):
     __tablename__ = 'label_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.label.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.label.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -2459,7 +2459,7 @@ class LinkCreditableAttributeType(Base):
     __tablename__ = 'link_creditable_attribute_type'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
 
@@ -2560,7 +2560,7 @@ class EditorWatchPreferences(Base):
     __tablename__ = 'editor_watch_preferences'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     notify_via_email = Column(Boolean, default=True, server_default=sql.text('true'), nullable=False)
     notification_timeframe = Column(Interval, default='1 week', server_default=sql.text("'1 week'"), nullable=False)
     last_checked = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
@@ -2572,8 +2572,8 @@ class EditorWatchArtist(Base):
     __tablename__ = 'editor_watch_artist'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id])
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -2583,7 +2583,7 @@ class EditorWatchReleaseGroupType(Base):
     __tablename__ = 'editor_watch_release_group_type'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_group_type_id = Column('release_group_type', Integer, ForeignKey('musicbrainz.release_group_primary_type.id'), primary_key=True, nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -2594,7 +2594,7 @@ class EditorWatchReleaseStatus(Base):
     __tablename__ = 'editor_watch_release_status'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_status_id = Column('release_status', Integer, ForeignKey('musicbrainz.release_status.id'), primary_key=True, nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
@@ -2842,7 +2842,7 @@ class RecordingMeta(Base):
     __tablename__ = 'recording_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.recording.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.recording.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -3000,7 +3000,7 @@ class ReleaseMeta(Base):
     __tablename__ = 'release_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     date_added = Column(DateTime(timezone=True), server_default=sql.func.now())
     info_url = Column(String(255))
     amazon_asin = Column(String(10))
@@ -3014,7 +3014,7 @@ class ReleaseCoverArt(Base):
     __tablename__ = 'release_coverart'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.release.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     cover_art_url = Column(String(255))
 
@@ -3140,7 +3140,7 @@ class ReleaseGroupMeta(Base):
     __tablename__ = 'release_group_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.release_group.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.release_group.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     first_release_date_year = Column(SMALLINT)
     first_release_date_month = Column(SMALLINT)
@@ -3297,7 +3297,7 @@ class MediumIndex(Base):
     __tablename__ = 'medium_index'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id'), primary_key=True)
+    medium_id = Column('medium', Integer, ForeignKey('musicbrainz.medium.id', ondelete='CASCADE'), primary_key=True)
     toc = Column(Cube)
 
     medium = relationship('Medium', foreign_keys=[medium_id])
@@ -3460,7 +3460,7 @@ class WorkMeta(Base):
     __tablename__ = 'work_meta'
     __table_args__ = {'schema': 'musicbrainz'}
 
-    id = Column('id', Integer, ForeignKey('musicbrainz.work.id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey('musicbrainz.work.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -3545,7 +3545,7 @@ class CoverArt(Base):
     __table_args__ = {'schema': 'cover_art_archive'}
 
     id = Column(BIGINT, primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', ondelete='CASCADE'), nullable=False)
     comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id'), nullable=False)
     ordering = Column(Integer, nullable=False)
@@ -3561,7 +3561,7 @@ class CoverArtType(Base):
     __tablename__ = 'cover_art_type'
     __table_args__ = {'schema': 'cover_art_archive'}
 
-    id = Column('id', BIGINT, ForeignKey('cover_art_archive.cover_art.id'), primary_key=True, nullable=False)
+    id = Column('id', BIGINT, ForeignKey('cover_art_archive.cover_art.id', ondelete='CASCADE'), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer, ForeignKey('cover_art_archive.art_type.id'), primary_key=True, nullable=False)
 
     cover_art = relationship('CoverArt', foreign_keys=[id])

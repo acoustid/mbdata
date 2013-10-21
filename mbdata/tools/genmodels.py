@@ -46,10 +46,11 @@ def format_model_name(table_name):
 
 class ForeignKey(object):
 
-    def __init__(self, schema, table, column):
+    def __init__(self, schema, table, column, cascade=False):
         self.schema = schema
         self.table = table
         self.column = column
+        self.cascade = cascade
 
 
 class Column(object):
@@ -104,9 +105,11 @@ def parse_create_table_column(clause, schema):
     for comment in clause.get_comments():
         if re.search(r'\bPK\b', comment):
             column.primary_key = True
-        match = re.search(r'\b(?:(weakly)\s+)?references\s+([a-z0-9_.]+)', comment)
+        match = re.search(r'\b(?:(weakly)\s+)?references\s+([a-z0-9_.]+)(?:\s(CASCADE))?', comment)
         if match is not None and match.group(1) != 'weakly':
             column.foreign_key = ForeignKey(*split_fqn(match.group(2), schema))
+            if match.group(3) == 'CASCADE':
+                column.foreign_key.cascade = True
 
     return column
 
@@ -261,7 +264,10 @@ def generate_models_from_sql(sql):
                         aliases.append((attribute_name, column.name))
                         aliases.append((relationship_name, foreign_key.table))
 
-                params.append('ForeignKey({0!r})'.format(join_foreign_key(foreign_key.schema, foreign_key.table, foreign_key.column)))
+                foreign_key_params = [repr(join_foreign_key(foreign_key.schema, foreign_key.table, foreign_key.column))]
+                if foreign_key.cascade:
+                    foreign_key_params.append("ondelete='CASCADE'")
+                params.append('ForeignKey({0})'.format(', '.join(foreign_key_params)))
 
             if not column.nullable:
                 column_attributes['nullable'] = 'False'
