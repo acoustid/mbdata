@@ -21,6 +21,18 @@ def serialize_artist_credit(artist_credit):
     return data
 
 
+def serialize_work(work, include):
+    data = {
+        'id': work.gid,
+        'name': work.name,
+    }
+
+    if include.iswcs:
+        data['iswcs'] = [iswc.iswc for iswc in work.iswcs]
+
+    return data
+
+
 def serialize_recording(recording, include):
     data = {
         'id': recording.gid,

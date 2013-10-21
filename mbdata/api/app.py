@@ -9,6 +9,7 @@ from mbdata.api.blueprints.place import blueprint as place_blueprint
 from mbdata.api.blueprints.recording import blueprint as recording_blueprint
 from mbdata.api.blueprints.release import blueprint as release_blueprint
 from mbdata.api.blueprints.release_group import blueprint as release_group_blueprint
+from mbdata.api.blueprints.work import blueprint as work_blueprint
 
 
 app = Flask(__name__)
@@ -20,6 +21,7 @@ app.register_blueprint(place_blueprint, url_prefix='/1.0/place')
 app.register_blueprint(recording_blueprint, url_prefix='/1.0/recording')
 app.register_blueprint(release_blueprint, url_prefix='/1.0/release')
 app.register_blueprint(release_group_blueprint, url_prefix='/1.0/release_group')
+app.register_blueprint(work_blueprint, url_prefix='/1.0/work')
 
 engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
 Session = sessionmaker(bind=engine)

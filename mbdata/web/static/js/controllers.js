@@ -42,3 +42,8 @@ app.controller('ReleaseGroupCtrl', function ($scope, releaseGroup, releases) {
     $scope.releases = releases;
 });
 
+app.controller('WorkCtrl', function ($scope, work) {
+    $scope.$root.title = work.name;
+    $scope.work = work;
+});
+

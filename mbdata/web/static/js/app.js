@@ -88,6 +88,21 @@ var app = angular.module('mbdata', ['ngRoute']).
                     }
                 }
             }).
+            when('/work/:id', {
+                controller: 'WorkCtrl',
+                templateUrl: '/static/partial/work.html',
+                resolve: {
+                    work: function ($route, MB) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['iswcs']
+                        };
+                        return MB.work.details(params).then(function (data) {
+                            return data.work;
+                        });
+                    }
+                }
+            }).
             otherwise({redirectTo: '/'});
     });
 
