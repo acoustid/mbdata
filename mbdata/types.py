@@ -2,7 +2,14 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 import re
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgres import UUID
 from sqlalchemy.types import UserDefinedType
+
+
+@compiles(UUID, 'sqlite')
+def visit_uuid_sqlite(element, compiler, **kwargs):
+    return 'CHAR(32)'
 
 
 class PartialDate(object):
