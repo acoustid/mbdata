@@ -122,7 +122,6 @@ def test_set_statement_without_quotes():
     sql = "SET search_path = cover_art_archive;"
     statement = parse_statements(sqlparse.parse(sql)).next()
 
-    statement._pprint_tree()
     assert_is_instance(statement, Set)
     assert_equals('search_path', statement.get_name())
     assert_equals('cover_art_archive', statement.get_value())
@@ -132,8 +131,17 @@ def test_set_statement_with_to():
     sql = "SET search_path TO 'cover_art_archive';"
     statement = parse_statements(sqlparse.parse(sql)).next()
 
-    statement._pprint_tree()
     assert_is_instance(statement, Set)
     assert_equals('search_path', statement.get_name())
     assert_equals('cover_art_archive', statement.get_value())
+
+
+def test_create_type_statement():
+    sql = "CREATE TYPE FLUENCY AS ENUM ('basic', 'intermediate');"
+    statement = parse_statements(sqlparse.parse(sql)).next()
+
+    statement._pprint_tree()
+    assert_is_instance(statement, CreateType)
+    assert_equals('FLUENCY', statement.get_name())
+    assert_equals(['basic', 'intermediate'], statement.get_enum_labels())
 

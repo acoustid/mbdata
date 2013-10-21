@@ -65,23 +65,45 @@ class CreateTable(Statement):
 
 
 class CreateType(Statement):
-    pass
+
+    def get_name(self):
+        token = self.token_next_by_type(0, T.Name)
+        if token is None:
+            raise ValueError('unknown format')
+
+        return token.value
+
+    def get_enum_labels(self):
+        enum_token = self.token_next_match(0, T.Name, 'ENUM')
+        if enum_token is None:
+            raise ValueError('unknown format - missing ENUM')
+
+        parentheses_tokens = self.token_next(enum_token)
+        if parentheses_tokens is None or not isinstance(parentheses_tokens, Parenthesis):
+            raise ValueError('unknown format - missing parentheses after ENUM')
+
+        labels = []
+        for token in parentheses_tokens.tokens:
+            if token.ttype == T.String.Single:
+                labels.append(token.value[1:-1])
+        return labels
 
 
 def parse_statements(statements):
     for statement in statements:
+        clean_tokens = group_parentheses(statement.flatten())
         first_token = statement.token_first()
         if first_token is None:
             continue
         if first_token.normalized == 'SET':
-            statement = Set(list(statement.flatten()))
+            statement = Set(clean_tokens.tokens)
         elif first_token.normalized == 'CREATE':
             second_token = statement.token_next(first_token)
             if second_token is not None:
                 if second_token.normalized == 'TABLE':
-                    statement = CreateTable(statement.tokens)
+                    statement = CreateTable(clean_tokens.tokens)
                 elif second_token.normalized == 'TYPE':
-                    statement = CreateType(statement.tokens)
+                    statement = CreateType(clean_tokens.tokens)
         yield statement
 
 
