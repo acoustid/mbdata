@@ -23,8 +23,14 @@ app.register_blueprint(release_blueprint, url_prefix='/1.0/release')
 app.register_blueprint(release_group_blueprint, url_prefix='/1.0/release_group')
 app.register_blueprint(work_blueprint, url_prefix='/1.0/work')
 
-engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
-Session = sessionmaker(bind=engine)
+Session = engine = None
+
+def setup_db():
+    global engine, Session
+    engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
+    Session = sessionmaker(bind=engine)
+
+setup_db()
 
 
 @app.before_request
