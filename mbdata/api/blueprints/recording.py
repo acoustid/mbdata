@@ -28,7 +28,7 @@ def get_recording_by_gid(query, gid):
 def details():
     gid = get_param('id', type='uuid', required=True)
 
-    includes_class = make_includes('artist_names', 'artist_credits')
+    includes_class = make_includes('artist_names', 'artist_credits', 'isrcs')
     include = get_param('include', type='enum+', container=includes_class)
 
     if include.artist_names and include.artist_credits:

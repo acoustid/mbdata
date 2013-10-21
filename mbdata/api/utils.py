@@ -139,12 +139,24 @@ def serialize_partial_date(data, name, date):
 
 class Includes(object):
 
+    ALL_INCLUDES = set([
+        'artist_names',
+        'artist_credits',
+        'release_group',
+        'mediums',
+        'tracks',
+        'isrcs',
+        'iswcs',
+    ])
+
     def __init__(self, allowed_includes, includes):
-        self._allowed_includes = allowed_includes
+        self._allowed_includes = set(allowed_includes)
         self._includes = set(includes)
+        if self._allowed_includes - self.ALL_INCLUDES:
+            raise ValueError(self._allowed_includes)
 
     def __getattr__(self, name):
-        if name not in self._allowed_includes:
+        if name not in self.ALL_INCLUDES:
             raise AttributeError(name)
 
         return bool(name in self._includes)
@@ -154,7 +166,7 @@ class Includes(object):
             self.__dict__[name] = value
             return
 
-        if name not in self._allowed_includes:
+        if name not in self.ALL_INCLUDES:
             raise AttributeError(name)
 
         if value and name not in self._includes:
