@@ -24,7 +24,7 @@ def format_model_name(table_name):
     return ''.join([capitalize(word) for word in words])
 
 
-def group_tokens(tokens):
+def group_parentheses(tokens):
     stack = [[]]
     for token in tokens:
         if token.is_whitespace():
@@ -70,7 +70,7 @@ def split_tables(all_tokens, types):
     schema_name = 'musicbrainz'
 
     for token in all_tokens:
-        tokens = group_tokens(token.flatten())
+        tokens = group_parentheses(token.flatten())
 
         create_token = tokens.token_next_match(0, T.DDL, 'CREATE')
         if create_token is None:
