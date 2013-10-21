@@ -1,4 +1,5 @@
 *.pyc
+*.swp
 e/
 mbdata.egg-info/
 settings.py
