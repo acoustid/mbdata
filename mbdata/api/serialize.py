@@ -21,6 +21,23 @@ def serialize_artist_credit(artist_credit):
     return data
 
 
+def serialize_recording(recording, include):
+    data = {
+        'id': recording.gid,
+        'name': recording.name,
+    }
+
+    if recording.length:
+        data['length'] = recording.length / 1000.0
+
+    if include.artist_names:
+        data['artist'] = recording.artist_credit.name
+    elif include.artist_credits:
+        data['artists'] = serialize_artist_credit(recording.artist_credit)
+
+    return data
+
+
 def serialize_track(track, include):
     data = {
         'id': track.gid,

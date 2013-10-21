@@ -1,0 +1,5 @@
+<h1><span mb-artist-credit="recording.artists"></span> &ndash; {{ recording.name }}</h1>
+
+<p ng-show="recording.length">Length: {{ recording.length | duration }}</p>
+
+<p class="text-muted"><small>See this recording at <a href="//musicbrainz.org/recording/{{ recording.id }}">MusicBrainz</a></small></p>

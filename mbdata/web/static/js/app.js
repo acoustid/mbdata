@@ -34,6 +34,21 @@ var app = angular.module('mbdata', ['ngRoute']).
                     }
                 }
             }).
+            when('/recording/:id', {
+                controller: 'RecordingCtrl',
+                templateUrl: '/static/partial/recording.html',
+                resolve: {
+                    recording: function ($route, MB) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['artistCredits']
+                        };
+                        return MB.recording.details(params).then(function (data) {
+                            return data.recording;
+                        });
+                    }
+                }
+            }).
             when('/release/:id', {
                 controller: 'ReleaseCtrl',
                 templateUrl: '/static/partial/release.html',

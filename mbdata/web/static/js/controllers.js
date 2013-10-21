@@ -26,6 +26,11 @@ app.controller('PlaceCtrl', function ($scope, place) {
     $scope.place = place;
 });
 
+app.controller('RecordingCtrl', function ($scope, recording) {
+    $scope.$root.title = recording.name;
+    $scope.recording = recording;
+});
+
 app.controller('ReleaseCtrl', function ($scope, release) {
     $scope.$root.title = release.name;
     $scope.release = release;
