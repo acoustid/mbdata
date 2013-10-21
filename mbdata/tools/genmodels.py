@@ -264,7 +264,10 @@ def generate_models_from_sql(sql):
                         aliases.append((attribute_name, column.name))
                         aliases.append((relationship_name, foreign_key.table))
 
-                foreign_key_params = [repr(join_foreign_key(foreign_key.schema, foreign_key.table, foreign_key.column))]
+                foreign_key_params = [
+                    repr(join_foreign_key(foreign_key.schema, foreign_key.table, foreign_key.column)),
+                    "name='{0}_fk_{1}'".format(table.name, column.name),
+                ]
                 if foreign_key.cascade:
                     foreign_key_params.append("ondelete='CASCADE'")
                 params.append('ForeignKey({0})'.format(', '.join(foreign_key_params)))
