@@ -602,7 +602,7 @@ class EditorLanguage(Base):
 
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id'), primary_key=True, nullable=False)
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id'), primary_key=True, nullable=False)
-    fluency = Column(Enum(u'basic', u'intermediate', u'advanced', u'native', name=u'FLUENCY'), nullable=False)
+    fluency = Column(Enum('basic', 'intermediate', 'advanced', 'native', name='FLUENCY'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -3005,7 +3005,7 @@ class ReleaseMeta(Base):
     info_url = Column(String(255))
     amazon_asin = Column(String(10))
     amazon_store = Column(String(20))
-    cover_art_presence = Column(Enum(u'absent', u'present', u'darkened', name=u'COVER_ART_PRESENCE'), nullable=False)
+    cover_art_presence = Column(Enum('absent', 'present', 'darkened', name='COVER_ART_PRESENCE'), nullable=False)
 
     release = relationship('Release', foreign_keys=[id], backref=backref('meta', uselist=False))
 

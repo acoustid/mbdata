@@ -58,14 +58,16 @@ class CreateTable(Statement):
         end_of_column = False
         for token in body_token.tokens[1:-1]:
             if end_of_column and not token.value.startswith('--'):
-                body_token.group_tokens(CreateTableColumn, tokens)
+                if tokens[0].value not in ('CONSTRAINT', 'CHECK'):
+                    body_token.group_tokens(CreateTableColumn, tokens)
                 tokens = []
                 end_of_column = False
             tokens.append(token)
             if token.match(T.Punctuation, ','):
                 end_of_column = True
         if tokens:
-            body_token.group_tokens(CreateTableColumn, tokens)
+            if tokens[0].value not in ('CONSTRAINT', 'CHECK'):
+                body_token.group_tokens(CreateTableColumn, tokens)
 
     def get_name(self):
         table_token = self.token_next_match(0, T.Keyword, 'TABLE')
