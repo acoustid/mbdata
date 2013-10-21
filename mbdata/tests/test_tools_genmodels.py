@@ -140,8 +140,42 @@ def test_create_type_statement():
     sql = "CREATE TYPE FLUENCY AS ENUM ('basic', 'intermediate');"
     statement = parse_statements(sqlparse.parse(sql)).next()
 
-    statement._pprint_tree()
     assert_is_instance(statement, CreateType)
     assert_equals('FLUENCY', statement.get_name())
     assert_equals(['basic', 'intermediate'], statement.get_enum_labels())
+
+
+def test_create_table_statement():
+    sql = '''
+CREATE TABLE table_name (
+    id SERIAL, -- PK
+    name VARCHAR(100) NOT NULL,
+    created TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+    '''
+    statement = parse_statements(sqlparse.parse(sql)).next()
+
+    assert_is_instance(statement, CreateTable)
+    assert_equals('table_name', statement.get_name())
+
+    columns = list(statement.get_columns())
+    assert_equals(3, len(columns))
+
+    assert_equals('id', columns[0].get_name())
+    assert_equals('SERIAL', columns[0].get_type())
+    assert_equals(None, columns[0].get_default_value())
+    assert_equals(['-- PK'], columns[0].get_comments())
+    assert_equals(False, columns[0].is_not_null())
+
+    assert_equals('name', columns[1].get_name())
+    assert_equals('VARCHAR(100)', columns[1].get_type())
+    assert_equals(None, columns[1].get_default_value())
+    assert_equals([], columns[1].get_comments())
+    assert_equals(True, columns[1].is_not_null())
+
+    assert_equals('created', columns[2].get_name())
+    assert_equals('TIMESTAMP WITH TIME ZONE', columns[2].get_type())
+    assert_equals('now()', columns[2].get_default_value())
+    assert_equals([], columns[2].get_comments())
+    assert_equals(True, columns[2].is_not_null())
 

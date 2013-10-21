@@ -61,7 +61,115 @@ class Set(Statement):
 
 
 class CreateTable(Statement):
-    pass
+
+    def __init__(self, tokens):
+        TokenList.__init__(self, tokens)
+        self._group_columns()
+
+    def _group_columns(self):
+        body_token = self.token_next_by_instance(0, Parenthesis)
+        if body_token is None:
+            raise ValueError('unknown format - missing TABLE body')
+
+        tokens = []
+        end_of_column = False
+        for token in body_token.tokens[1:-1]:
+            if end_of_column and not token.value.startswith('--'):
+                body_token.group_tokens(CreateTableColumn, tokens)
+                tokens = []
+                end_of_column = False
+            tokens.append(token)
+            if token.match(T.Punctuation, ','):
+                end_of_column = True
+        if tokens:
+            body_token.group_tokens(CreateTableColumn, tokens)
+
+    def get_name(self):
+        table_token = self.token_next_match(0, T.Keyword, 'TABLE')
+        if table_token is None:
+            raise ValueError('unknown format - missing TABLE')
+
+        token = self.token_next(table_token)
+        if token is None:
+            raise ValueError('unknown format - missing TABLE name')
+
+        return token.value
+
+    def get_columns(self):
+        for token in self.tokens:
+            if isinstance(token, Parenthesis):
+                for sub_token in token.tokens:
+                    if isinstance(sub_token, CreateTableColumn):
+                        yield sub_token
+
+
+class CreateTableColumn(TokenList):
+
+    def get_name(self):
+        name_token = self.token_first()
+
+        return name_token.value
+
+    def get_type(self):
+        name_token = self.token_first()
+
+        token = self.token_next(name_token)
+        type = token.value
+
+        token = self.token_next(token)
+        if token and isinstance(token, Parenthesis):
+            type += token.value
+            token = self.token_next(token)
+
+        if token and token.normalized == 'WITH':
+            t = self.token_next(token)
+            if t and t.normalized == 'TIME':
+                t = self.token_next(t)
+                if t and t.normalized == 'ZONE':
+                    type += ' WITH TIME ZONE'
+                    token = self.token_next(t)
+
+        if token and token.normalized == 'WITHOUT':
+            t = self.token_next(token)
+            if t and t.normalized == 'TIME':
+                t = self.token_next(t)
+                if t and t.normalized == 'ZONE':
+                    type += ' WITHOUT TIME ZONE'
+                    token = self.token_next(t)
+
+        return type
+
+    def get_default_value(self):
+        token = self.token_next_match(0, T.Keyword, 'DEFAULT')
+        if token is None:
+            return None
+
+        token = self.token_next(token)
+        default = token.value
+
+        token = self.token_next(token)
+        if token and isinstance(token, Parenthesis):
+            default += token.value
+            token = self.token_next(token)
+
+        return default
+
+    def get_comments(self):
+        comments = []
+        token = self.token_next_by_type(0, T.Comment.Single)
+
+        while token is not None:
+            comments.append(token.value.strip())
+            idx = self.token_index(token) + 1
+            token = self.token_next_by_type(idx, T.Comment.Single)
+
+        return comments
+
+    def is_not_null(self):
+        token = self.token_next_match(0, T.Keyword, 'NOT NULL')
+        if token is None:
+            return False
+        return True
 
 
 class CreateType(Statement):
