@@ -5,6 +5,7 @@ import re
 import sqlparse
 from sqlparse import tokens as T
 from sqlparse.sql import TokenList, Parenthesis, Statement
+from mbdata.utils.sql import CreateTable, CreateType, Set, parse_statements
 
 
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
@@ -24,195 +25,108 @@ def format_model_name(table_name):
     return ''.join([capitalize(word) for word in words])
 
 
-def group_parentheses(tokens):
-    stack = [[]]
-    for token in tokens:
-        if token.is_whitespace():
-            continue
-        if token.match(T.Punctuation, '('):
-            stack.append([token])
+class ForeignKey(object):
+
+    def __init__(self, schema, table, column):
+        self.schema = schema
+        self.table = table
+        self.column = column
+
+
+class Column(object):
+
+    def __init__(self, name, type, nullable=True, default=None, primary_key=False, foreign_key=None):
+        self.name = name
+        self.type = type
+        self.nullable = nullable
+        self.default = default
+        self.primary_key = primary_key
+        self.foreign_key = foreign_key
+
+
+class Table(object):
+
+    def __init__(self, schema, name, columns):
+        self.schema = schema
+        self.name = name
+        self.columns = columns
+
+
+class Enum(object):
+
+    def __init__(self, schema, name, labels):
+        self.schema = schema
+        self.name = name
+        self.labels = labels
+
+
+def split_fqn(fqn, schema=None):
+    parts = fqn.split('.')
+    if len(parts) == 1:
+        return schema, parts[0], 'id' # XXX this shouldn't happen, but there are errors in CreateTables.sql
+    elif len(parts) == 2:
+        return schema, parts[0], parts[1]
+    elif len(parts) == 3:
+        return parts[0], parts[1], parts[2]
+    raise ValueError('invalid name {0}'.format(fqn))
+
+
+DEFAULT_TYPES = {
+    'SERIAL': 'Integer',
+    'INT': 'Integer',
+    'INTEGER': 'Integer',
+}
+
+
+def parse_create_table_column(clause, schema):
+    column = Column(clause.get_name(), clause.get_type())
+
+    if clause.is_not_null():
+        column.nullable = False
+
+    column.default = clause.get_default_value()
+
+    if column.type == 'SERIAL':
+        column.primary_key = True
+
+    for comment in clause.get_comments():
+        if re.search(r'\bPK\b', comment):
+            column.primary_key = True
         else:
-            stack[-1].append(token)
-            if token.match(T.Punctuation, ')'):
-                group = stack.pop()
-                stack[-1].append(Parenthesis(group))
-    return TokenList(stack[0])
+            match = re.search(r'\b(?:(weakly)\s+)?references\s+([a-z0-9_.]+)', comment)
+            if match is not None and match.group(1) != 'weakly':
+                column.foreign_key = ForeignKey(*split_fqn(match.group(2), schema))
+
+    return column
 
 
-class Set(Statement):
-
-    def _find_value(self):
-        comparison = self.token_next_match(0, T.Comparison, '=')
-        if comparison is None:
-            comparison = self.token_next_match(0, T.Keyword, 'TO')
-            if comparison is None:
-                raise ValueError('unknown format')
-        return comparison
-
-    def get_value(self):
-        token = self.token_next(self._find_value())
-        if token is None or token.match(T.Punctuation, ';'):
-            return None
-        if token.ttype == T.String.Single:
-            return token.value[1:-1]
-        if token.ttype == T.Name:
-            return token.value
-        raise ValueError('unknown format')
+def parse_create_table(statement, schema):
+    table = Table(schema, statement.get_name(), [])
+    for column_clause in statement.get_columns():
+        table.columns.append(parse_create_table_column(column_clause, schema))
+    return table
 
 
-class CreateTable(Statement):
-
-    def __init__(self, tokens):
-        TokenList.__init__(self, tokens)
-        self._group_columns()
-
-    def _group_columns(self):
-        body_token = self.token_next_by_instance(0, Parenthesis)
-        if body_token is None:
-            raise ValueError('unknown format - missing TABLE body')
-
-        tokens = []
-        end_of_column = False
-        for token in body_token.tokens[1:-1]:
-            if end_of_column and not token.value.startswith('--'):
-                body_token.group_tokens(CreateTableColumn, tokens)
-                tokens = []
-                end_of_column = False
-            tokens.append(token)
-            if token.match(T.Punctuation, ','):
-                end_of_column = True
-        if tokens:
-            body_token.group_tokens(CreateTableColumn, tokens)
-
-    def get_name(self):
-        table_token = self.token_next_match(0, T.Keyword, 'TABLE')
-        if table_token is None:
-            raise ValueError('unknown format - missing TABLE')
-
-        token = self.token_next(table_token)
-        if token is None:
-            raise ValueError('unknown format - missing TABLE name')
-
-        return token.value
-
-    def get_columns(self):
-        for token in self.tokens:
-            if isinstance(token, Parenthesis):
-                for sub_token in token.tokens:
-                    if isinstance(sub_token, CreateTableColumn):
-                        yield sub_token
+def parse_create_type(statement, schema):
+    return Enum(schema, statement.get_name(), statement.get_enum_labels())
 
 
-class CreateTableColumn(TokenList):
+def parse_create_tables_sql(sql, schema='musicbrainz'):
+    types = []
+    tables = []
 
-    def get_name(self):
-        name_token = self.token_first()
-
-        return name_token.value
-
-    def get_type(self):
-        name_token = self.token_first()
-
-        token = self.token_next(name_token)
-        type = token.value
-
-        token = self.token_next(token)
-        if token and isinstance(token, Parenthesis):
-            type += token.value
-            token = self.token_next(token)
-
-        if token and token.normalized == 'WITH':
-            t = self.token_next(token)
-            if t and t.normalized == 'TIME':
-                t = self.token_next(t)
-                if t and t.normalized == 'ZONE':
-                    type += ' WITH TIME ZONE'
-                    token = self.token_next(t)
-
-        if token and token.normalized == 'WITHOUT':
-            t = self.token_next(token)
-            if t and t.normalized == 'TIME':
-                t = self.token_next(t)
-                if t and t.normalized == 'ZONE':
-                    type += ' WITHOUT TIME ZONE'
-                    token = self.token_next(t)
-
-        return type
-
-    def get_default_value(self):
-        token = self.token_next_match(0, T.Keyword, 'DEFAULT')
-        if token is None:
-            return None
-
-        token = self.token_next(token)
-        default = token.value
-
-        token = self.token_next(token)
-        if token and isinstance(token, Parenthesis):
-            default += token.value
-            token = self.token_next(token)
-
-        return default
-
-    def get_comments(self):
-        comments = []
-        token = self.token_next_by_type(0, T.Comment.Single)
-
-        while token is not None:
-            comments.append(token.value.strip())
-            idx = self.token_index(token) + 1
-            token = self.token_next_by_type(idx, T.Comment.Single)
-
-        return comments
-
-    def is_not_null(self):
-        token = self.token_next_match(0, T.Keyword, 'NOT NULL')
-        if token is None:
-            return False
-        return True
-
-
-class CreateType(Statement):
-
-    def get_name(self):
-        token = self.token_next_by_type(0, T.Name)
-        if token is None:
-            raise ValueError('unknown format')
-
-        return token.value
-
-    def get_enum_labels(self):
-        enum_token = self.token_next_match(0, T.Name, 'ENUM')
-        if enum_token is None:
-            raise ValueError('unknown format - missing ENUM')
-
-        parentheses_tokens = self.token_next(enum_token)
-        if parentheses_tokens is None or not isinstance(parentheses_tokens, Parenthesis):
-            raise ValueError('unknown format - missing parentheses after ENUM')
-
-        labels = []
-        for token in parentheses_tokens.tokens:
-            if token.ttype == T.String.Single:
-                labels.append(token.value[1:-1])
-        return labels
-
-
-def parse_statements(statements):
+    statements = parse_statements(sqlparse.parse(sql))
     for statement in statements:
-        clean_tokens = group_parentheses(statement.flatten())
-        first_token = statement.token_first()
-        if first_token is None:
-            continue
-        if first_token.normalized == 'SET':
-            statement = Set(clean_tokens.tokens)
-        elif first_token.normalized == 'CREATE':
-            second_token = statement.token_next(first_token)
-            if second_token is not None:
-                if second_token.normalized == 'TABLE':
-                    statement = CreateTable(clean_tokens.tokens)
-                elif second_token.normalized == 'TYPE':
-                    statement = CreateType(clean_tokens.tokens)
-        yield statement
+        if isinstance(statement, Set) and statement.get_name() == 'search_path':
+            schema = statement.get_value().split(',')[0].strip()
+
+        elif isinstance(statement, CreateType):
+            types.append(parse_create_type(statement, schema))
+
+        elif isinstance(statement, CreateTable):
+            tables.append(parse_create_table(statement, schema))
+
+    return types, tables
 
 
 def split_columns(tokens):
