@@ -4,7 +4,7 @@
 import re
 import sqlparse
 from sqlparse import tokens as T
-from sqlparse.sql import TokenList
+from sqlparse.sql import TokenList, Parenthesis, Statement
 
 
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
@@ -35,8 +35,54 @@ def group_parentheses(tokens):
             stack[-1].append(token)
             if token.match(T.Punctuation, ')'):
                 group = stack.pop()
-                stack[-1].append(TokenList(group))
+                stack[-1].append(Parenthesis(group))
     return TokenList(stack[0])
+
+
+class Set(Statement):
+
+    def _find_value(self):
+        comparison = self.token_next_match(0, T.Comparison, '=')
+        if comparison is None:
+            comparison = self.token_next_match(0, T.Keyword, 'TO')
+            if comparison is None:
+                raise ValueError('unknown format')
+        return comparison
+
+    def get_value(self):
+        token = self.token_next(self._find_value())
+        if token is None or token.match(T.Punctuation, ';'):
+            return None
+        if token.ttype == T.String.Single:
+            return token.value[1:-1]
+        if token.ttype == T.Name:
+            return token.value
+        raise ValueError('unknown format')
+
+
+class CreateTable(Statement):
+    pass
+
+
+class CreateType(Statement):
+    pass
+
+
+def parse_statements(statements):
+    for statement in statements:
+        first_token = statement.token_first()
+        if first_token is None:
+            continue
+        if first_token.normalized == 'SET':
+            statement = Set(list(statement.flatten()))
+        elif first_token.normalized == 'CREATE':
+            second_token = statement.token_next(first_token)
+            if second_token is not None:
+                if second_token.normalized == 'TABLE':
+                    statement = CreateTable(statement.tokens)
+                elif second_token.normalized == 'TYPE':
+                    statement = CreateType(statement.tokens)
+        yield statement
 
 
 def split_columns(tokens):
