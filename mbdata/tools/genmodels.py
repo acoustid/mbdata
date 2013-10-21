@@ -17,7 +17,7 @@ def capitalize(word):
     return SPECIAL_NAMES.get(word, word.title())
 
 
-def format_class_name(table_name):
+def format_model_name(table_name):
     words = list(table_name.split('_'))
     if words[0] == 'l':
         words[0] = 'link'
@@ -170,7 +170,7 @@ def generate_models_from_sql(sql):
     types = {}
     tokens = sqlparse.parse(sql)
     for schema_name, table_name, columns in split_tables(tokens, types):
-        model_name = format_class_name(table_name)
+        model_name = format_model_name(table_name)
         yield 'class {0}(Base):'.format(model_name)
         yield '    __tablename__ = {0!r}'.format(table_name)
         yield '    __table_args__ = {0!r}'.format({'schema': schema_name})
@@ -313,7 +313,7 @@ def generate_models_from_sql(sql):
             yield ''
             for attribute_name, relationship_name, foreign_key, backref in foreign_keys:
                 foreign_schema_name, foreign_table_name, foreign_column_name = split_foreign_key(foreign_key, schema_name)
-                foreign_model_name = format_class_name(foreign_table_name)
+                foreign_model_name = format_model_name(foreign_table_name)
                 relationship_params = [
                     repr(foreign_model_name),
                     'foreign_keys=[{0}]'.format(attribute_name)
