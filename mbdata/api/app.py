@@ -16,12 +16,12 @@ app = Flask(__name__)
 app.config.from_object('mbdata.api.commonsettings')
 app.config.from_envvar('MBDATA_API_SETTINGS')
 
-app.register_blueprint(artist_blueprint, url_prefix='/1.0/artist')
-app.register_blueprint(place_blueprint, url_prefix='/1.0/place')
-app.register_blueprint(recording_blueprint, url_prefix='/1.0/recording')
-app.register_blueprint(release_blueprint, url_prefix='/1.0/release')
-app.register_blueprint(release_group_blueprint, url_prefix='/1.0/release_group')
-app.register_blueprint(work_blueprint, url_prefix='/1.0/work')
+app.register_blueprint(artist_blueprint, url_prefix='/v1/artist')
+app.register_blueprint(place_blueprint, url_prefix='/v1/place')
+app.register_blueprint(recording_blueprint, url_prefix='/v1/recording')
+app.register_blueprint(release_blueprint, url_prefix='/v1/release')
+app.register_blueprint(release_group_blueprint, url_prefix='/v1/release_group')
+app.register_blueprint(work_blueprint, url_prefix='/v1/work')
 
 Session = engine = None
 

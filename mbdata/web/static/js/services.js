@@ -4,13 +4,11 @@
 'use strict';
 
 app.factory('MB', function ($http, API_URL) {
-    var API_VERSION = '1.0';
-
     var MB = {
         get: function (entity, method, params) {
             return $http({
                 method: 'GET',
-                url: API_URL + '/' + API_VERSION + '/' + entity + '/' + method,
+                url: API_URL + '/v1/' + entity + '/' + method,
                 params: params
             }).then(function (response) {
                 return humps.camelizeKeys(response.data.response);

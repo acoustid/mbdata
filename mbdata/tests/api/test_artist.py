@@ -6,7 +6,7 @@ from mbdata.tests.api import with_client, assert_json_response_equal
 
 @with_client
 def test_artist_details(client):
-    rv = client.get('/1.0/artist/details?id=95e9aba6-f85c-48a0-9ec9-395d4f0e3875')
+    rv = client.get('/v1/artist/details?id=95e9aba6-f85c-48a0-9ec9-395d4f0e3875')
 
     expected = {
         u'response': {
@@ -33,7 +33,7 @@ def test_artist_details(client):
 
 @with_client
 def test_artist_details_va(client):
-    rv = client.get('/1.0/artist/details?id=89ad4ac3-39f7-470e-963a-56509c546377')
+    rv = client.get('/v1/artist/details?id=89ad4ac3-39f7-470e-963a-56509c546377')
 
     expected = {
         u'response': {

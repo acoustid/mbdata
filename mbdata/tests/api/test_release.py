@@ -25,13 +25,13 @@ BASE_RESPONSE = {
 
 @with_client
 def test_release_details_not_found(client):
-    rv = client.get('/1.0/release/details?id=331b6652-3faf-43e0-9ce2-0f2e76b941e8')
+    rv = client.get('/v1/release/details?id=331b6652-3faf-43e0-9ce2-0f2e76b941e8')
     assert_equal(rv.status_code, 404)
 
 
 @with_client
 def test_release_details(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149')
 
     expected = copy.deepcopy(BASE_RESPONSE)
 
@@ -40,7 +40,7 @@ def test_release_details(client):
 
 @with_client
 def test_release_details_artist_names(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artist'] = u'Trentem\xf8ller'
@@ -50,7 +50,7 @@ def test_release_details_artist_names(client):
 
 @with_client
 def test_release_details_artist_credits(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_credits')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_credits')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artists'] = [
@@ -65,13 +65,13 @@ def test_release_details_artist_credits(client):
 
 @with_client
 def test_release_details_tracks_with_artist_names_and_credits(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names&include=artist_credits')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names&include=artist_credits')
     assert_equal(rv.status_code, 400)
 
 
 @with_client
 def test_release_details_mediums(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'mediums'] = [
@@ -92,13 +92,13 @@ def test_release_details_mediums(client):
 
 @with_client
 def test_release_details_tracks_without_mediums(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=tracks')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=tracks')
     assert_equal(rv.status_code, 400)
 
 
 @with_client
 def test_release_details_tracks_and_mediums(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=tracks')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=tracks')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'mediums'] = [
@@ -271,7 +271,7 @@ def test_release_details_tracks_and_mediums(client):
 
 @with_client
 def test_release_details_tracks_and_mediums_and_artist_credits(client):
-    rv = client.get('/1.0/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=tracks&include=artist_credits')
+    rv = client.get('/v1/release/details?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=tracks&include=artist_credits')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artists'] = [
