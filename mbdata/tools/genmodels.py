@@ -3,6 +3,8 @@
 
 import re
 import sqlparse
+from sqlparse import tokens as T
+from sqlparse.sql import TokenList, Parenthesis
 from mbdata.utils.sql import CreateTable, CreateType, Set, parse_statements
 
 
@@ -166,12 +168,12 @@ def generate_models_header():
     yield '# pylint: disable=C0302'
     yield '# pylint: disable=W0232'
     yield ''
-    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, sql'
+    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, CheckConstraint, sql'
     yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
     yield 'from sqlalchemy.orm import relationship, composite, backref'
-    yield 'from mbdata.types import PartialDate, Point, Cube'
+    yield 'from mbdata.types import PartialDate, Point, Cube, regexp'
     yield ''
     yield 'Base = declarative_base()'
     yield ''
@@ -196,6 +198,81 @@ def make_type_mapper(types):
         raise ValueError('unknown type - ' + type)
 
     return inner
+
+
+def convert_expression_to_python(token):
+    if not token.is_group():
+        if token.value.upper() == 'TRUE':
+            return 'sql.true()'
+        elif token.value.upper() == 'FALSE':
+            return 'sql.false()'
+        elif token.ttype == T.Name:
+            return 'sql.literal_column({0!r})'.format(str(token.value))
+        else:
+            return 'sql.text({0!r})'.format(str(token.value))
+
+    if isinstance(token, Parenthesis):
+        return '({0})'.format(convert_expression_to_python(TokenList(token.tokens[1:-1])))
+
+    elif len(token.tokens) == 1:
+        return convert_expression_to_python(token.tokens[0])
+
+    elif len(token.tokens) == 3 and token.tokens[1].ttype == T.Comparison:
+        lhs = convert_expression_to_python(token.tokens[0])
+        rhs = convert_expression_to_python(token.tokens[2])
+        op = token.tokens[1].value
+        if op == '=':
+            op = '=='
+        return '{0} {1} {2}'.format(lhs, op, rhs)
+
+    elif len(token.tokens) == 3 and token.tokens[1].match(T.Keyword, 'IN') and isinstance(token.tokens[2], Parenthesis):
+        lhs = convert_expression_to_python(token.tokens[0])
+        rhs = [convert_expression_to_python(t) for t in token.tokens[2].tokens[1:-1] if not t.match(T.Punctuation, ',')]
+        return '{0}.in_({1!r})'.format(lhs, tuple(rhs))
+
+    elif len(token.tokens) == 4 and token.tokens[1].match(T.Comparison, '~') and token.tokens[2].match(T.Name, 'E') and token.tokens[3].ttype == T.String.Single:
+        lhs = convert_expression_to_python(token.tokens[0])
+        pattern = token.tokens[3].value.replace('\\\\', '\\')
+        return 'regexp({0}, {1})'.format(lhs, pattern)
+
+    elif len(token.tokens) == 3 and token.tokens[1].match(T.Keyword, 'IS') and token.tokens[2].match(T.Keyword, 'NULL'):
+        lhs = convert_expression_to_python(token.tokens[0])
+        return '{0} == None'.format(lhs)
+
+    elif len(token.tokens) == 3 and token.tokens[1].match(T.Keyword, 'IS') and token.tokens[2].match(T.Keyword, 'NOT NULL'):
+        lhs = convert_expression_to_python(token.tokens[0])
+        return '{0} != None'.format(lhs)
+
+    else:
+        parts = []
+        op = None
+        idx = 0
+
+        while True:
+            op_token = token.token_next_match(idx, T.Keyword, ('AND', 'OR'))
+            if op_token is None:
+                break
+            if op is None:
+                op = op_token.normalized
+            assert op == op_token.normalized
+            new_idx = token.token_index(op_token)
+            new_tokens = token.tokens[idx:new_idx]
+            if len(new_tokens) == 1:
+                parts.append(convert_expression_to_python(new_tokens[0]))
+            else:
+                parts.append(convert_expression_to_python(TokenList(new_tokens)))
+            idx = new_idx + 1
+
+        if idx == 0:
+            raise ValueError('unknown expression - {0}'.format(token))
+
+        new_tokens = token.tokens[idx:]
+        if len(new_tokens) == 1:
+            parts.append(convert_expression_to_python(new_tokens[0]))
+        else:
+            parts.append(convert_expression_to_python(TokenList(new_tokens)))
+
+        return 'sql.{0}_({1})'.format(op.lower(), ', '.join(parts))
 
 
 def generate_models_from_sql(sql):
@@ -304,12 +381,13 @@ def generate_models_from_sql(sql):
                     else:
                         column_attributes['server_default'] = 'sql.text({0!r})'.format(default)
 
-            if column.check_constraint:
-                check = column.check_constraint
-                if check.name:
-                    params.append('CheckConstraint({0!r}, name={1!r})'.format(str(check.text), str(check.name)))
-                else:
-                    params.append('CheckConstraint({0!r})'.format(str(check.text)))
+            #if column.check_constraint:
+            #    check = column.check_constraint
+            #    text = convert_expression_to_python(check.text)
+            #    if check.name:
+            #        params.append('CheckConstraint({0}, name={1!r})'.format(str(text), str(check.name)))
+            #    else:
+            #        params.append('CheckConstraint({0})'.format(str(text)))
 
             for name, value in column_attributes.iteritems():
                 params.append('{0}={1}'.format(name, value))

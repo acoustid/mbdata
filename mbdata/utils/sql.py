@@ -109,10 +109,10 @@ class CreateTableColumnCheckConstraint(TokenList):
                 continue
             if token.ttype == T.Comment.Single:
                 continue
-            if tokens and not tokens[-1].match(T.Punctuation, '(') and not token.match(T.Punctuation, ')') and not tokens[-1].value == 'E':
-                tokens.append(Token(T.Whitespace, ' '))
+            #if tokens and not tokens[-1].match(T.Punctuation, '(') and not token.match(T.Punctuation, ')') and not tokens[-1].value == 'E':
+            #    tokens.append(Token(T.Whitespace, ' '))
             tokens.append(token)
-        return TokenList(tokens)
+        return group_parentheses(tokens)
 
 
 class CreateTableColumn(TokenList):

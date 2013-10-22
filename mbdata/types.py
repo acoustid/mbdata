@@ -5,11 +5,32 @@ import re
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.dialects.postgres import UUID
 from sqlalchemy.types import UserDefinedType
+from sqlalchemy.sql.expression import ClauseElement, TextClause
 
 
 @compiles(UUID, 'sqlite')
 def visit_uuid_sqlite(element, compiler, **kwargs):
     return 'CHAR(32)'
+
+
+class regexp(ClauseElement):
+    def __init__(self, column, pattern):
+        self.column = column
+        self.pattern = TextClause(pattern)
+
+
+@compiles(regexp)
+def visit_regexp(element, compiler, **kwargs):
+    return '{0} REGEXP {1}'.format(
+        compiler.process(element.column),
+        compiler.process(element.pattern))
+
+
+@compiles(regexp, 'postgresql')
+def visit_regexp_postgresql(element, compiler, **kwargs):
+    return '{0} ~ {1}'.format(
+        compiler.process(element.column),
+        compiler.process(element.pattern))
 
 
 class PartialDate(object):

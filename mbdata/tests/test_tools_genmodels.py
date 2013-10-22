@@ -7,6 +7,7 @@ from sqlparse.sql import Token, TokenList, Parenthesis, Identifier
 from mbdata.tools.genmodels import (
     format_model_name,
     parse_create_tables_sql,
+    convert_expression_to_python,
 )
 
 
@@ -82,4 +83,89 @@ CREATE TABLE cover_art (
     assert_equals('COVER_ART_TYPE', tables[1].columns[2].type)
     assert_equals(False, tables[1].columns[2].primary_key)
     assert_equals(None, tables[1].columns[2].foreign_key)
+
+
+def test_expression_to_python_binary_op_compare():
+    sql = '''CREATE TABLE table (id SERIAL CHECK (id >= 0));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    assert_equal("sql.literal_column('id') >= sql.text('0')", convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_is_null():
+    sql = '''CREATE TABLE table (id SERIAL CHECK (id IS NULL));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    check.text._pprint_tree()
+    assert_equal("sql.literal_column('id') == None", convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_is_not_null():
+    sql = '''CREATE TABLE table (id SERIAL CHECK (id IS NOT NULL));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    check.text._pprint_tree()
+    assert_equal("sql.literal_column('id') != None", convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_nested_op():
+    sql = '''CREATE TABLE table (id SERIAL CHECK (((a IS NOT NULL OR b IS NOT NULL) AND c = TRUE) OR ((a IS NULL AND a IS NULL))));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    expected = "sql.or_((sql.and_((sql.or_(sql.literal_column('a') != None, sql.literal_column('b') != None)), sql.literal_column('c') == sql.true())), ((sql.and_(sql.literal_column('a') == None, sql.literal_column('a') == None))))"
+    assert_equal(expected, convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_special_name():
+    sql = '''CREATE TABLE table (length INTEGER CHECK (length IS NULL OR length > 0));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    check.text._pprint_tree()
+    expected = "sql.or_(sql.text('length') == None, sql.text('length') > sql.text('0'))"
+    assert_equal(expected, convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_special_name_2():
+    sql = '''CREATE TABLE table (date DATE NOT NULL CHECK (date >= '2000-01-01'));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    check.text._pprint_tree()
+    expected = "sql.text('date') >= sql.text('2000-01-01')"
+    assert_equal(expected, convert_expression_to_python(check.text))
+
+
+def test_expression_to_python_regex_op():
+    sql = '''CREATE TABLE table (id SERIAL CHECK (id ~ E'^\\\\d{11}$'));'''
+    types, tables = parse_create_tables_sql(sql)
+
+    assert_equal(1, len(tables))
+    assert_equal(1, len(tables[0].columns))
+    check = tables[0].columns[0].check_constraint
+
+    expected = "regexp(sql.literal_column('id'), '^\\d{11}$')"
+    assert_equal(expected, convert_expression_to_python(check.text))
 
