@@ -44,6 +44,13 @@ def format_model_name(table_name):
     return str(''.join([capitalize(word) for word in words]))
 
 
+class CheckConstraint(object):
+
+    def __init__(self, text, name=None):
+        self.text = text
+        self.name = name
+
+
 class ForeignKey(object):
 
     def __init__(self, schema, table, column, cascade=False):
@@ -55,13 +62,14 @@ class ForeignKey(object):
 
 class Column(object):
 
-    def __init__(self, name, type, nullable=True, default=None, primary_key=False, foreign_key=None):
+    def __init__(self, name, type, nullable=True, default=None, primary_key=False, foreign_key=None, check_constraint=None):
         self.name = name
         self.type = type
         self.nullable = nullable
         self.default = default
         self.primary_key = primary_key
         self.foreign_key = foreign_key
+        self.check_constraint = check_constraint
 
 
 class Table(object):
@@ -110,6 +118,10 @@ def parse_create_table_column(clause, schema):
             column.foreign_key = ForeignKey(*split_fqn(match.group(2), schema))
             if match.group(3) == 'CASCADE':
                 column.foreign_key.cascade = True
+
+    check = clause.get_check_constraint()
+    if check is not None:
+        column.check_constraint = CheckConstraint(check.get_body(), check.get_name())
 
     return column
 
@@ -291,6 +303,13 @@ def generate_models_from_sql(sql):
                         column_attributes['server_default'] = 'sql.{0}()'.format(default)
                     else:
                         column_attributes['server_default'] = 'sql.text({0!r})'.format(default)
+
+            if column.check_constraint:
+                check = column.check_constraint
+                if check.name:
+                    params.append('CheckConstraint({0!r}, name={1!r})'.format(str(check.text), str(check.name)))
+                else:
+                    params.append('CheckConstraint({0!r})'.format(str(check.text)))
 
             for name, value in column_attributes.iteritems():
                 params.append('{0}={1}'.format(name, value))

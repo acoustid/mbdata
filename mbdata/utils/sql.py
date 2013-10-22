@@ -4,7 +4,7 @@
 import re
 import sqlparse
 from sqlparse import tokens as T
-from sqlparse.sql import TokenList, Parenthesis, Statement
+from sqlparse.sql import Token, TokenList, Parenthesis, Statement
 
 
 def group_parentheses(tokens):
@@ -88,6 +88,33 @@ class CreateTable(Statement):
                         yield sub_token
 
 
+class CreateTableColumnCheckConstraint(TokenList):
+
+    def get_name(self):
+        constraint_token = self.token_next_match(0, T.Keyword, 'CONSTRAINT')
+        if constraint_token is not None:
+            name_token = self.token_next(constraint_token)
+            if name_token is not None:
+                return name_token.value
+
+    def _get_body_tokens(self):
+        body_token = self.token_next_by_instance(0, Parenthesis)
+        if body_token is not None:
+            return TokenList(body_token.tokens[1:-1])
+
+    def get_body(self):
+        tokens = []
+        for token in self._get_body_tokens().flatten():
+            if token.is_whitespace():
+                continue
+            if token.ttype == T.Comment.Single:
+                continue
+            if tokens and not tokens[-1].match(T.Punctuation, '(') and not token.match(T.Punctuation, ')') and not tokens[-1].value == 'E':
+                tokens.append(Token(T.Whitespace, ' '))
+            tokens.append(token)
+        return TokenList(tokens)
+
+
 class CreateTableColumn(TokenList):
 
     def get_name(self):
@@ -155,6 +182,27 @@ class CreateTableColumn(TokenList):
         if token is None:
             return False
         return True
+
+    def get_check_constraint(self):
+        check_token = self.token_next_match(0, T.Keyword, 'CHECK')
+        if check_token is None:
+            return None
+
+        tokens = []
+
+        constraint_name_token = self.token_prev(check_token)
+        if constraint_name_token is not None:
+            constraint_token = self.token_prev(constraint_name_token)
+            if constraint_token is not None and constraint_token.normalized == 'CONSTRAINT':
+                tokens.append(constraint_token)
+                tokens.append(constraint_name_token)
+
+        tokens.append(check_token)
+
+        body_token = self.token_next(check_token)
+        tokens.append(body_token)
+
+        return self.group_tokens(CreateTableColumnCheckConstraint, tokens)
 
 
 class CreateType(Statement):

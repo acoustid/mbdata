@@ -145,21 +145,57 @@ CREATE TABLE table_name (
     columns = list(statement.get_columns())
     assert_equals(3, len(columns))
 
-    assert_equals('id', columns[0].get_name())
-    assert_equals('SERIAL', columns[0].get_type())
-    assert_equals(None, columns[0].get_default_value())
-    assert_equals(['-- PK'], columns[0].get_comments())
-    assert_equals(False, columns[0].is_not_null())
+    column = columns[0]
+    assert_equals('id', column.get_name())
+    assert_equals('SERIAL', column.get_type())
+    assert_equals(None, column.get_default_value())
+    assert_equals(['-- PK'], column.get_comments())
+    assert_equals(False, column.is_not_null())
+    assert_equals(None, column.get_check_constraint())
 
-    assert_equals('name', columns[1].get_name())
-    assert_equals('VARCHAR(100)', columns[1].get_type())
-    assert_equals(None, columns[1].get_default_value())
-    assert_equals([], columns[1].get_comments())
-    assert_equals(True, columns[1].is_not_null())
+    column = columns[1]
+    assert_equals('name', column.get_name())
+    assert_equals('VARCHAR(100)', column.get_type())
+    assert_equals(None, column.get_default_value())
+    assert_equals([], column.get_comments())
+    assert_equals(True, column.is_not_null())
+    assert_equals(None, column.get_check_constraint())
 
-    assert_equals('created', columns[2].get_name())
-    assert_equals('TIMESTAMP WITH TIME ZONE', columns[2].get_type())
-    assert_equals('now()', columns[2].get_default_value())
-    assert_equals([], columns[2].get_comments())
-    assert_equals(True, columns[2].is_not_null())
+    column = columns[2]
+    assert_equals('created', column.get_name())
+    assert_equals('TIMESTAMP WITH TIME ZONE', column.get_type())
+    assert_equals('now()', column.get_default_value())
+    assert_equals([], column.get_comments())
+    assert_equals(True, column.is_not_null())
+    assert_equals(None, column.get_check_constraint())
+
+
+def test_create_table_statement_check_constraint():
+    sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CHECK (edits_pending > 0)); '''
+    statement = parse_statements(sqlparse.parse(sql)).next()
+
+    assert_is_instance(statement, CreateTable)
+    columns = list(statement.get_columns())
+    assert_equal(1, len(columns))
+
+    column = columns[0]
+    check = column.get_check_constraint()
+    assert_true(check)
+    assert_equal(None, check.get_name())
+    assert_equal('edits_pending > 0', str(check.get_body()))
+
+
+def test_create_table_statement_named_check_constraint():
+    sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CONSTRAINT check_column CHECK (edits_pending > 0)); '''
+    statement = parse_statements(sqlparse.parse(sql)).next()
+
+    assert_is_instance(statement, CreateTable)
+    columns = list(statement.get_columns())
+    assert_equal(1, len(columns))
+
+    column = columns[0]
+    check = column.get_check_constraint()
+    assert_true(check)
+    assert_equal('check_column', check.get_name())
+    assert_equal('edits_pending > 0', str(check.get_body()))
 
