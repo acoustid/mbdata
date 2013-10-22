@@ -7,12 +7,16 @@ import unicodedata
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.collections import InstrumentedList
-from mbdata.models import Release, ReleaseGroup
+from mbdata.models import Release, ReleaseGroup, Place
 
 
 RELEASE_GIDS = [
     '89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149',
     '7643ee96-fe19-4b76-aa9a-e8af7d0e9d73',
+]
+
+PLACE_GIDS = [
+    'bd55aeb7-19d1-4607-a500-14b8479d3fed', # Abbey Road Studios
 ]
 
 
@@ -90,7 +94,7 @@ def find_name(output, names, obj):
             continue
         code.append('{0}.{1} = {2}'.format(name, attr.key, dump_value(value)))
 
-    for attr in mapper.relationships:
+    for attr in sorted(mapper.relationships, key=lambda attr: attr.key):
         value = getattr(obj, attr.key, None)
         if value is None:
             continue
@@ -124,9 +128,13 @@ def dump_sample_data(session):
     output = []
     names = {}
 
-    releases = session.query(Release).filter(Release.gid.in_(RELEASE_GIDS))
-    for release in releases:
-        find_name(output, names, release)
+    queries = [
+        session.query(Release).filter(Release.gid.in_(RELEASE_GIDS)),
+        session.query(Place).filter(Place.gid.in_(PLACE_GIDS)),
+    ]
+    for query in queries:
+        for item in query:
+            find_name(output, names, item)
 
     print 'import datetime'
     models_to_import = list(sorted(models))

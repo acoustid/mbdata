@@ -2,18 +2,13 @@ import datetime
 from mbdata.models import Area, AreaType, Artist, ArtistCredit, ArtistCreditName
 from mbdata.models import ArtistIPI, ArtistISNI, ArtistMeta, ArtistType, CountryArea
 from mbdata.models import Gender, Label, LabelMeta, LabelType, Language
-from mbdata.models import Medium, MediumFormat, Recording, RecordingMeta, Release
-from mbdata.models import ReleaseCountry, ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType
-from mbdata.models import ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus
-from mbdata.models import Script, Track
+from mbdata.models import Medium, MediumFormat, Place, PlaceType, Recording
+from mbdata.models import RecordingMeta, Release, ReleaseCountry, ReleaseGroup, ReleaseGroupMeta
+from mbdata.models import ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta
+from mbdata.models import ReleasePackaging, ReleaseStatus, Script, Track
 
 
 def create_sample_data(session):
-    artisttype_person = ArtistType()
-    artisttype_person.id = 1
-    artisttype_person.name = u'Person'
-    session.add(artisttype_person)
-
     areatype_country = AreaType()
     areatype_country.id = 1
     areatype_country.name = u'Country'
@@ -30,11 +25,6 @@ def create_sample_data(session):
     area_denmark.comment = u''
     area_denmark.type = areatype_country
     session.add(area_denmark)
-
-    gender_male = Gender()
-    gender_male.id = 1
-    gender_male.name = u'Male'
-    session.add(gender_male)
 
     areatype_municipality = AreaType()
     areatype_municipality.id = 4
@@ -53,22 +43,32 @@ def create_sample_data(session):
     area_vordingborg_municipality.type = areatype_municipality
     session.add(area_vordingborg_municipality)
 
+    gender_male = Gender()
+    gender_male.id = 1
+    gender_male.name = u'Male'
+    session.add(gender_male)
+
     artistipi_1 = ArtistIPI()
     artistipi_1.ipi = u'00054968649'
     artistipi_1.edits_pending = 0
     artistipi_1.created = datetime.datetime(2013, 10, 2, 18, 0, 12, 326623)
     session.add(artistipi_1)
 
-    artistmeta_1 = ArtistMeta()
-    artistmeta_1.rating = 100
-    artistmeta_1.rating_count = 2
-    session.add(artistmeta_1)
-
     artistisni_1 = ArtistISNI()
     artistisni_1.isni = u'0000000117742762'
     artistisni_1.edits_pending = 0
     artistisni_1.created = datetime.datetime(2013, 8, 4, 3, 48, 1, 946612)
     session.add(artistisni_1)
+
+    artistmeta_1 = ArtistMeta()
+    artistmeta_1.rating = 100
+    artistmeta_1.rating_count = 2
+    session.add(artistmeta_1)
+
+    artisttype_person = ArtistType()
+    artisttype_person.id = 1
+    artisttype_person.name = u'Person'
+    session.add(artisttype_person)
 
     artist_trentemoller = Artist()
     artist_trentemoller.id = 108703
@@ -82,17 +82,17 @@ def create_sample_data(session):
     artist_trentemoller.edits_pending = 0
     artist_trentemoller.last_updated = datetime.datetime(2013, 10, 2, 18, 0, 12, 326623)
     artist_trentemoller.ended = False
-    artist_trentemoller.type = artisttype_person
     artist_trentemoller.area = area_denmark
-    artist_trentemoller.gender = gender_male
     artist_trentemoller.begin_area = area_vordingborg_municipality
+    artist_trentemoller.gender = gender_male
     artist_trentemoller.ipis = [
         artistipi_1,
     ]
-    artist_trentemoller.meta = artistmeta_1
     artist_trentemoller.isnis = [
         artistisni_1,
     ]
+    artist_trentemoller.meta = artistmeta_1
+    artist_trentemoller.type = artisttype_person
     session.add(artist_trentemoller)
 
     artistcreditname_trentemoller = ArtistCreditName()
@@ -112,68 +112,6 @@ def create_sample_data(session):
         artistcreditname_trentemoller,
     ]
     session.add(artistcredit_trentemoller)
-
-    releasegroupprimarytype_album = ReleaseGroupPrimaryType()
-    releasegroupprimarytype_album.id = 1
-    releasegroupprimarytype_album.name = u'Album'
-    session.add(releasegroupprimarytype_album)
-
-    releasegroupsecondarytype_compilation = ReleaseGroupSecondaryType()
-    releasegroupsecondarytype_compilation.id = 1
-    releasegroupsecondarytype_compilation.name = u'Compilation'
-    session.add(releasegroupsecondarytype_compilation)
-
-    releasegroupsecondarytypejoin_1 = ReleaseGroupSecondaryTypeJoin()
-    releasegroupsecondarytypejoin_1.created = datetime.datetime(2012, 5, 15, 2, 0)
-    releasegroupsecondarytypejoin_1.secondary_type = releasegroupsecondarytype_compilation
-    session.add(releasegroupsecondarytypejoin_1)
-
-    releasegroupmeta_1 = ReleaseGroupMeta()
-    releasegroupmeta_1.release_count = 1
-    releasegroupmeta_1.first_release_date_year = 2007
-    releasegroupmeta_1.first_release_date_month = 3
-    releasegroupmeta_1.first_release_date_day = 23
-    releasegroupmeta_1.rating = 40
-    releasegroupmeta_1.rating_count = 1
-    session.add(releasegroupmeta_1)
-
-    releasegroup_trentemoller_the_polar_mix = ReleaseGroup()
-    releasegroup_trentemoller_the_polar_mix.id = 633232
-    releasegroup_trentemoller_the_polar_mix.gid = 'baca4e84-aa67-3ef9-adbe-0dfebe7b6a82'
-    releasegroup_trentemoller_the_polar_mix.name = u'Trentem\xf8ller: The P\xf8lar Mix'
-    releasegroup_trentemoller_the_polar_mix.comment = u''
-    releasegroup_trentemoller_the_polar_mix.edits_pending = 0
-    releasegroup_trentemoller_the_polar_mix.last_updated = datetime.datetime(2012, 5, 15, 21, 1, 58, 718541)
-    releasegroup_trentemoller_the_polar_mix.artist_credit = artistcredit_trentemoller
-    releasegroup_trentemoller_the_polar_mix.type = releasegroupprimarytype_album
-    releasegroup_trentemoller_the_polar_mix.secondary_types = [
-        releasegroupsecondarytypejoin_1,
-    ]
-    releasegroup_trentemoller_the_polar_mix.meta = releasegroupmeta_1
-    session.add(releasegroup_trentemoller_the_polar_mix)
-
-    releasestatus_promotion = ReleaseStatus()
-    releasestatus_promotion.id = 2
-    releasestatus_promotion.name = u'Promotion'
-    session.add(releasestatus_promotion)
-
-    language_english = Language()
-    language_english.id = 120
-    language_english.iso_code_2t = u'eng'
-    language_english.iso_code_2b = u'eng'
-    language_english.iso_code_1 = u'en'
-    language_english.name = u'English'
-    language_english.frequency = 2
-    language_english.iso_code_3 = u'eng'
-    session.add(language_english)
-
-    script_latin = Script()
-    script_latin.id = 28
-    script_latin.iso_code = u'Latn'
-    script_latin.iso_number = u'215'
-    script_latin.name = u'Latin'
-    script_latin.frequency = 4
-    session.add(script_latin)
 
     area_united_kingdom = Area()
     area_united_kingdom.id = 221
@@ -197,6 +135,44 @@ def create_sample_data(session):
     releasecountry_1.date_day = 23
     releasecountry_1.country = countryarea_1
     session.add(releasecountry_1)
+
+    labelmeta_1 = LabelMeta()
+    session.add(labelmeta_1)
+
+    labeltype_production = LabelType()
+    labeltype_production.id = 3
+    labeltype_production.name = u'Production'
+    session.add(labeltype_production)
+
+    label_king_biscuit_recordings = Label()
+    label_king_biscuit_recordings.id = 9000
+    label_king_biscuit_recordings.gid = 'aefbe2a5-76d6-4c99-a51d-f9214fe1018b'
+    label_king_biscuit_recordings.name = u'King Biscuit Recordings'
+    label_king_biscuit_recordings.sort_name = u'King Biscuit Recordings'
+    label_king_biscuit_recordings.comment = u''
+    label_king_biscuit_recordings.edits_pending = 0
+    label_king_biscuit_recordings.ended = False
+    label_king_biscuit_recordings.area = area_united_kingdom
+    label_king_biscuit_recordings.meta = labelmeta_1
+    label_king_biscuit_recordings.type = labeltype_production
+    session.add(label_king_biscuit_recordings)
+
+    releaselabel_1 = ReleaseLabel()
+    releaselabel_1.id = 213807
+    releaselabel_1.catalog_number = u'KBCD109'
+    releaselabel_1.last_updated = datetime.datetime(2011, 5, 16, 17, 59, 0, 785958)
+    releaselabel_1.label = label_king_biscuit_recordings
+    session.add(releaselabel_1)
+
+    language_english = Language()
+    language_english.id = 120
+    language_english.iso_code_2t = u'eng'
+    language_english.iso_code_2b = u'eng'
+    language_english.iso_code_1 = u'en'
+    language_english.name = u'English'
+    language_english.frequency = 2
+    language_english.iso_code_3 = u'eng'
+    session.add(language_english)
 
     mediumformat_hdcd = MediumFormat()
     mediumformat_hdcd.id = 25
@@ -257,8 +233,8 @@ def create_sample_data(session):
     track_small_piano_piece.length = 176333
     track_small_piano_piece.edits_pending = 0
     track_small_piano_piece.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_small_piano_piece.recording = recording_small_piano_piece
     track_small_piano_piece.artist_credit = artistcredit_trentemoller
+    track_small_piano_piece.recording = recording_small_piano_piece
     session.add(track_small_piano_piece)
 
     artistmeta_2 = ArtistMeta()
@@ -272,8 +248,8 @@ def create_sample_data(session):
     artist_khan.comment = u'IDM artist Can Oral'
     artist_khan.edits_pending = 0
     artist_khan.ended = False
-    artist_khan.type = artisttype_person
     artist_khan.meta = artistmeta_2
+    artist_khan.type = artisttype_person
     session.add(artist_khan)
 
     artistcreditname_khan = ArtistCreditName()
@@ -318,8 +294,8 @@ def create_sample_data(session):
     track_fantomes.length = 262720
     track_fantomes.edits_pending = 0
     track_fantomes.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_fantomes.recording = recording_fantomes
     track_fantomes.artist_credit = artistcredit_khan
+    track_fantomes.recording = recording_fantomes
     session.add(track_fantomes)
 
     recordingmeta_3 = RecordingMeta()
@@ -346,8 +322,8 @@ def create_sample_data(session):
     track_the_very_last_resort.length = 439146
     track_the_very_last_resort.edits_pending = 0
     track_the_very_last_resort.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_the_very_last_resort.recording = recording_the_very_last_resort
     track_the_very_last_resort.artist_credit = artistcredit_trentemoller
+    track_the_very_last_resort.recording = recording_the_very_last_resort
     session.add(track_the_very_last_resort)
 
     recordingmeta_4 = RecordingMeta()
@@ -374,8 +350,8 @@ def create_sample_data(session):
     track_miss_you.length = 230000
     track_miss_you.edits_pending = 0
     track_miss_you.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_miss_you.recording = recording_miss_you
     track_miss_you.artist_credit = artistcredit_trentemoller
+    track_miss_you.recording = recording_miss_you
     session.add(track_miss_you)
 
     area_united_states = Area()
@@ -389,11 +365,6 @@ def create_sample_data(session):
     area_united_states.comment = u''
     area_united_states.type = areatype_country
     session.add(area_united_states)
-
-    gender_female = Gender()
-    gender_female.id = 2
-    gender_female.name = u'Female'
-    session.add(gender_female)
 
     areatype_subdivision = AreaType()
     areatype_subdivision.id = 2
@@ -429,6 +400,11 @@ def create_sample_data(session):
     area_montreal.type = areatype_city
     session.add(area_montreal)
 
+    gender_female = Gender()
+    gender_female.id = 2
+    gender_female.name = u'Female'
+    session.add(gender_female)
+
     artistmeta_3 = ArtistMeta()
     artistmeta_3.rating = 80
     artistmeta_3.rating_count = 2
@@ -449,12 +425,12 @@ def create_sample_data(session):
     artist_lhasa.edits_pending = 0
     artist_lhasa.last_updated = datetime.datetime(2013, 6, 7, 6, 6, 30, 835699)
     artist_lhasa.ended = True
-    artist_lhasa.type = artisttype_person
     artist_lhasa.area = area_united_states
-    artist_lhasa.gender = gender_female
     artist_lhasa.begin_area = area_new_york
     artist_lhasa.end_area = area_montreal
+    artist_lhasa.gender = gender_female
     artist_lhasa.meta = artistmeta_3
+    artist_lhasa.type = artisttype_person
     session.add(artist_lhasa)
 
     artistcreditname_lhasa = ArtistCreditName()
@@ -500,8 +476,8 @@ def create_sample_data(session):
     track_de_carla_a_pered.length = 207346
     track_de_carla_a_pered.edits_pending = 0
     track_de_carla_a_pered.last_updated = datetime.datetime(2012, 4, 11, 2, 0, 11, 85366)
-    track_de_carla_a_pered.recording = recording_de_carla_a_pered
     track_de_carla_a_pered.artist_credit = artistcredit_lhasa
+    track_de_carla_a_pered.recording = recording_de_carla_a_pered
     session.add(track_de_carla_a_pered)
 
     area_mexico = Area()
@@ -531,10 +507,10 @@ def create_sample_data(session):
     artist_murcof.edits_pending = 0
     artist_murcof.last_updated = datetime.datetime(2011, 5, 23, 0, 58, 8, 421516)
     artist_murcof.ended = False
-    artist_murcof.type = artisttype_person
     artist_murcof.area = area_mexico
     artist_murcof.gender = gender_male
     artist_murcof.meta = artistmeta_4
+    artist_murcof.type = artisttype_person
     session.add(artist_murcof)
 
     artistcreditname_murcof = ArtistCreditName()
@@ -579,8 +555,8 @@ def create_sample_data(session):
     track_una.length = 271200
     track_una.edits_pending = 0
     track_una.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_una.recording = recording_una
     track_una.artist_credit = artistcredit_murcof
+    track_una.recording = recording_una
     session.add(track_una)
 
     recordingmeta_7 = RecordingMeta()
@@ -607,14 +583,9 @@ def create_sample_data(session):
     track_snowflake.length = 447026
     track_snowflake.edits_pending = 0
     track_snowflake.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_snowflake.recording = recording_snowflake
     track_snowflake.artist_credit = artistcredit_trentemoller
+    track_snowflake.recording = recording_snowflake
     session.add(track_snowflake)
-
-    artisttype_group = ArtistType()
-    artisttype_group.id = 2
-    artisttype_group.name = u'Group'
-    session.add(artisttype_group)
 
     area_jamaica = Area()
     area_jamaica.id = 106
@@ -631,6 +602,11 @@ def create_sample_data(session):
     artistmeta_5 = ArtistMeta()
     session.add(artistmeta_5)
 
+    artisttype_group = ArtistType()
+    artisttype_group.id = 2
+    artisttype_group.name = u'Group'
+    session.add(artisttype_group)
+
     artist_the_crystalites = Artist()
     artist_the_crystalites.id = 134514
     artist_the_crystalites.gid = '41ee41ff-cec6-46a6-8e67-5991a8ebc2ed'
@@ -640,9 +616,9 @@ def create_sample_data(session):
     artist_the_crystalites.edits_pending = 0
     artist_the_crystalites.last_updated = datetime.datetime(2011, 8, 10, 9, 0, 11, 778408)
     artist_the_crystalites.ended = False
-    artist_the_crystalites.type = artisttype_group
     artist_the_crystalites.area = area_jamaica
     artist_the_crystalites.meta = artistmeta_5
+    artist_the_crystalites.type = artisttype_group
     session.add(artist_the_crystalites)
 
     artistcreditname_the_crystalites = ArtistCreditName()
@@ -687,8 +663,8 @@ def create_sample_data(session):
     track_concentration_version_3.length = 202746
     track_concentration_version_3.edits_pending = 0
     track_concentration_version_3.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_concentration_version_3.recording = recording_concentration_version_3
     track_concentration_version_3.artist_credit = artistcredit_the_crystalites
+    track_concentration_version_3.recording = recording_concentration_version_3
     session.add(track_concentration_version_3)
 
     recordingmeta_9 = RecordingMeta()
@@ -715,8 +691,8 @@ def create_sample_data(session):
     track_evil_dub.length = 302813
     track_evil_dub.edits_pending = 0
     track_evil_dub.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_evil_dub.recording = recording_evil_dub
     track_evil_dub.artist_credit = artistcredit_trentemoller
+    track_evil_dub.recording = recording_evil_dub
     session.add(track_evil_dub)
 
     area_coventry = Area()
@@ -731,16 +707,16 @@ def create_sample_data(session):
     area_coventry.type = areatype_subdivision
     session.add(area_coventry)
 
-    artistmeta_6 = ArtistMeta()
-    artistmeta_6.rating = 80
-    artistmeta_6.rating_count = 2
-    session.add(artistmeta_6)
-
     artistisni_2 = ArtistISNI()
     artistisni_2.isni = u'0000000122859471'
     artistisni_2.edits_pending = 0
     artistisni_2.created = datetime.datetime(2013, 5, 26, 12, 0, 11, 791620)
     session.add(artistisni_2)
+
+    artistmeta_6 = ArtistMeta()
+    artistmeta_6.rating = 80
+    artistmeta_6.rating_count = 2
+    session.add(artistmeta_6)
 
     artist_the_specials = Artist()
     artist_the_specials.id = 11619
@@ -752,13 +728,13 @@ def create_sample_data(session):
     artist_the_specials.edits_pending = 0
     artist_the_specials.last_updated = datetime.datetime(2013, 10, 11, 18, 0, 23, 807561)
     artist_the_specials.ended = False
-    artist_the_specials.type = artisttype_group
     artist_the_specials.area = area_united_kingdom
     artist_the_specials.begin_area = area_coventry
-    artist_the_specials.meta = artistmeta_6
     artist_the_specials.isnis = [
         artistisni_2,
     ]
+    artist_the_specials.meta = artistmeta_6
+    artist_the_specials.type = artisttype_group
     session.add(artist_the_specials)
 
     artistcreditname_the_specials = ArtistCreditName()
@@ -803,8 +779,8 @@ def create_sample_data(session):
     track_ghost_town.length = 311986
     track_ghost_town.edits_pending = 0
     track_ghost_town.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_ghost_town.recording = recording_ghost_town
     track_ghost_town.artist_credit = artistcredit_the_specials
+    track_ghost_town.recording = recording_ghost_town
     session.add(track_ghost_town)
 
     artistmeta_7 = ArtistMeta()
@@ -818,8 +794,8 @@ def create_sample_data(session):
     artist_businessman.comment = u''
     artist_businessman.edits_pending = 0
     artist_businessman.ended = False
-    artist_businessman.type = artisttype_person
     artist_businessman.meta = artistmeta_7
+    artist_businessman.type = artisttype_person
     session.add(artist_businessman)
 
     artistcreditname_businessman = ArtistCreditName()
@@ -864,8 +840,8 @@ def create_sample_data(session):
     track_dubby_games.length = 286213
     track_dubby_games.edits_pending = 0
     track_dubby_games.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_dubby_games.recording = recording_dubby_games
     track_dubby_games.artist_credit = artistcredit_businessman
+    track_dubby_games.recording = recording_dubby_games
     session.add(track_dubby_games)
 
     recordingmeta_12 = RecordingMeta()
@@ -892,8 +868,8 @@ def create_sample_data(session):
     track_nightwalker.length = 267186
     track_nightwalker.edits_pending = 0
     track_nightwalker.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_nightwalker.recording = recording_nightwalker
     track_nightwalker.artist_credit = artistcredit_trentemoller
+    track_nightwalker.recording = recording_nightwalker
     session.add(track_nightwalker)
 
     medium_1 = Medium()
@@ -943,8 +919,8 @@ def create_sample_data(session):
     track_moan_feat_ane_trolle.length = 408480
     track_moan_feat_ane_trolle.edits_pending = 0
     track_moan_feat_ane_trolle.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_moan_feat_ane_trolle.recording = recording_moan_feat_ane_trolle
     track_moan_feat_ane_trolle.artist_credit = artistcredit_trentemoller
+    track_moan_feat_ane_trolle.recording = recording_moan_feat_ane_trolle
     session.add(track_moan_feat_ane_trolle)
 
     area_los_angeles = Area()
@@ -959,16 +935,16 @@ def create_sample_data(session):
     area_los_angeles.type = areatype_city
     session.add(area_los_angeles)
 
-    artistmeta_8 = ArtistMeta()
-    artistmeta_8.rating = 85
-    artistmeta_8.rating_count = 16
-    session.add(artistmeta_8)
-
     artistisni_3 = ArtistISNI()
     artistisni_3.isni = u'0000000115160232'
     artistisni_3.edits_pending = 0
     artistisni_3.created = datetime.datetime(2013, 7, 24, 5, 45, 1, 534835)
     session.add(artistisni_3)
+
+    artistmeta_8 = ArtistMeta()
+    artistmeta_8.rating = 85
+    artistmeta_8.rating_count = 16
+    session.add(artistmeta_8)
 
     artist_the_doors = Artist()
     artist_the_doors.id = 1757
@@ -981,13 +957,13 @@ def create_sample_data(session):
     artist_the_doors.edits_pending = 0
     artist_the_doors.last_updated = datetime.datetime(2013, 7, 24, 5, 45, 1, 534835)
     artist_the_doors.ended = True
-    artist_the_doors.type = artisttype_group
     artist_the_doors.area = area_united_states
     artist_the_doors.begin_area = area_los_angeles
-    artist_the_doors.meta = artistmeta_8
     artist_the_doors.isnis = [
         artistisni_3,
     ]
+    artist_the_doors.meta = artistmeta_8
+    artist_the_doors.type = artisttype_group
     session.add(artist_the_doors)
 
     artistcreditname_the_doors = ArtistCreditName()
@@ -1032,8 +1008,8 @@ def create_sample_data(session):
     track_break_on_through_dark_ride_dub_mix.length = 288960
     track_break_on_through_dark_ride_dub_mix.edits_pending = 0
     track_break_on_through_dark_ride_dub_mix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_break_on_through_dark_ride_dub_mix.recording = recording_break_on_through_dark_ride_dub_mix
     track_break_on_through_dark_ride_dub_mix.artist_credit = artistcredit_the_doors
+    track_break_on_through_dark_ride_dub_mix.recording = recording_break_on_through_dark_ride_dub_mix
     session.add(track_break_on_through_dark_ride_dub_mix)
 
     area_glasgow = Area()
@@ -1063,10 +1039,10 @@ def create_sample_data(session):
     artist_franz_ferdinand.edits_pending = 0
     artist_franz_ferdinand.last_updated = datetime.datetime(2013, 6, 16, 0, 24, 22, 502874)
     artist_franz_ferdinand.ended = False
-    artist_franz_ferdinand.type = artisttype_group
     artist_franz_ferdinand.area = area_united_kingdom
     artist_franz_ferdinand.begin_area = area_glasgow
     artist_franz_ferdinand.meta = artistmeta_9
+    artist_franz_ferdinand.type = artisttype_group
     session.add(artist_franz_ferdinand)
 
     artistcreditname_franz_ferdinand = ArtistCreditName()
@@ -1111,8 +1087,8 @@ def create_sample_data(session):
     track_the_fallen_justice_remix.length = 97973
     track_the_fallen_justice_remix.edits_pending = 0
     track_the_fallen_justice_remix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_the_fallen_justice_remix.recording = recording_the_fallen_justice_remix
     track_the_fallen_justice_remix.artist_credit = artistcredit_franz_ferdinand
+    track_the_fallen_justice_remix.recording = recording_the_fallen_justice_remix
     session.add(track_the_fallen_justice_remix)
 
     area_new_york_1 = Area()
@@ -1140,10 +1116,10 @@ def create_sample_data(session):
     artist_le_tigre.edits_pending = 0
     artist_le_tigre.last_updated = datetime.datetime(2013, 7, 26, 11, 14, 16, 631116)
     artist_le_tigre.ended = False
-    artist_le_tigre.type = artisttype_group
     artist_le_tigre.area = area_united_states
     artist_le_tigre.begin_area = area_new_york_1
     artist_le_tigre.meta = artistmeta_10
+    artist_le_tigre.type = artisttype_group
     session.add(artist_le_tigre)
 
     artistcreditname_le_tigre = ArtistCreditName()
@@ -1188,8 +1164,8 @@ def create_sample_data(session):
     track_nanny_nanny_boo_boo_junior_senior_remix.length = 149506
     track_nanny_nanny_boo_boo_junior_senior_remix.edits_pending = 0
     track_nanny_nanny_boo_boo_junior_senior_remix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_nanny_nanny_boo_boo_junior_senior_remix.recording = recording_nanny_nanny_boo_boo_junior_senior_remix
     track_nanny_nanny_boo_boo_junior_senior_remix.artist_credit = artistcredit_le_tigre
+    track_nanny_nanny_boo_boo_junior_senior_remix.recording = recording_nanny_nanny_boo_boo_junior_senior_remix
     session.add(track_nanny_nanny_boo_boo_junior_senior_remix)
 
     artistmeta_11 = ArtistMeta()
@@ -1204,8 +1180,8 @@ def create_sample_data(session):
     artist_james_white_and_the_blacks.edits_pending = 0
     artist_james_white_and_the_blacks.last_updated = datetime.datetime(2010, 7, 25, 6, 44, 13, 723447)
     artist_james_white_and_the_blacks.ended = False
-    artist_james_white_and_the_blacks.type = artisttype_group
     artist_james_white_and_the_blacks.meta = artistmeta_11
+    artist_james_white_and_the_blacks.type = artisttype_group
     session.add(artist_james_white_and_the_blacks)
 
     artistcreditname_james_white_and_the_blacks = ArtistCreditName()
@@ -1250,8 +1226,8 @@ def create_sample_data(session):
     track_contort_yourself.length = 153226
     track_contort_yourself.edits_pending = 0
     track_contort_yourself.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_contort_yourself.recording = recording_contort_yourself
     track_contort_yourself.artist_credit = artistcredit_james_white_and_the_blacks
+    track_contort_yourself.recording = recording_contort_yourself
     session.add(track_contort_yourself)
 
     area_sweden = Area()
@@ -1278,9 +1254,9 @@ def create_sample_data(session):
     artist_revl9n.edits_pending = 0
     artist_revl9n.last_updated = datetime.datetime(2011, 12, 6, 21, 27, 11, 764329)
     artist_revl9n.ended = False
-    artist_revl9n.type = artisttype_group
     artist_revl9n.area = area_sweden
     artist_revl9n.meta = artistmeta_12
+    artist_revl9n.type = artisttype_group
     session.add(artist_revl9n)
 
     artistcreditname_revl9n = ArtistCreditName()
@@ -1325,8 +1301,8 @@ def create_sample_data(session):
     track_someone_like_you.length = 149373
     track_someone_like_you.edits_pending = 0
     track_someone_like_you.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_someone_like_you.recording = recording_someone_like_you
     track_someone_like_you.artist_credit = artistcredit_revl9n
+    track_someone_like_you.recording = recording_someone_like_you
     session.add(track_someone_like_you)
 
     area_germany = Area()
@@ -1355,10 +1331,10 @@ def create_sample_data(session):
     artist_thomas_schumacher.edits_pending = 0
     artist_thomas_schumacher.last_updated = datetime.datetime(2011, 6, 17, 16, 28, 33, 602591)
     artist_thomas_schumacher.ended = False
-    artist_thomas_schumacher.type = artisttype_person
     artist_thomas_schumacher.area = area_germany
     artist_thomas_schumacher.gender = gender_male
     artist_thomas_schumacher.meta = artistmeta_13
+    artist_thomas_schumacher.type = artisttype_person
     session.add(artist_thomas_schumacher)
 
     artistcreditname_thomas_schumacher = ArtistCreditName()
@@ -1403,8 +1379,8 @@ def create_sample_data(session):
     track_high_on_you.length = 402466
     track_high_on_you.edits_pending = 0
     track_high_on_you.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_high_on_you.recording = recording_high_on_you
     track_high_on_you.artist_credit = artistcredit_thomas_schumacher
+    track_high_on_you.recording = recording_high_on_you
     session.add(track_high_on_you)
 
     areatype_district = AreaType()
@@ -1436,16 +1412,16 @@ def create_sample_data(session):
     artistipi_3.created = datetime.datetime(2013, 1, 23, 18, 0, 16, 122251)
     session.add(artistipi_3)
 
-    artistmeta_14 = ArtistMeta()
-    artistmeta_14.rating = 78
-    artistmeta_14.rating_count = 12
-    session.add(artistmeta_14)
-
     artistisni_4 = ArtistISNI()
     artistisni_4.isni = u'0000000078243206'
     artistisni_4.edits_pending = 0
     artistisni_4.created = datetime.datetime(2013, 8, 30, 7, 1, 40, 485286)
     session.add(artistisni_4)
+
+    artistmeta_14 = ArtistMeta()
+    artistmeta_14.rating = 78
+    artistmeta_14.rating_count = 12
+    session.add(artistmeta_14)
 
     artist_moby = Artist()
     artist_moby.id = 359
@@ -1459,18 +1435,18 @@ def create_sample_data(session):
     artist_moby.edits_pending = 0
     artist_moby.last_updated = datetime.datetime(2013, 8, 30, 7, 1, 40, 485286)
     artist_moby.ended = False
-    artist_moby.type = artisttype_person
     artist_moby.area = area_united_states
-    artist_moby.gender = gender_male
     artist_moby.begin_area = area_manhattan
+    artist_moby.gender = gender_male
     artist_moby.ipis = [
         artistipi_2,
         artistipi_3,
     ]
-    artist_moby.meta = artistmeta_14
     artist_moby.isnis = [
         artistisni_4,
     ]
+    artist_moby.meta = artistmeta_14
+    artist_moby.type = artisttype_person
     session.add(artist_moby)
 
     artistcreditname_moby = ArtistCreditName()
@@ -1515,8 +1491,8 @@ def create_sample_data(session):
     track_go_trentemoller_remix.length = 392373
     track_go_trentemoller_remix.edits_pending = 0
     track_go_trentemoller_remix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_go_trentemoller_remix.recording = recording_go_trentemoller_remix
     track_go_trentemoller_remix.artist_credit = artistcredit_moby
+    track_go_trentemoller_remix.recording = recording_go_trentemoller_remix
     session.add(track_go_trentemoller_remix)
 
     area_stockholm = Area()
@@ -1546,10 +1522,10 @@ def create_sample_data(session):
     artist_the_knife.edits_pending = 0
     artist_the_knife.last_updated = datetime.datetime(2013, 8, 10, 2, 29, 13, 786964)
     artist_the_knife.ended = False
-    artist_the_knife.type = artisttype_group
     artist_the_knife.area = area_sweden
     artist_the_knife.begin_area = area_stockholm
     artist_the_knife.meta = artistmeta_15
+    artist_the_knife.type = artisttype_group
     session.add(artist_the_knife)
 
     artistcreditname_the_knife = ArtistCreditName()
@@ -1594,8 +1570,8 @@ def create_sample_data(session):
     track_silent_shout_trente_short_edit.length = 14986
     track_silent_shout_trente_short_edit.edits_pending = 0
     track_silent_shout_trente_short_edit.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_silent_shout_trente_short_edit.recording = recording_silent_shout_trente_short_edit
     track_silent_shout_trente_short_edit.artist_credit = artistcredit_the_knife
+    track_silent_shout_trente_short_edit.recording = recording_silent_shout_trente_short_edit
     session.add(track_silent_shout_trente_short_edit)
 
     artistmeta_16 = ArtistMeta()
@@ -1609,8 +1585,8 @@ def create_sample_data(session):
     artist_jokke_ilsoe.comment = u''
     artist_jokke_ilsoe.edits_pending = 0
     artist_jokke_ilsoe.ended = False
-    artist_jokke_ilsoe.type = artisttype_person
     artist_jokke_ilsoe.meta = artistmeta_16
+    artist_jokke_ilsoe.type = artisttype_person
     session.add(artist_jokke_ilsoe)
 
     artistcreditname_jokke_ilsoe = ArtistCreditName()
@@ -1655,8 +1631,8 @@ def create_sample_data(session):
     track_feelin_good_trentemoller_remix.length = 383320
     track_feelin_good_trentemoller_remix.edits_pending = 0
     track_feelin_good_trentemoller_remix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_feelin_good_trentemoller_remix.recording = recording_feelin_good_trentemoller_remix
     track_feelin_good_trentemoller_remix.artist_credit = artistcredit_jokke_ilsoe
+    track_feelin_good_trentemoller_remix.recording = recording_feelin_good_trentemoller_remix
     session.add(track_feelin_good_trentemoller_remix)
 
     artistmeta_17 = ArtistMeta()
@@ -1671,10 +1647,10 @@ def create_sample_data(session):
     artist_isolee.edits_pending = 0
     artist_isolee.last_updated = datetime.datetime(2012, 8, 18, 11, 0, 20, 310734)
     artist_isolee.ended = False
-    artist_isolee.type = artisttype_person
     artist_isolee.area = area_germany
     artist_isolee.gender = gender_male
     artist_isolee.meta = artistmeta_17
+    artist_isolee.type = artisttype_person
     session.add(artist_isolee)
 
     artistcreditname_isolee = ArtistCreditName()
@@ -1719,8 +1695,8 @@ def create_sample_data(session):
     track_beau_mot_plage_freeform_five_remix_re_edit.length = 144373
     track_beau_mot_plage_freeform_five_remix_re_edit.edits_pending = 0
     track_beau_mot_plage_freeform_five_remix_re_edit.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_beau_mot_plage_freeform_five_remix_re_edit.recording = recording_beau_mot_plage_freeform_five_remix_re_edit
     track_beau_mot_plage_freeform_five_remix_re_edit.artist_credit = artistcredit_isolee
+    track_beau_mot_plage_freeform_five_remix_re_edit.recording = recording_beau_mot_plage_freeform_five_remix_re_edit
     session.add(track_beau_mot_plage_freeform_five_remix_re_edit)
 
     recordingmeta_24 = RecordingMeta()
@@ -1747,8 +1723,8 @@ def create_sample_data(session):
     track_always_something_better_feat_richard_davis.length = 461706
     track_always_something_better_feat_richard_davis.edits_pending = 0
     track_always_something_better_feat_richard_davis.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_always_something_better_feat_richard_davis.recording = recording_always_something_better_feat_richard_davis
     track_always_something_better_feat_richard_davis.artist_credit = artistcredit_trentemoller
+    track_always_something_better_feat_richard_davis.recording = recording_always_something_better_feat_richard_davis
     session.add(track_always_something_better_feat_richard_davis)
 
     recordingmeta_25 = RecordingMeta()
@@ -1776,8 +1752,8 @@ def create_sample_data(session):
     track_we_share_our_mother_s_health_trentemoller_remix.length = 356160
     track_we_share_our_mother_s_health_trentemoller_remix.edits_pending = 0
     track_we_share_our_mother_s_health_trentemoller_remix.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_we_share_our_mother_s_health_trentemoller_remix.recording = recording_we_share_our_mothers_health_trentemoller_remix
     track_we_share_our_mother_s_health_trentemoller_remix.artist_credit = artistcredit_the_knife
+    track_we_share_our_mother_s_health_trentemoller_remix.recording = recording_we_share_our_mothers_health_trentemoller_remix
     session.add(track_we_share_our_mother_s_health_trentemoller_remix)
 
     medium_2 = Medium()
@@ -1804,38 +1780,62 @@ def create_sample_data(session):
     ]
     session.add(medium_2)
 
-    labeltype_production = LabelType()
-    labeltype_production.id = 3
-    labeltype_production.name = u'Production'
-    session.add(labeltype_production)
-
-    labelmeta_1 = LabelMeta()
-    session.add(labelmeta_1)
-
-    label_king_biscuit_recordings = Label()
-    label_king_biscuit_recordings.id = 9000
-    label_king_biscuit_recordings.gid = 'aefbe2a5-76d6-4c99-a51d-f9214fe1018b'
-    label_king_biscuit_recordings.name = u'King Biscuit Recordings'
-    label_king_biscuit_recordings.sort_name = u'King Biscuit Recordings'
-    label_king_biscuit_recordings.comment = u''
-    label_king_biscuit_recordings.edits_pending = 0
-    label_king_biscuit_recordings.ended = False
-    label_king_biscuit_recordings.type = labeltype_production
-    label_king_biscuit_recordings.area = area_united_kingdom
-    label_king_biscuit_recordings.meta = labelmeta_1
-    session.add(label_king_biscuit_recordings)
-
-    releaselabel_1 = ReleaseLabel()
-    releaselabel_1.id = 213807
-    releaselabel_1.catalog_number = u'KBCD109'
-    releaselabel_1.last_updated = datetime.datetime(2011, 5, 16, 17, 59, 0, 785958)
-    releaselabel_1.label = label_king_biscuit_recordings
-    session.add(releaselabel_1)
-
     releasemeta_1 = ReleaseMeta()
     releasemeta_1.date_added = datetime.datetime(2007, 7, 24, 6, 30, 26, 1888)
     releasemeta_1.cover_art_presence = 'present'
     session.add(releasemeta_1)
+
+    releasegroupmeta_1 = ReleaseGroupMeta()
+    releasegroupmeta_1.release_count = 1
+    releasegroupmeta_1.first_release_date_year = 2007
+    releasegroupmeta_1.first_release_date_month = 3
+    releasegroupmeta_1.first_release_date_day = 23
+    releasegroupmeta_1.rating = 40
+    releasegroupmeta_1.rating_count = 1
+    session.add(releasegroupmeta_1)
+
+    releasegroupsecondarytype_compilation = ReleaseGroupSecondaryType()
+    releasegroupsecondarytype_compilation.id = 1
+    releasegroupsecondarytype_compilation.name = u'Compilation'
+    session.add(releasegroupsecondarytype_compilation)
+
+    releasegroupsecondarytypejoin_1 = ReleaseGroupSecondaryTypeJoin()
+    releasegroupsecondarytypejoin_1.created = datetime.datetime(2012, 5, 15, 2, 0)
+    releasegroupsecondarytypejoin_1.secondary_type = releasegroupsecondarytype_compilation
+    session.add(releasegroupsecondarytypejoin_1)
+
+    releasegroupprimarytype_album = ReleaseGroupPrimaryType()
+    releasegroupprimarytype_album.id = 1
+    releasegroupprimarytype_album.name = u'Album'
+    session.add(releasegroupprimarytype_album)
+
+    releasegroup_trentemoller_the_polar_mix = ReleaseGroup()
+    releasegroup_trentemoller_the_polar_mix.id = 633232
+    releasegroup_trentemoller_the_polar_mix.gid = 'baca4e84-aa67-3ef9-adbe-0dfebe7b6a82'
+    releasegroup_trentemoller_the_polar_mix.name = u'Trentem\xf8ller: The P\xf8lar Mix'
+    releasegroup_trentemoller_the_polar_mix.comment = u''
+    releasegroup_trentemoller_the_polar_mix.edits_pending = 0
+    releasegroup_trentemoller_the_polar_mix.last_updated = datetime.datetime(2012, 5, 15, 21, 1, 58, 718541)
+    releasegroup_trentemoller_the_polar_mix.artist_credit = artistcredit_trentemoller
+    releasegroup_trentemoller_the_polar_mix.meta = releasegroupmeta_1
+    releasegroup_trentemoller_the_polar_mix.secondary_types = [
+        releasegroupsecondarytypejoin_1,
+    ]
+    releasegroup_trentemoller_the_polar_mix.type = releasegroupprimarytype_album
+    session.add(releasegroup_trentemoller_the_polar_mix)
+
+    script_latin = Script()
+    script_latin.id = 28
+    script_latin.iso_code = u'Latn'
+    script_latin.iso_number = u'215'
+    script_latin.name = u'Latin'
+    script_latin.frequency = 4
+    session.add(script_latin)
+
+    releasestatus_promotion = ReleaseStatus()
+    releasestatus_promotion.id = 2
+    releasestatus_promotion.name = u'Promotion'
+    session.add(releasestatus_promotion)
 
     release_trentemoller_the_polar_mix = Release()
     release_trentemoller_the_polar_mix.id = 291054
@@ -1846,32 +1846,32 @@ def create_sample_data(session):
     release_trentemoller_the_polar_mix.quality = -1
     release_trentemoller_the_polar_mix.last_updated = datetime.datetime(2012, 10, 11, 8, 53, 15, 922324)
     release_trentemoller_the_polar_mix.artist_credit = artistcredit_trentemoller
-    release_trentemoller_the_polar_mix.release_group = releasegroup_trentemoller_the_polar_mix
-    release_trentemoller_the_polar_mix.status = releasestatus_promotion
-    release_trentemoller_the_polar_mix.language = language_english
-    release_trentemoller_the_polar_mix.script = script_latin
     release_trentemoller_the_polar_mix.country_dates = [
         releasecountry_1,
-    ]
-    release_trentemoller_the_polar_mix.mediums = [
-        medium_1,
-        medium_2,
     ]
     release_trentemoller_the_polar_mix.labels = [
         releaselabel_1,
     ]
+    release_trentemoller_the_polar_mix.language = language_english
+    release_trentemoller_the_polar_mix.mediums = [
+        medium_1,
+        medium_2,
+    ]
     release_trentemoller_the_polar_mix.meta = releasemeta_1
+    release_trentemoller_the_polar_mix.release_group = releasegroup_trentemoller_the_polar_mix
+    release_trentemoller_the_polar_mix.script = script_latin
+    release_trentemoller_the_polar_mix.status = releasestatus_promotion
     session.add(release_trentemoller_the_polar_mix)
-
-    artisttype_other = ArtistType()
-    artisttype_other.id = 3
-    artisttype_other.name = u'Other'
-    session.add(artisttype_other)
 
     artistmeta_18 = ArtistMeta()
     artistmeta_18.rating = 78
     artistmeta_18.rating_count = 18
     session.add(artistmeta_18)
+
+    artisttype_other = ArtistType()
+    artisttype_other.id = 3
+    artisttype_other.name = u'Other'
+    session.add(artisttype_other)
 
     artist_various_artists = Artist()
     artist_various_artists.id = 1
@@ -1882,8 +1882,8 @@ def create_sample_data(session):
     artist_various_artists.edits_pending = 9
     artist_various_artists.last_updated = datetime.datetime(2013, 10, 18, 18, 0, 20, 936389)
     artist_various_artists.ended = False
-    artist_various_artists.type = artisttype_other
     artist_various_artists.meta = artistmeta_18
+    artist_various_artists.type = artisttype_other
     session.add(artist_various_artists)
 
     artistcreditname_various_artists = ArtistCreditName()
@@ -1904,41 +1904,6 @@ def create_sample_data(session):
     ]
     session.add(artistcredit_various_artists)
 
-    releasegroupsecondarytypejoin_2 = ReleaseGroupSecondaryTypeJoin()
-    releasegroupsecondarytypejoin_2.created = datetime.datetime(2012, 5, 15, 2, 0)
-    releasegroupsecondarytypejoin_2.secondary_type = releasegroupsecondarytype_compilation
-    session.add(releasegroupsecondarytypejoin_2)
-
-    releasegroupmeta_2 = ReleaseGroupMeta()
-    releasegroupmeta_2.release_count = 1
-    releasegroupmeta_2.first_release_date_year = 2009
-    session.add(releasegroupmeta_2)
-
-    releasegroup_xvi_reflections_on_classical_music = ReleaseGroup()
-    releasegroup_xvi_reflections_on_classical_music.id = 1029754
-    releasegroup_xvi_reflections_on_classical_music.gid = '8650e20f-39cc-45e2-b4fa-a5bb6de349ad'
-    releasegroup_xvi_reflections_on_classical_music.name = u'XVI Reflections on Classical Music'
-    releasegroup_xvi_reflections_on_classical_music.comment = u''
-    releasegroup_xvi_reflections_on_classical_music.edits_pending = 0
-    releasegroup_xvi_reflections_on_classical_music.last_updated = datetime.datetime(2012, 5, 15, 21, 1, 58, 718541)
-    releasegroup_xvi_reflections_on_classical_music.artist_credit = artistcredit_various_artists
-    releasegroup_xvi_reflections_on_classical_music.type = releasegroupprimarytype_album
-    releasegroup_xvi_reflections_on_classical_music.secondary_types = [
-        releasegroupsecondarytypejoin_2,
-    ]
-    releasegroup_xvi_reflections_on_classical_music.meta = releasegroupmeta_2
-    session.add(releasegroup_xvi_reflections_on_classical_music)
-
-    releasestatus_official = ReleaseStatus()
-    releasestatus_official.id = 1
-    releasestatus_official.name = u'Official'
-    session.add(releasestatus_official)
-
-    releasepackaging_digipak = ReleasePackaging()
-    releasepackaging_digipak.id = 3
-    releasepackaging_digipak.name = u'Digipak'
-    session.add(releasepackaging_digipak)
-
     countryarea_2 = CountryArea()
     countryarea_2.area = area_germany
     session.add(countryarea_2)
@@ -1947,6 +1912,35 @@ def create_sample_data(session):
     releasecountry_2.date_year = 2009
     releasecountry_2.country = countryarea_2
     session.add(releasecountry_2)
+
+    labelmeta_2 = LabelMeta()
+    session.add(labelmeta_2)
+
+    labeltype_publisher = LabelType()
+    labeltype_publisher.id = 7
+    labeltype_publisher.name = u'Publisher'
+    session.add(labeltype_publisher)
+
+    label_universal_music = Label()
+    label_universal_music.id = 36455
+    label_universal_music.gid = '13a464dc-b9fd-4d16-a4f4-d4316f6a46c7'
+    label_universal_music.name = u'Universal Music'
+    label_universal_music.sort_name = u'Universal Music'
+    label_universal_music.label_code = 7340
+    label_universal_music.comment = u''
+    label_universal_music.edits_pending = 0
+    label_universal_music.last_updated = datetime.datetime(2012, 9, 28, 13, 4, 21, 712883)
+    label_universal_music.ended = False
+    label_universal_music.area = area_united_states
+    label_universal_music.meta = labelmeta_2
+    label_universal_music.type = labeltype_publisher
+    session.add(label_universal_music)
+
+    releaselabel_2 = ReleaseLabel()
+    releaselabel_2.id = 533902
+    releaselabel_2.last_updated = datetime.datetime(2011, 5, 16, 17, 59, 0, 785958)
+    releaselabel_2.label = label_universal_music
+    session.add(releaselabel_2)
 
     artistmeta_19 = ArtistMeta()
     session.add(artistmeta_19)
@@ -1959,8 +1953,8 @@ def create_sample_data(session):
     artist_lawrence.comment = u'Electronic artist Peter M. Kersten'
     artist_lawrence.edits_pending = 0
     artist_lawrence.ended = False
-    artist_lawrence.type = artisttype_person
     artist_lawrence.meta = artistmeta_19
+    artist_lawrence.type = artisttype_person
     session.add(artist_lawrence)
 
     artistcreditname_lawrence = ArtistCreditName()
@@ -2005,8 +1999,8 @@ def create_sample_data(session):
     track_daydream.length = 199000
     track_daydream.edits_pending = 0
     track_daydream.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_daydream.recording = recording_daydream
     track_daydream.artist_credit = artistcredit_lawrence
+    track_daydream.recording = recording_daydream
     session.add(track_daydream)
 
     artistmeta_20 = ArtistMeta()
@@ -2020,8 +2014,8 @@ def create_sample_data(session):
     artist_takeo_toyama.comment = u''
     artist_takeo_toyama.edits_pending = 0
     artist_takeo_toyama.ended = False
-    artist_takeo_toyama.type = artisttype_person
     artist_takeo_toyama.meta = artistmeta_20
+    artist_takeo_toyama.type = artisttype_person
     session.add(artist_takeo_toyama)
 
     artistcreditname_takeo_toyama = ArtistCreditName()
@@ -2066,8 +2060,8 @@ def create_sample_data(session):
     track_lithium.length = 213000
     track_lithium.edits_pending = 0
     track_lithium.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_lithium.recording = recording_lithium
     track_lithium.artist_credit = artistcredit_takeo_toyama
+    track_lithium.recording = recording_lithium
     session.add(track_lithium)
 
     artistmeta_21 = ArtistMeta()
@@ -2083,10 +2077,10 @@ def create_sample_data(session):
     artist_hauschka.edits_pending = 0
     artist_hauschka.last_updated = datetime.datetime(2012, 6, 1, 10, 2, 3, 517903)
     artist_hauschka.ended = False
-    artist_hauschka.type = artisttype_person
     artist_hauschka.area = area_germany
     artist_hauschka.gender = gender_male
     artist_hauschka.meta = artistmeta_21
+    artist_hauschka.type = artisttype_person
     session.add(artist_hauschka)
 
     artistcreditname_hauschka = ArtistCreditName()
@@ -2131,8 +2125,8 @@ def create_sample_data(session):
     track_zuhause.length = 282000
     track_zuhause.edits_pending = 0
     track_zuhause.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_zuhause.recording = recording_zuhause
     track_zuhause.artist_credit = artistcredit_hauschka
+    track_zuhause.recording = recording_zuhause
     session.add(track_zuhause)
 
     area_france = Area()
@@ -2160,10 +2154,10 @@ def create_sample_data(session):
     artist_sylvain_chauveau.edits_pending = 0
     artist_sylvain_chauveau.last_updated = datetime.datetime(2012, 1, 25, 18, 2, 35, 401552)
     artist_sylvain_chauveau.ended = False
-    artist_sylvain_chauveau.type = artisttype_person
     artist_sylvain_chauveau.area = area_france
     artist_sylvain_chauveau.gender = gender_male
     artist_sylvain_chauveau.meta = artistmeta_22
+    artist_sylvain_chauveau.type = artisttype_person
     session.add(artist_sylvain_chauveau)
 
     artistcreditname_sylvain_chauveau = ArtistCreditName()
@@ -2208,8 +2202,8 @@ def create_sample_data(session):
     track_il_fait_nuit_noire_a_berlin.length = 127000
     track_il_fait_nuit_noire_a_berlin.edits_pending = 0
     track_il_fait_nuit_noire_a_berlin.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_il_fait_nuit_noire_a_berlin.recording = recording_il_fait_nuit_noire_a_berlin
     track_il_fait_nuit_noire_a_berlin.artist_credit = artistcredit_sylvain_chauveau
+    track_il_fait_nuit_noire_a_berlin.recording = recording_il_fait_nuit_noire_a_berlin
     session.add(track_il_fait_nuit_noire_a_berlin)
 
     artistmeta_23 = ArtistMeta()
@@ -2224,8 +2218,8 @@ def create_sample_data(session):
     artist_alva_noto_ryuichi_sakamoto.edits_pending = 0
     artist_alva_noto_ryuichi_sakamoto.last_updated = datetime.datetime(2013, 1, 23, 20, 0, 17, 638468)
     artist_alva_noto_ryuichi_sakamoto.ended = False
-    artist_alva_noto_ryuichi_sakamoto.type = artisttype_group
     artist_alva_noto_ryuichi_sakamoto.meta = artistmeta_23
+    artist_alva_noto_ryuichi_sakamoto.type = artisttype_group
     session.add(artist_alva_noto_ryuichi_sakamoto)
 
     artistcreditname_alva_noto_ryuichi_sakamoto = ArtistCreditName()
@@ -2270,8 +2264,8 @@ def create_sample_data(session):
     track_moon.length = 367000
     track_moon.edits_pending = 0
     track_moon.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_moon.recording = recording_moon
     track_moon.artist_credit = artistcredit_alva_noto_ryuichi_sakamoto
+    track_moon.recording = recording_moon
     session.add(track_moon)
 
     artistmeta_24 = ArtistMeta()
@@ -2288,9 +2282,9 @@ def create_sample_data(session):
     artist_gas.edits_pending = 0
     artist_gas.last_updated = datetime.datetime(2012, 3, 11, 20, 9, 29, 240384)
     artist_gas.ended = False
-    artist_gas.type = artisttype_person
     artist_gas.area = area_germany
     artist_gas.meta = artistmeta_24
+    artist_gas.type = artisttype_person
     session.add(artist_gas)
 
     artistcreditname_gas = ArtistCreditName()
@@ -2335,8 +2329,8 @@ def create_sample_data(session):
     track_zauberberg_iv.length = 356000
     track_zauberberg_iv.edits_pending = 0
     track_zauberberg_iv.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_zauberberg_iv.recording = recording_zauberberg_iv
     track_zauberberg_iv.artist_credit = artistcredit_gas
+    track_zauberberg_iv.recording = recording_zauberberg_iv
     session.add(track_zauberberg_iv)
 
     area_canada = Area()
@@ -2365,9 +2359,9 @@ def create_sample_data(session):
     artist_final_fantasy.edits_pending = 0
     artist_final_fantasy.last_updated = datetime.datetime(2012, 9, 25, 23, 0, 14, 891477)
     artist_final_fantasy.ended = True
-    artist_final_fantasy.type = artisttype_group
     artist_final_fantasy.area = area_canada
     artist_final_fantasy.meta = artistmeta_25
+    artist_final_fantasy.type = artisttype_group
     session.add(artist_final_fantasy)
 
     artistcreditname_final_fantasy = ArtistCreditName()
@@ -2413,8 +2407,8 @@ def create_sample_data(session):
     track_he_poos_clouds.length = 211000
     track_he_poos_clouds.edits_pending = 0
     track_he_poos_clouds.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_he_poos_clouds.recording = recording_he_poos_clouds
     track_he_poos_clouds.artist_credit = artistcredit_final_fantasy
+    track_he_poos_clouds.recording = recording_he_poos_clouds
     session.add(track_he_poos_clouds)
 
     area_luxembourg = Area()
@@ -2441,10 +2435,10 @@ def create_sample_data(session):
     artist_francesco_tristano.edits_pending = 0
     artist_francesco_tristano.last_updated = datetime.datetime(2012, 9, 16, 20, 36, 44, 436508)
     artist_francesco_tristano.ended = False
-    artist_francesco_tristano.type = artisttype_person
     artist_francesco_tristano.area = area_luxembourg
     artist_francesco_tristano.gender = gender_male
     artist_francesco_tristano.meta = artistmeta_26
+    artist_francesco_tristano.type = artisttype_person
     session.add(artist_francesco_tristano)
 
     artistcreditname_francesco_tristano = ArtistCreditName()
@@ -2489,8 +2483,8 @@ def create_sample_data(session):
     track_andover.length = 373000
     track_andover.edits_pending = 0
     track_andover.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_andover.recording = recording_andover
     track_andover.artist_credit = artistcredit_francesco_tristano
+    track_andover.recording = recording_andover
     session.add(track_andover)
 
     area_baltimore = Area()
@@ -2517,16 +2511,16 @@ def create_sample_data(session):
     artistipi_5.created = datetime.datetime(2013, 3, 26, 18, 40, 13, 338175)
     session.add(artistipi_5)
 
-    artistmeta_27 = ArtistMeta()
-    artistmeta_27.rating = 95
-    artistmeta_27.rating_count = 8
-    session.add(artistmeta_27)
-
     artistisni_5 = ArtistISNI()
     artistisni_5.isni = u'0000000121367029'
     artistisni_5.edits_pending = 0
     artistisni_5.created = datetime.datetime(2013, 10, 12, 18, 52, 44, 358667)
     session.add(artistisni_5)
+
+    artistmeta_27 = ArtistMeta()
+    artistmeta_27.rating = 95
+    artistmeta_27.rating_count = 8
+    session.add(artistmeta_27)
 
     artist_philip_glass = Artist()
     artist_philip_glass.id = 9193
@@ -2540,18 +2534,18 @@ def create_sample_data(session):
     artist_philip_glass.edits_pending = 0
     artist_philip_glass.last_updated = datetime.datetime(2013, 10, 12, 18, 52, 44, 358667)
     artist_philip_glass.ended = False
-    artist_philip_glass.type = artisttype_person
     artist_philip_glass.area = area_united_states
-    artist_philip_glass.gender = gender_male
     artist_philip_glass.begin_area = area_baltimore
+    artist_philip_glass.gender = gender_male
     artist_philip_glass.ipis = [
         artistipi_4,
         artistipi_5,
     ]
-    artist_philip_glass.meta = artistmeta_27
     artist_philip_glass.isnis = [
         artistisni_5,
     ]
+    artist_philip_glass.meta = artistmeta_27
+    artist_philip_glass.type = artisttype_person
     session.add(artist_philip_glass)
 
     artistcreditname_philip_glass = ArtistCreditName()
@@ -2596,8 +2590,8 @@ def create_sample_data(session):
     track_abdulmajid.length = 531000
     track_abdulmajid.edits_pending = 0
     track_abdulmajid.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_abdulmajid.recording = recording_abdulmajid
     track_abdulmajid.artist_credit = artistcredit_philip_glass
+    track_abdulmajid.recording = recording_abdulmajid
     session.add(track_abdulmajid)
 
     recordingmeta_35 = RecordingMeta()
@@ -2624,8 +2618,8 @@ def create_sample_data(session):
     track_maiz.length = 364000
     track_maiz.edits_pending = 0
     track_maiz.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_maiz.recording = recording_maiz
     track_maiz.artist_credit = artistcredit_murcof
+    track_maiz.recording = recording_maiz
     session.add(track_maiz)
 
     artistmeta_28 = ArtistMeta()
@@ -2640,8 +2634,8 @@ def create_sample_data(session):
     artist_slowcream.edits_pending = 0
     artist_slowcream.last_updated = datetime.datetime(2011, 1, 1, 22, 3, 35, 272282)
     artist_slowcream.ended = False
-    artist_slowcream.type = artisttype_person
     artist_slowcream.meta = artistmeta_28
+    artist_slowcream.type = artisttype_person
     session.add(artist_slowcream)
 
     artistcreditname_slowcream = ArtistCreditName()
@@ -2686,8 +2680,8 @@ def create_sample_data(session):
     track_suburb_novel.length = 301000
     track_suburb_novel.edits_pending = 0
     track_suburb_novel.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_suburb_novel.recording = recording_suburb_novel
     track_suburb_novel.artist_credit = artistcredit_slowcream
+    track_suburb_novel.recording = recording_suburb_novel
     session.add(track_suburb_novel)
 
     artistipi_6 = ArtistIPI()
@@ -2711,13 +2705,13 @@ def create_sample_data(session):
     artist_max_richter.edits_pending = 0
     artist_max_richter.last_updated = datetime.datetime(2013, 3, 14, 9, 40, 55, 93741)
     artist_max_richter.ended = False
-    artist_max_richter.type = artisttype_person
     artist_max_richter.area = area_united_kingdom
     artist_max_richter.gender = gender_male
     artist_max_richter.ipis = [
         artistipi_6,
     ]
     artist_max_richter.meta = artistmeta_29
+    artist_max_richter.type = artisttype_person
     session.add(artist_max_richter)
 
     artistcreditname_max_richter = ArtistCreditName()
@@ -2762,8 +2756,8 @@ def create_sample_data(session):
     track_arboretum.length = 174000
     track_arboretum.edits_pending = 0
     track_arboretum.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_arboretum.recording = recording_arboretum
     track_arboretum.artist_credit = artistcredit_max_richter
+    track_arboretum.recording = recording_arboretum
     session.add(track_arboretum)
 
     artistmeta_30 = ArtistMeta()
@@ -2779,8 +2773,8 @@ def create_sample_data(session):
     artist_akira_rabelais.edits_pending = 0
     artist_akira_rabelais.last_updated = datetime.datetime(2011, 12, 12, 22, 22, 45, 74149)
     artist_akira_rabelais.ended = False
-    artist_akira_rabelais.type = artisttype_person
     artist_akira_rabelais.meta = artistmeta_30
+    artist_akira_rabelais.type = artisttype_person
     session.add(artist_akira_rabelais)
 
     artistcreditname_akira_rabelais = ArtistCreditName()
@@ -2825,8 +2819,8 @@ def create_sample_data(session):
     track_1382_wyclif_gen_ii_7.length = 379000
     track_1382_wyclif_gen_ii_7.edits_pending = 0
     track_1382_wyclif_gen_ii_7.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_1382_wyclif_gen_ii_7.recording = recording_1382_wyclif_gen_ii_7
     track_1382_wyclif_gen_ii_7.artist_credit = artistcredit_akira_rabelais
+    track_1382_wyclif_gen_ii_7.recording = recording_1382_wyclif_gen_ii_7
     session.add(track_1382_wyclif_gen_ii_7)
 
     artistmeta_31 = ArtistMeta()
@@ -2840,8 +2834,8 @@ def create_sample_data(session):
     artist_ryan_teague.comment = u''
     artist_ryan_teague.edits_pending = 0
     artist_ryan_teague.ended = False
-    artist_ryan_teague.type = artisttype_person
     artist_ryan_teague.meta = artistmeta_31
+    artist_ryan_teague.type = artisttype_person
     session.add(artist_ryan_teague)
 
     artistcreditname_ryan_teague = ArtistCreditName()
@@ -2886,8 +2880,8 @@ def create_sample_data(session):
     track_prelude_iii.length = 307000
     track_prelude_iii.edits_pending = 0
     track_prelude_iii.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_prelude_iii.recording = recording_prelude_iii
     track_prelude_iii.artist_credit = artistcredit_ryan_teague
+    track_prelude_iii.recording = recording_prelude_iii
     session.add(track_prelude_iii)
 
     artistmeta_32 = ArtistMeta()
@@ -2901,8 +2895,8 @@ def create_sample_data(session):
     artist_greg_haines.comment = u''
     artist_greg_haines.edits_pending = 0
     artist_greg_haines.ended = False
-    artist_greg_haines.type = artisttype_person
     artist_greg_haines.meta = artistmeta_32
+    artist_greg_haines.type = artisttype_person
     session.add(artist_greg_haines)
 
     artistcreditname_greg_haines = ArtistCreditName()
@@ -2947,8 +2941,8 @@ def create_sample_data(session):
     track_snow_airport.length = 297000
     track_snow_airport.edits_pending = 0
     track_snow_airport.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_snow_airport.recording = recording_snow_airport
     track_snow_airport.artist_credit = artistcredit_greg_haines
+    track_snow_airport.recording = recording_snow_airport
     session.add(track_snow_airport)
 
     artistipi_7 = ArtistIPI()
@@ -2972,13 +2966,13 @@ def create_sample_data(session):
     artist_gavin_bryars.edits_pending = 0
     artist_gavin_bryars.last_updated = datetime.datetime(2012, 7, 10, 1, 8, 22, 712737)
     artist_gavin_bryars.ended = False
-    artist_gavin_bryars.type = artisttype_person
     artist_gavin_bryars.area = area_united_kingdom
     artist_gavin_bryars.gender = gender_male
     artist_gavin_bryars.ipis = [
         artistipi_7,
     ]
     artist_gavin_bryars.meta = artistmeta_33
+    artist_gavin_bryars.type = artisttype_person
     session.add(artist_gavin_bryars)
 
     artistcreditname_gavin_bryars = ArtistCreditName()
@@ -3023,8 +3017,8 @@ def create_sample_data(session):
     track_tramp_with_orchestra_iii.length = 288000
     track_tramp_with_orchestra_iii.edits_pending = 0
     track_tramp_with_orchestra_iii.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
-    track_tramp_with_orchestra_iii.recording = recording_tramp_with_orchestra_iii
     track_tramp_with_orchestra_iii.artist_credit = artistcredit_gavin_bryars
+    track_tramp_with_orchestra_iii.recording = recording_tramp_with_orchestra_iii
     session.add(track_tramp_with_orchestra_iii)
 
     medium_3 = Medium()
@@ -3054,41 +3048,47 @@ def create_sample_data(session):
     ]
     session.add(medium_3)
 
-    labeltype_publisher = LabelType()
-    labeltype_publisher.id = 7
-    labeltype_publisher.name = u'Publisher'
-    session.add(labeltype_publisher)
-
-    labelmeta_2 = LabelMeta()
-    session.add(labelmeta_2)
-
-    label_universal_music = Label()
-    label_universal_music.id = 36455
-    label_universal_music.gid = '13a464dc-b9fd-4d16-a4f4-d4316f6a46c7'
-    label_universal_music.name = u'Universal Music'
-    label_universal_music.sort_name = u'Universal Music'
-    label_universal_music.label_code = 7340
-    label_universal_music.comment = u''
-    label_universal_music.edits_pending = 0
-    label_universal_music.last_updated = datetime.datetime(2012, 9, 28, 13, 4, 21, 712883)
-    label_universal_music.ended = False
-    label_universal_music.type = labeltype_publisher
-    label_universal_music.area = area_united_states
-    label_universal_music.meta = labelmeta_2
-    session.add(label_universal_music)
-
-    releaselabel_2 = ReleaseLabel()
-    releaselabel_2.id = 533902
-    releaselabel_2.last_updated = datetime.datetime(2011, 5, 16, 17, 59, 0, 785958)
-    releaselabel_2.label = label_universal_music
-    session.add(releaselabel_2)
-
     releasemeta_2 = ReleaseMeta()
     releasemeta_2.date_added = datetime.datetime(2011, 1, 1, 22, 34, 7, 280802)
     releasemeta_2.info_url = u'http://www.amazon.de/gp/product/B002JP1LCK'
     releasemeta_2.amazon_asin = u'B002JP1LCK'
     releasemeta_2.cover_art_presence = 'present'
     session.add(releasemeta_2)
+
+    releasepackaging_digipak = ReleasePackaging()
+    releasepackaging_digipak.id = 3
+    releasepackaging_digipak.name = u'Digipak'
+    session.add(releasepackaging_digipak)
+
+    releasegroupmeta_2 = ReleaseGroupMeta()
+    releasegroupmeta_2.release_count = 1
+    releasegroupmeta_2.first_release_date_year = 2009
+    session.add(releasegroupmeta_2)
+
+    releasegroupsecondarytypejoin_2 = ReleaseGroupSecondaryTypeJoin()
+    releasegroupsecondarytypejoin_2.created = datetime.datetime(2012, 5, 15, 2, 0)
+    releasegroupsecondarytypejoin_2.secondary_type = releasegroupsecondarytype_compilation
+    session.add(releasegroupsecondarytypejoin_2)
+
+    releasegroup_xvi_reflections_on_classical_music = ReleaseGroup()
+    releasegroup_xvi_reflections_on_classical_music.id = 1029754
+    releasegroup_xvi_reflections_on_classical_music.gid = '8650e20f-39cc-45e2-b4fa-a5bb6de349ad'
+    releasegroup_xvi_reflections_on_classical_music.name = u'XVI Reflections on Classical Music'
+    releasegroup_xvi_reflections_on_classical_music.comment = u''
+    releasegroup_xvi_reflections_on_classical_music.edits_pending = 0
+    releasegroup_xvi_reflections_on_classical_music.last_updated = datetime.datetime(2012, 5, 15, 21, 1, 58, 718541)
+    releasegroup_xvi_reflections_on_classical_music.artist_credit = artistcredit_various_artists
+    releasegroup_xvi_reflections_on_classical_music.meta = releasegroupmeta_2
+    releasegroup_xvi_reflections_on_classical_music.secondary_types = [
+        releasegroupsecondarytypejoin_2,
+    ]
+    releasegroup_xvi_reflections_on_classical_music.type = releasegroupprimarytype_album
+    session.add(releasegroup_xvi_reflections_on_classical_music)
+
+    releasestatus_official = ReleaseStatus()
+    releasestatus_official.id = 1
+    releasestatus_official.name = u'Official'
+    session.add(releasestatus_official)
 
     release_xvi_reflections_on_classical_music = Release()
     release_xvi_reflections_on_classical_music.id = 785487
@@ -3100,21 +3100,53 @@ def create_sample_data(session):
     release_xvi_reflections_on_classical_music.quality = -1
     release_xvi_reflections_on_classical_music.last_updated = datetime.datetime(2013, 10, 6, 11, 39, 8, 511181)
     release_xvi_reflections_on_classical_music.artist_credit = artistcredit_various_artists
-    release_xvi_reflections_on_classical_music.release_group = releasegroup_xvi_reflections_on_classical_music
-    release_xvi_reflections_on_classical_music.status = releasestatus_official
-    release_xvi_reflections_on_classical_music.packaging = releasepackaging_digipak
-    release_xvi_reflections_on_classical_music.language = language_english
-    release_xvi_reflections_on_classical_music.script = script_latin
     release_xvi_reflections_on_classical_music.country_dates = [
         releasecountry_2,
-    ]
-    release_xvi_reflections_on_classical_music.mediums = [
-        medium_3,
     ]
     release_xvi_reflections_on_classical_music.labels = [
         releaselabel_2,
     ]
+    release_xvi_reflections_on_classical_music.language = language_english
+    release_xvi_reflections_on_classical_music.mediums = [
+        medium_3,
+    ]
     release_xvi_reflections_on_classical_music.meta = releasemeta_2
+    release_xvi_reflections_on_classical_music.packaging = releasepackaging_digipak
+    release_xvi_reflections_on_classical_music.release_group = releasegroup_xvi_reflections_on_classical_music
+    release_xvi_reflections_on_classical_music.script = script_latin
+    release_xvi_reflections_on_classical_music.status = releasestatus_official
     session.add(release_xvi_reflections_on_classical_music)
+
+    area_westminster = Area()
+    area_westminster.id = 3906
+    area_westminster.gid = '48d08ee1-db45-4566-bb1d-c47ab6dbaf98'
+    area_westminster.name = u'Westminster'
+    area_westminster.sort_name = u'Westminster'
+    area_westminster.edits_pending = 0
+    area_westminster.last_updated = datetime.datetime(2013, 5, 21, 16, 51, 57, 923559)
+    area_westminster.ended = False
+    area_westminster.comment = u''
+    area_westminster.type = areatype_subdivision
+    session.add(area_westminster)
+
+    placetype_studio = PlaceType()
+    placetype_studio.id = 1
+    placetype_studio.name = u'Studio'
+    session.add(placetype_studio)
+
+    place_abbey_road_studios = Place()
+    place_abbey_road_studios.id = 775
+    place_abbey_road_studios.gid = 'bd55aeb7-19d1-4607-a500-14b8479d3fed'
+    place_abbey_road_studios.name = u'Abbey Road Studios'
+    place_abbey_road_studios.address = u"3 Abbey Road, St John's Wood, London"
+    place_abbey_road_studios.coordinates = (51.53192, -0.17835)
+    place_abbey_road_studios.comment = u''
+    place_abbey_road_studios.edits_pending = 0
+    place_abbey_road_studios.last_updated = datetime.datetime(2013, 10, 18, 17, 0, 17, 553196)
+    place_abbey_road_studios.begin_date_year = 1931
+    place_abbey_road_studios.ended = False
+    place_abbey_road_studios.area = area_westminster
+    place_abbey_road_studios.type = placetype_studio
+    session.add(place_abbey_road_studios)
 
     session.commit()

@@ -5,6 +5,8 @@ import tempfile
 import logging
 import json
 import functools
+import unittest
+from nose.tools import *
 
 os.environ['MBDATA_API_SETTINGS'] = os.path.join(os.path.dirname(__file__), 'settings.py')
 from mbdata import patch_model_schemas, NO_SCHEMAS
@@ -12,6 +14,8 @@ from mbdata.api import app
 from mbdata.models import Base
 from mbdata.tests.api.sample_data import create_sample_data
 
+
+unittest.TestCase.maxDiff = None
 
 use_file_db = True
 #use_file_db = False
@@ -52,4 +56,10 @@ def with_client(func):
         with app.app.test_client() as client:
             return func(client, *args, **kwargs)
     return wrapper
+
+
+def assert_json_response_equal(rv, expected):
+    assert_equal(rv.status_code, 200)
+    assert_equal(rv.content_type, 'application/json')
+    assert_dict_equal(json.loads(rv.data), expected)
 

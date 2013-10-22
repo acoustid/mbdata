@@ -1,12 +1,7 @@
 # -*- coding: utf8 -*-
 
-import json
-import unittest
 from nose.tools import *
-from mbdata.tests.api import with_client
-
-
-unittest.TestCase.maxDiff = None
+from mbdata.tests.api import with_client, assert_json_response_equal
 
 
 @with_client
@@ -33,8 +28,7 @@ def test_artist_details(client):
         }
     }
 
-    assert_equal(200, rv.status_code)
-    assert_dict_equal(expected, json.loads(rv.data))
+    assert_json_response_equal(rv, expected)
 
 
 @with_client
@@ -57,6 +51,5 @@ def test_artist_details_va(client):
         }
     }
 
-    assert_equal(200, rv.status_code)
-    assert_dict_equal(expected, json.loads(rv.data))
+    assert_json_response_equal(rv, expected)
 

@@ -18,7 +18,6 @@ def get_place_by_gid(query, gid):
 @blueprint.route('/details')
 def place_details():
     gid = get_param('id', type='uuid', required=True)
-    include = set(['urls'])
 
     query = g.db.query(Place).\
         options(joinedload("type"))
@@ -37,6 +36,9 @@ def place_details():
     serialize_partial_date(data, 'begin_date', place.begin_date)
     serialize_partial_date(data, 'end_date', place.end_date)
 
+    if place.address:
+        data['address'] = place.address
+
     if place.ended:
         data['ended'] = True
 
@@ -51,7 +53,7 @@ def place_details():
 
     context['place'] = data
 
-    if 'urls' in include:
+    if False: #'urls' in include:
         query = g.db.query(LinkPlaceURL).filter_by(place=place).\
             options(joinedload('url', innerjoin=True)).\
             options(joinedload('link', innerjoin=True)).\
