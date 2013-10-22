@@ -103,6 +103,9 @@ var app = angular.module('mbdata', ['ngRoute']).
                     }
                 }
             }).
+            when('/error', {
+                template: 'Error'
+            }).
             otherwise({redirectTo: '/'});
     });
 

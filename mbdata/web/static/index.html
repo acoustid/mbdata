@@ -17,7 +17,8 @@
     <script src="/static/js/filters.js"></script>
     <script src="/static/js/directives.js"></script>
   </head>
-  <body>
+  <body ng-controller="AppCtrl">
+    <div ng-show="loading" class="loading"><span>Loading...</span></div>
     <div ng-view class="container"></div>
   </body>
 </html>

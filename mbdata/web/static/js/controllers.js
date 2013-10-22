@@ -3,6 +3,27 @@
 
 'use strict';
 
+app.controller('AppCtrl', function ($scope, $rootScope, $location) {
+    $scope.loading = false;
+    $scope.enableLoadingTimer = 0;
+
+    $rootScope.$on('$routeChangeStart', function(event, next, current) {
+        $scope.enableLoadingTimer = setTimeout(function () { $scope.loading = true }, 200);
+    });
+
+    $rootScope.$on('$routeChangeSuccess', function(event, next, current) {
+        clearTimeout($scope.enableLoadingTimer);
+        $scope.loading = false;
+    });
+
+    $rootScope.$on('$routeChangeError', function(event, next, current, rejection) {
+        clearTimeout($scope.enableLoadingTimer);
+        $scope.loading = false;
+        $location.path('/error');
+    });
+
+});
+
 app.controller('SearchCtrl', function ($scope) {
     $scope.$root.title = 'Search';
     $scope.query = '';
