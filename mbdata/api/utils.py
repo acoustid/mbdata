@@ -2,6 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 import re
+import logging
 import xml.sax.saxutils
 from cStringIO import StringIO
 from flask import request, abort, current_app, json
@@ -9,7 +10,12 @@ from mbdata.api.errors import (
     SUCCESS,
     INVALID_FORMAT_ERROR,
     MISSING_PARAMETER_ERROR,
+    ERROR_STATUS_CODES,
+    ERROR_DEFAULT_STATUS_CODE,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def to_uuid(s):
@@ -121,8 +127,9 @@ def response_ok(**data):
 
 
 def response_error(code, message, **data):
+    logger.debug('response_error(%r, %r, %r)', code, message, data)
     response = render_response(code, message, data)
-    response.status_code = 400
+    response.status_code = ERROR_STATUS_CODES.get(code, ERROR_DEFAULT_STATUS_CODE)
     return response
 
 
