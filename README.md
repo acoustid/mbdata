@@ -58,7 +58,7 @@ Start the development server:
 Query the API:
 
     #!sh
-    curl 'http://127.0.0.1:5000/v1/artist/details?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
+    curl 'http://127.0.0.1:5000/v1/artist/get?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
 
 For production use, you should use server software like
 [uWSGI](http://projects.unbit.it/uwsgi/) and

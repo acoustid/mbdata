@@ -24,8 +24,8 @@ def get_recording_by_gid(query, gid):
     return get_something_by_gid(query, RecordingGIDRedirect, gid)
 
 
-@blueprint.route('/details')
-def details():
+@blueprint.route('/get')
+def handle_get():
     gid = get_param('id', type='uuid', required=True)
 
     includes_class = make_includes('artist_names', 'artist_credits', 'isrcs')

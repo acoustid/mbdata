@@ -17,7 +17,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                 templateUrl: '/static/partial/artist.html',
                 resolve: {
                     artist: function ($route, MB) {
-                        return MB.artist.details({id: $route.current.params.id}).then(function (data) {
+                        return MB.artist.get({id: $route.current.params.id}).then(function (data) {
                             return data.artist;
                         });
                     }
@@ -28,7 +28,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                 templateUrl: '/static/partial/place.html',
                 resolve: {
                     place: function ($route, MB) {
-                        return MB.place.details({id: $route.current.params.id}).then(function (data) {
+                        return MB.place.get({id: $route.current.params.id}).then(function (data) {
                             return data.place;
                         });
                     }
@@ -43,7 +43,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                             id: $route.current.params.id,
                             include: ['artistCredits']
                         };
-                        return MB.recording.details(params).then(function (data) {
+                        return MB.recording.get(params).then(function (data) {
                             return data.recording;
                         });
                     }
@@ -58,7 +58,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                             id: $route.current.params.id,
                             include: ['releaseGroup', 'mediums', 'tracks', 'artistCredits']
                         };
-                        return MB.release.details(params).then(function (data) {
+                        return MB.release.get(params).then(function (data) {
                             return data.release;
                         });
                     }
@@ -73,7 +73,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                             id: $route.current.params.id,
                             include: ['artistCredits']
                         };
-                        return MB.releaseGroup.details(params).then(function (data) {
+                        return MB.releaseGroup.get(params).then(function (data) {
                             return data.releaseGroup;
                         });
                     },
@@ -97,7 +97,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                             id: $route.current.params.id,
                             include: ['iswcs']
                         };
-                        return MB.work.details(params).then(function (data) {
+                        return MB.work.get(params).then(function (data) {
                             return data.work;
                         });
                     }

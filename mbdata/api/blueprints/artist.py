@@ -23,8 +23,8 @@ def get_plain_artist_by_gid_or_error(gid):
     return artist
 
 
-@blueprint.route('/details')
-def artist_details():
+@blueprint.route('/get')
+def handle_get():
     gid = get_param('id', type='uuid', required=True)
 
     query = g.db.query(Artist).\
@@ -69,7 +69,7 @@ def artist_details():
 
 
 @blueprint.route('/urls')
-def artist_urls():
+def handle_urls():
     gid = get_param('id', type='uuid', required=True)
     artist = get_plain_artist_by_gid_or_error(gid)
 
@@ -83,7 +83,7 @@ def artist_urls():
 
 
 @blueprint.route('/tags')
-def artist_tags():
+def handle_tags():
     gid = get_param('id', type='uuid', required=True)
     artist = get_plain_artist_by_gid_or_error(gid)
 

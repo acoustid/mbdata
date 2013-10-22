@@ -15,8 +15,8 @@ def get_place_by_gid(query, gid):
     return get_something_by_gid(query, PlaceGIDRedirect, gid)
 
 
-@blueprint.route('/details')
-def place_details():
+@blueprint.route('/get')
+def handle_get():
     gid = get_param('id', type='uuid', required=True)
 
     query = g.db.query(Place).\

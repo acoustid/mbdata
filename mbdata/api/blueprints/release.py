@@ -25,8 +25,8 @@ def get_release_by_gid(query, gid):
     return get_something_by_gid(query, ReleaseGIDRedirect, gid)
 
 
-@blueprint.route('/details')
-def release_details():
+@blueprint.route('/get')
+def handle_get():
     gid = get_param('id', type='uuid', required=True)
 
     includes_class = make_includes('mediums', 'tracks', 'release_group', 'artist_names', 'artist_credits')

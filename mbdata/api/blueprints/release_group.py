@@ -25,8 +25,8 @@ def get_release_group_by_gid(query, gid):
     return get_something_by_gid(query, ReleaseGroupGIDRedirect, gid)
 
 
-@blueprint.route('/details')
-def details():
+@blueprint.route('/get')
+def handle_get():
     gid = get_param('id', type='uuid', required=True)
 
     includes_class = make_includes('artist_names', 'artist_credits')
@@ -55,7 +55,7 @@ def details():
 
 
 @blueprint.route('/list_releases')
-def list_releases():
+def handle_list_releases():
     gid = get_param('id', type='uuid', required=True)
 
     includes_class = make_includes('artist_names', 'artist_credits')

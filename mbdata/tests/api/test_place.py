@@ -5,8 +5,8 @@ from mbdata.tests.api import with_client, assert_json_response_equal
 
 
 @with_client
-def test_place_details(client):
-    rv = client.get('/v1/place/details?id=bd55aeb7-19d1-4607-a500-14b8479d3fed')
+def test_place_get(client):
+    rv = client.get('/v1/place/get?id=bd55aeb7-19d1-4607-a500-14b8479d3fed')
 
     expected = {
         u'response': {
