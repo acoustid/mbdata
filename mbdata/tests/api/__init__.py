@@ -9,7 +9,8 @@ import functools
 os.environ['MBDATA_API_SETTINGS'] = os.path.join(os.path.dirname(__file__), 'settings.py')
 from mbdata import patch_model_schemas, NO_SCHEMAS
 from mbdata.api import app
-from mbdata.models import Base, Artist, ArtistType, Gender
+from mbdata.models import Base
+from mbdata.tests.api.sample_data import create_sample_data
 
 
 use_file_db = True
@@ -35,7 +36,7 @@ def setup_package():
     Base.metadata.create_all(app.engine)
 
     session = app.Session()
-    insert_sample_data(session)
+    create_sample_data(session)
     session.close()
 
 
@@ -43,41 +44,6 @@ def teardown_package():
     if use_file_db:
         os.close(db_fd)
         os.unlink(db_name)
-
-
-def insert_sample_data(session):
-    group = ArtistType()
-    group.name = 'Group'
-    session.add(group)
-
-    person = ArtistType()
-    person.name = 'Person'
-    session.add(person)
-
-    male = Gender()
-    male.name = 'Male'
-    session.add(male)
-
-    female = Gender()
-    female.name = 'Female'
-    session.add(female)
-
-    artist = Artist()
-    artist.gid = 'ce89261a-79cf-409e-a167-b4515b5eb5bb'
-    artist.name = 'The Chemical Brothers'
-    artist.sort_name = 'Chemical Brothers, The'
-    artist.type = group
-    session.add(artist)
-
-    artist = Artist()
-    artist.gid = '6655955b-1c1e-4bcb-84e4-81bcd9efab30'
-    artist.name = u'Ólafur Arnalds'
-    artist.sort_name = u'Arnalds, Ólafur'
-    artist.type = person
-    artist.gender = male
-    session.add(artist)
-
-    session.commit()
 
 
 def with_client(func):

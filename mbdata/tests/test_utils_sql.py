@@ -182,7 +182,7 @@ def test_create_table_statement_check_constraint():
     check = column.get_check_constraint()
     assert_true(check)
     assert_equal(None, check.get_name())
-    assert_equal('edits_pending > 0', str(check.get_body()))
+    assert_equal('edits_pending>0', str(check.get_body()))
 
 
 def test_create_table_statement_named_check_constraint():
@@ -197,5 +197,5 @@ def test_create_table_statement_named_check_constraint():
     check = column.get_check_constraint()
     assert_true(check)
     assert_equal('check_column', check.get_name())
-    assert_equal('edits_pending > 0', str(check.get_body()))
+    assert_equal('edits_pending>0', str(check.get_body()))
 

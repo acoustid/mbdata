@@ -1,21 +1,29 @@
 # -*- coding: utf8 -*-
 
 import json
+import unittest
 from nose.tools import *
 from mbdata.tests.api import with_client
 
 
+unittest.TestCase.maxDiff = None
+
+
 @with_client
-def test_artist_details_group(client):
-    rv = client.get('/1.0/artist/details?id=ce89261a-79cf-409e-a167-b4515b5eb5bb')
+def test_artist_details(client):
+    rv = client.get('/1.0/artist/details?id=95e9aba6-f85c-48a0-9ec9-395d4f0e3875')
 
     expected = {
         u'response': {
             u'artist': {
-                u'id': u'ce89261a-79cf-409e-a167-b4515b5eb5bb',
-                u'name': u'The Chemical Brothers',
-                u'sort_name': u'Chemical Brothers, The',
-                u'type': u'Group',
+                u'id': u'95e9aba6-f85c-48a0-9ec9-395d4f0e3875',
+                u'name': u'Trentem\xf8ller',
+                u'sort_name': u'Trentem\xf8ller',
+                u'type': u'Person',
+                u'gender': u'Male',
+                u'area': u'Denmark',
+                u'begin_area': u'Vordingborg Municipality',
+                u'begin_date': {u'day': 16, u'month': 10, u'year': 1974},
             },
             u'status': {
                 u'code': 0,
@@ -30,17 +38,16 @@ def test_artist_details_group(client):
 
 
 @with_client
-def test_artist_details_person(client):
-    rv = client.get('/1.0/artist/details?id=6655955b-1c1e-4bcb-84e4-81bcd9efab30')
+def test_artist_details_va(client):
+    rv = client.get('/1.0/artist/details?id=89ad4ac3-39f7-470e-963a-56509c546377')
 
     expected = {
         u'response': {
             u'artist': {
-                u'id': u'6655955b-1c1e-4bcb-84e4-81bcd9efab30',
-                u'name': u'Ólafur Arnalds',
-                u'sort_name': u'Arnalds, Ólafur',
-                u'type': u'Person',
-                u'gender': u'Male',
+                u'id': u'89ad4ac3-39f7-470e-963a-56509c546377',
+                u'name': u'Various Artists',
+                u'sort_name': u'Various Artists',
+                u'type': u'Other',
             },
             u'status': {
                 u'code': 0,

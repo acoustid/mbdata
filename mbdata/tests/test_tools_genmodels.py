@@ -154,7 +154,7 @@ def test_expression_to_python_special_name_2():
     check = tables[0].columns[0].check_constraint
 
     check.text._pprint_tree()
-    expected = "sql.text('date') >= sql.text('2000-01-01')"
+    expected = "sql.text('date') >= sql.text(\"'2000-01-01'\")"
     assert_equal(expected, convert_expression_to_python(check.text))
 
 
