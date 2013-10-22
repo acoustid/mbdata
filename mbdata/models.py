@@ -241,7 +241,7 @@ class ArtistIPI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], backref=backref('ipis'))
 
 
 class ArtistISNI(Base):
@@ -253,7 +253,7 @@ class ArtistISNI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], backref=backref('isnis'))
 
 
 class ArtistMeta(Base):
@@ -2325,7 +2325,7 @@ class LabelIPI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    label = relationship('Label', foreign_keys=[label_id])
+    label = relationship('Label', foreign_keys=[label_id], backref=backref('ipis'))
 
 
 class LabelISNI(Base):
@@ -2337,7 +2337,7 @@ class LabelISNI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    label = relationship('Label', foreign_keys=[label_id])
+    label = relationship('Label', foreign_keys=[label_id], backref=backref('isnis'))
 
 
 class LabelMeta(Base):
@@ -2901,7 +2901,7 @@ class Release(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('releases'))
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
     status = relationship('ReleaseStatus', foreign_keys=[status_id])
     packaging = relationship('ReleasePackaging', foreign_keys=[packaging_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -2913,12 +2913,13 @@ class ReleaseCountry(Base):
     __table_args__ = {'schema': 'musicbrainz'}
 
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='release_country_fk_release'), primary_key=True, nullable=False)
-    country = Column(Integer, ForeignKey('musicbrainz.country_area.area', name='release_country_fk_country'), primary_key=True, nullable=False)
+    country_id = Column('country', Integer, ForeignKey('musicbrainz.country_area.area', name='release_country_fk_country'), primary_key=True, nullable=False)
     date_year = Column(SMALLINT)
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship('Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id], backref=backref('country_dates'))
+    country = relationship('CountryArea', foreign_keys=[country_id])
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
@@ -2932,7 +2933,7 @@ class ReleaseUnknownCountry(Base):
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship('Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id], backref=backref('unknown_country_dates'))
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
@@ -3031,7 +3032,7 @@ class ReleaseLabel(Base):
     catalog_number = Column(String(255))
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    release = relationship('Release', foreign_keys=[release_id])
+    release = relationship('Release', foreign_keys=[release_id], backref=backref('labels'))
     label = relationship('Label', foreign_keys=[label_id])
 
 

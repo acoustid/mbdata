@@ -83,8 +83,6 @@ def find_name(output, names, obj):
     code.append('{0} = {1}()'.format(name, obj.__class__.__name__))
 
     for attr in mapper.column_attrs:
-        #if any([column.primary_key for column in attr.columns]):
-        #    continue
         if sum([len(column.foreign_keys) for column in attr.columns]):
             continue
         value = getattr(obj, attr.key)
@@ -93,15 +91,13 @@ def find_name(output, names, obj):
         code.append('{0}.{1} = {2}'.format(name, attr.key, dump_value(value)))
 
     for attr in mapper.relationships:
-        if isinstance(attr, ReleaseGroup) and attr.key == 'releases':
-            continue
         value = getattr(obj, attr.key, None)
         if value is None:
             continue
         if isinstance(value, InstrumentedList):
             value_names = []
-            for obj in value:
-                value_name = find_name(output, names, obj)
+            for item in value:
+                value_name = find_name(output, names, item)
                 if value_name is not None:
                     value_names.append(value_name)
             if value_names:
@@ -150,9 +146,6 @@ def dump_sample_data(session):
 
     print
     print '    session.commit()'
-
-    #for name, value in names.items():
-    #    print '# {0} {1}'.format(name, value)
 
 
 if __name__ == '__main__':

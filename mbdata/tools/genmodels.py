@@ -312,7 +312,7 @@ def generate_models_from_sql(sql):
 
             foreign_key = column.foreign_key
             if foreign_key is not None:
-                if foreign_key.column == 'id':
+                if foreign_key.column in ('id', 'area'):
                     backref = None
                     if table.schema == 'musicbrainz' and table.name == 'artist_credit_name' and column.name == 'artist_credit':
                         backref = 'artists', 'order_by="ArtistCreditName.position"'
@@ -320,12 +320,24 @@ def generate_models_from_sql(sql):
                         backref = 'tracks', 'order_by="Track.position"'
                     if table.schema == 'musicbrainz' and table.name == 'medium' and column.name == 'release':
                         backref = 'mediums', 'order_by="Medium.position"'
-                    if table.schema == 'musicbrainz' and table.name == 'release' and column.name == 'release_group':
-                        backref = 'releases'
                     if table.schema == 'musicbrainz' and table.name == 'isrc' and column.name == 'recording':
                         backref = 'isrcs'
                     if table.schema == 'musicbrainz' and table.name == 'iswc' and column.name == 'work':
                         backref = 'iswcs'
+                    if table.schema == 'musicbrainz' and table.name == 'artist_ipi' and column.name == 'artist':
+                        backref = 'ipis'
+                    if table.schema == 'musicbrainz' and table.name == 'artist_isni' and column.name == 'artist':
+                        backref = 'isnis'
+                    if table.schema == 'musicbrainz' and table.name == 'label_ipi' and column.name == 'label':
+                        backref = 'ipis'
+                    if table.schema == 'musicbrainz' and table.name == 'label_isni' and column.name == 'label':
+                        backref = 'isnis'
+                    if table.schema == 'musicbrainz' and table.name == 'release_label' and column.name == 'release':
+                        backref = 'labels'
+                    if table.schema == 'musicbrainz' and table.name == 'release_country' and column.name == 'release':
+                        backref = 'country_dates'
+                    if table.schema == 'musicbrainz' and table.name == 'release_unknown_country' and column.name == 'release':
+                        backref = 'unknown_country_dates'
                     if table.schema == 'musicbrainz' and table.name == 'release_group_secondary_type_join' and column.name == 'release_group':
                         backref = 'secondary_types'
                     if table.schema == 'musicbrainz' and table.name.endswith('_meta') and column.name == 'id':
