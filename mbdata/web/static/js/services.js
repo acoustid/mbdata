@@ -9,7 +9,8 @@ app.factory('MB', function ($http, API_URL) {
             return $http({
                 method: 'GET',
                 url: API_URL + '/v1/' + entity + '/' + method,
-                params: params
+                params: params,
+                cache: true
             }).then(function (response) {
                 return humps.camelizeKeys(response.data.response);
             });
@@ -21,6 +22,15 @@ app.factory('MB', function ($http, API_URL) {
         var apiMethod = humps.decamelize(method);
         MB[entity] = MB[entity] || {};
         MB[entity][method] = function (params) {
+            if (params) {
+                for (var name in params) {
+                    var apiName = humps.decamelize(name);
+                    if (name != apiName) {
+                        params[apiName] = params[name];
+                        delete params[name];
+                    }
+                }
+            }
             if (Array.isArray(params.include)) {
                 for (var i = 0; i < params.include.length; i++) {
                     params.include[i] = humps.decamelize(params.include[i]);
@@ -43,7 +53,7 @@ app.factory('MB', function ($http, API_URL) {
     }
 
     generateEntities({
-        artist: ['get', 'urls', 'tags'],
+        artist: ['get', 'search', 'urls', 'tags'],
         label: ['get'],
         place: ['get'],
         recording: ['get'],

@@ -24,16 +24,56 @@ app.controller('AppCtrl', function ($scope, $rootScope, $location) {
 
 });
 
-app.controller('SearchCtrl', function ($scope) {
+app.controller('SearchCtrl', function ($scope, $routeParams, $location, MB) {
     $scope.$root.title = 'Search';
-    $scope.query = '';
+    $scope.resultsPerPage = 10;
+
+    function searchFinished(data) {
+        $scope.pageInfo = data.pageInfo;
+        $scope.results = data.results;
+        $scope.hasPrevPage = data.pageInfo.prevPageToken ? true : false;
+        $scope.hasNextPage = data.pageInfo.nextPageToken ? true : false;
+    }
+
+    function startSearch() {
+        var params = {
+            query: $scope.query,
+            results: $scope.resultsPerPage
+        };
+        MB.artist.search(params).then(searchFinished);
+    }
+
     $scope.results = [];
 
+    if ($routeParams.query) {
+        $scope.query = $routeParams.query;
+        startSearch();
+    }
+    else {
+        $scope.query = '';
+    }
+
     $scope.search = function () {
-        console.log('search', $scope.query);
-        $scope.results = [
-            {type: 'artist', id: '8970d868-0723-483b-a75b-51088913d3d4', name: 'Moby'}
-        ];
+        $location.search('query', $scope.query);
+        startSearch();
+    };
+
+    $scope.goToPrevPage = function () {
+        var params = {
+            query: $scope.query,
+            results: $scope.resultsPerPage,
+            pageToken: $scope.pageInfo.prevPageToken
+        };
+        MB.artist.search(params).then(searchFinished);
+    };
+
+    $scope.goToNextPage = function () {
+        var params = {
+            query: $scope.query,
+            results: $scope.resultsPerPage,
+            pageToken: $scope.pageInfo.nextPageToken
+        };
+        MB.artist.search(params).then(searchFinished);
     };
 });
 

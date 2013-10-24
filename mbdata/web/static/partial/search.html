@@ -7,7 +7,15 @@
 </form>
 <div ng-show="results">
   <h2>Results</h2>
-  <p ng-repeat="result in results">
-    <a href="/{{ result.type }}/{{ result.id }}"><b>{{ result.name }}</b></a>
+  <ul>
+    <li ng-repeat="result in results">
+      {{ result.score }}
+      <a href="/artist/{{ result.artist.id }}"><b>{{ result.artist.name }}</b></a>
+    </li>
+  </ul>
+  <p ng-show="hasPrevPage || hasNextPage">
+    Displaying results {{ pageInfo.start + 1 }} to {{ pageInfo.start + results.length }} of total {{ pageInfo.totalResults }}
+    <span ng-show="hasPrevPage"> | <a ng-click="goToPrevPage()" href="#">Previous page</a></span>
+    <span ng-show="hasNextPage"> | <a ng-click="goToNextPage()" href="#">Next page</a></span>
   </p>
 </div>

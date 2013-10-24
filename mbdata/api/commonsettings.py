@@ -4,3 +4,5 @@
 DATABASE_URI = ''
 DATABASE_ECHO = False
 
+SOLR_URI = 'http://127.0.0.1:8983/solr/musicbrainz'
+

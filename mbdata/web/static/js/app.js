@@ -10,7 +10,8 @@ var app = angular.module('mbdata', ['ngRoute']).
         $routeProvider.
             when('/', {
                 controller: 'SearchCtrl',
-                templateUrl: '/static/partial/search.html'
+                templateUrl: '/static/partial/search.html',
+                reloadOnSearch: false
             }).
             when('/artist/:id', {
                 controller: 'ArtistCtrl',

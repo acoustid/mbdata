@@ -2,6 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Flask, g, request
+from solr import Solr
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from mbdata.api.blueprints.artist import blueprint as artist_blueprint
@@ -36,11 +37,15 @@ setup_db()
 @app.before_request
 def before_request():
     g.db = Session()
+    g.solr = Solr(app.config['SOLR_URI'])
 
 
 @app.teardown_request
 def teardown_request(exception):
-    g.db.close()
+    if hasattr(g, 'db'):
+        g.db.close()
+    if hasattr(g, 'solr'):
+        g.solr.close()
 
 
 @app.after_request

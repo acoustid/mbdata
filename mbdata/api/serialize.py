@@ -1,6 +1,8 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
+from mbdata.api.utils import serialize_partial_date
+
 
 def serialize_artist_credit(artist_credit):
     data = []
@@ -149,6 +151,37 @@ def serialize_release(release, include, no_release_group=False, no_mediums=False
         for medium in release.mediums:
             mediums_data.append(serialize_medium(medium, include))
         data['mediums'] = mediums_data
+
+    return data
+
+
+def serialize_artist(artist, include):
+    data = {
+        'id': artist.gid,
+        'name': artist.name,
+        'sort_name': artist.sort_name,
+    }
+
+    serialize_partial_date(data, 'begin_date', artist.begin_date)
+    serialize_partial_date(data, 'end_date', artist.end_date)
+
+    if artist.ended:
+        data['ended'] = True
+
+    if artist.type:
+        data['type'] = artist.type.name
+
+    if artist.gender:
+        data['gender'] = artist.gender.name
+
+    if artist.area:
+        data['area'] = artist.area.name
+
+    if artist.begin_area:
+        data['begin_area'] = artist.begin_area.name
+
+    if artist.end_area:
+        data['end_area'] = artist.end_area.name
 
     return data
 
