@@ -30,8 +30,8 @@ def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
 
-    if include.artist_names and include.artist_credits:
-        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))
+    if include.artist and include.artists:
+        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
 
     query = g.db.query(Release).\
         options(joinedload("status")).\
@@ -39,9 +39,9 @@ def handle_get():
         options(joinedload("language")).\
         options(joinedload("script"))
 
-    if include.artist_names or include.artist_credits:
+    if include.artist or include.artists:
         query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artist_credits:
+    if include.artists:
         query = query.\
             options(subqueryload("artist_credit.artists")).\
             options(joinedload("artist_credit.artists.artist", innerjoin=True))
@@ -52,9 +52,9 @@ def handle_get():
             options(subqueryload("release_group.secondary_types")).\
             options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
 
-        if include.release_group.artist_names or include.release_group.artist_credits:
+        if include.release_group.artist or include.release_group.artists:
             query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
-        if include.release_group.artist_credits:
+        if include.release_group.artists:
             query = query.\
                 options(subqueryload("release_group.artist_credit.artists")).\
                 options(joinedload("release_group.artist_credit.artists.artist", innerjoin=True))
@@ -65,9 +65,9 @@ def handle_get():
         if include.mediums.tracks:
             query = query.options(subqueryload("mediums.tracks"))
 
-            if include.mediums.tracks.artist_names or include.mediums.tracks.artist_credits:
+            if include.mediums.tracks.artist or include.mediums.tracks.artists:
                 query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
-            if include.mediums.tracks.artist_credits:
+            if include.mediums.tracks.artists:
                 query = query.\
                     options(subqueryload("mediums.tracks.artist_credit.artists")).\
                     options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))

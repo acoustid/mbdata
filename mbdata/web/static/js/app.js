@@ -49,7 +49,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     recording: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['artistCredits']
+                            include: ['artists']
                         };
                         return MB.recording.get(params).then(function (data) {
                             return data.recording;
@@ -64,7 +64,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     release: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['artistCredits', 'releaseGroup', 'releaseGroup.artistCredits', 'mediums', 'mediums.tracks', 'mediums.tracks.artistCredits']
+                            include: ['artists', 'releaseGroup', 'releaseGroup.artists', 'mediums', 'mediums.tracks', 'mediums.tracks.artists']
                         };
                         return MB.release.get(params).then(function (data) {
                             return data.release;
@@ -79,7 +79,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     releaseGroup: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['artistCredits']
+                            include: ['artists']
                         };
                         return MB.releaseGroup.get(params).then(function (data) {
                             return data.releaseGroup;
@@ -88,7 +88,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     releases: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['artistCredits']
+                            include: ['artists']
                         };
                         return MB.releaseGroup.listReleases(params).then(function (data) {
                             return data.releases;

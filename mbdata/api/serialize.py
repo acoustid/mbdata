@@ -44,9 +44,9 @@ def serialize_recording(recording, include):
     if recording.length:
         data['length'] = recording.length / 1000.0
 
-    if include.artist_names:
+    if include.artist:
         data['artist'] = recording.artist_credit.name
-    elif include.artist_credits:
+    elif include.artists:
         data['artists'] = serialize_artist_credit(recording.artist_credit)
 
     if include.isrc:
@@ -68,9 +68,9 @@ def serialize_track(track, include):
     if track.length:
         data['length'] = track.length / 1000.0
 
-    if include.artist_names:
+    if include.artist:
         data['artist'] = track.artist_credit.name
-    elif include.artist_credits:
+    elif include.artists:
         data['artists'] = serialize_artist_credit(track.artist_credit)
 
     return data
@@ -112,9 +112,9 @@ def serialize_release_group(release_group, include):
         for type in release_group.secondary_type:
             data['secondary_types'].append(type.secondary_type.name)
 
-    if include.artist_names:
+    if include.artist:
         data['artist'] = release_group.artist_credit.name
-    elif include.artist_credits:
+    elif include.artists:
         data['artists'] = serialize_artist_credit(release_group.artist_credit)
 
     return data
@@ -138,9 +138,9 @@ def serialize_release(release, include, no_release_group=False, no_mediums=False
     if release.script:
         data['script'] = release.script.name
 
-    if include.artist_names:
+    if include.artist:
         data['artist'] = release.artist_credit.name
-    elif include.artist_credits:
+    elif include.artists:
         data['artists'] = serialize_artist_credit(release.artist_credit)
 
     if not no_release_group and include.release_group:

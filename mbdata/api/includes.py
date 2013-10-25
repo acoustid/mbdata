@@ -70,16 +70,16 @@ class LabelIncludes(Includes):
 
 class RecordingIncludes(Includes):
     INCLUDES = set([
-        'artist_names',
-        'artist_credits',
+        'artist',
+        'artists',
         'isrc',
     ])
 
 
 class TrackIncludes(Includes):
     INCLUDES = set([
-        'artist_names',
-        'artist_credits',
+        'artist',
+        'artists',
         'recordings',
     ])
 
@@ -100,15 +100,15 @@ class MediumIncludes(Includes):
 
 class ReleaseGroupIncludes(Includes):
     INCLUDES = [
-        'artist_names',
-        'artist_credits',
+        'artist',
+        'artists',
     ]
 
 
 class ReleaseIncludes(Includes):
     INCLUDES = set([
-        'artist_names',
-        'artist_credits',
+        'artist',
+        'artists',
         'mediums',
         'release_group',
     ])

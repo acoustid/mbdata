@@ -30,17 +30,17 @@ def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ReleaseGroupIncludes.parse)
 
-    if include.artist_names and include.artist_credits:
-        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))
+    if include.artist and include.artists:
+        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
 
     query = g.db.query(ReleaseGroup).\
         options(joinedload("type")).\
         options(subqueryload("secondary_types")).\
         options(joinedload("secondary_types.secondary_type", innerjoin=True))
 
-    if include.artist_names or include.artist_credits:
+    if include.artist or include.artists:
         query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artist_credits:
+    if include.artists:
         query = query.\
             options(subqueryload("artist_credit.artists")).\
             options(joinedload("artist_credit.artists.artist", innerjoin=True))
@@ -57,8 +57,8 @@ def handle_list_releases():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
 
-    if include.artist_names and include.artist_credits:
-        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))
+    if include.artist and include.artists:
+        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
 
     release_group_query = g.db.query(ReleaseGroup.id).filter_by(gid=gid)
     query = g.db.query(Release).\
@@ -68,9 +68,9 @@ def handle_list_releases():
         options(joinedload("language")).\
         options(joinedload("script"))
 
-    if include.artist_names or include.artist_credits:
+    if include.artist or include.artists:
         query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artist_credits:
+    if include.artists:
         query = query.\
             options(subqueryload("artist_credit.artists")).\
             options(joinedload("artist_credit.artists.artist", innerjoin=True))

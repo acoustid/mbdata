@@ -39,8 +39,8 @@ def test_release_get(client):
 
 
 @with_client
-def test_release_get_artist_names(client):
-    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names')
+def test_release_get_artist(client):
+    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artist'] = u'Trentem\xf8ller'
@@ -49,8 +49,8 @@ def test_release_get_artist_names(client):
 
 
 @with_client
-def test_release_get_artist_credits(client):
-    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_credits')
+def test_release_get_artists(client):
+    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artists')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artists'] = [
@@ -64,8 +64,8 @@ def test_release_get_artist_credits(client):
 
 
 @with_client
-def test_release_get_tracks_with_artist_names_and_credits(client):
-    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist_names&include=artist_credits')
+def test_release_get_tracks_with_artist_and_credits(client):
+    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=artist&include=artists')
     assert_equal(rv.status_code, 400)
 
 
@@ -264,8 +264,8 @@ def test_release_get_tracks_and_mediums(client):
 
 
 @with_client
-def test_release_get_tracks_and_mediums_and_artist_credits(client):
-    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=mediums.tracks&include=mediums.tracks.artist_credits&include=artist_credits')
+def test_release_get_tracks_and_mediums_and_artists(client):
+    rv = client.get('/v1/release/get?id=89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149&include=mediums&include=mediums.tracks&include=mediums.tracks.artists&include=artists')
 
     expected = copy.deepcopy(BASE_RESPONSE)
     expected[u'response'][u'release'][u'artists'] = [
