@@ -9,8 +9,9 @@
   <h2>Results</h2>
   <ul>
     <li ng-repeat="result in results">
-      {{ result.score }}
-      <a href="/artist/{{ result.artist.id }}"><b>{{ result.artist.name }}</b></a>
+      <!-- score={{ result.score }} -->
+      <a href="/artist/{{ result.artist.id }}">{{ result.artist.name }}</a>
+      <span class="text-muted" ng-show="result.artist.comment">({{ result.artist.comment }})</span>
     </li>
   </ul>
   <p ng-show="hasPrevPage || hasNextPage">

@@ -162,6 +162,9 @@ def serialize_artist(artist, include):
         'sort_name': artist.sort_name,
     }
 
+    if artist.comment:
+        data['comment'] = artist.comment
+
     serialize_partial_date(data, 'begin_date', artist.begin_date)
     serialize_partial_date(data, 'end_date', artist.end_date)
 

@@ -41,6 +41,7 @@ def test_artist_get_va(client):
                 u'id': u'89ad4ac3-39f7-470e-963a-56509c546377',
                 u'name': u'Various Artists',
                 u'sort_name': u'Various Artists',
+                u"comment": u"add compilations to this artist",
                 u'type': u'Other',
             },
             u'status': {
