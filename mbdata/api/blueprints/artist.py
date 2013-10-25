@@ -6,6 +6,7 @@ from sqlalchemy.orm import joinedload, subqueryload_all, defer
 from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
+from mbdata.api.includes import ArtistIncludes
 from mbdata.api.serialize import serialize_artist
 from mbdata.api.search import (
     parse_page_token,
@@ -47,17 +48,19 @@ def query_artist(session):
 @blueprint.route('/get')
 def handle_get():
     gid = get_param('id', type='uuid', required=True)
+    include = get_param('include', type='enum+', container=ArtistIncludes.parse)
 
     artist = get_artist_by_gid(query_artist(g.db), gid)
     if artist is None:
         abort(response_error(2, 'artist not found'))
 
-    return response_ok(artist=serialize_artist(artist, None))
+    return response_ok(artist=serialize_artist(artist, include))
 
 
 @blueprint.route('/search')
 def handle_search():
     query = get_param('query', type='text')
+    include = get_param('include', type='enum+', container=ArtistIncludes.parse)
 
     page = get_search_params()
     options = prepare_search_options(page, fields='name^1.6 sort_name^1.1 alias')
@@ -81,7 +84,7 @@ def handle_search():
     for id in artist_ids:
         data.append({
             'score': scores[id],
-            'artist': serialize_artist(artist_by_id[id], None),
+            'artist': serialize_artist(artist_by_id[id], include),
         })
 
     return response_ok(results=data, page_info=prepare_page_info(search_results, page))

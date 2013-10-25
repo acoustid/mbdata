@@ -8,11 +8,11 @@ from mbdata.models import (
     RecordingGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
+from mbdata.api.includes import RecordingIncludes
 from mbdata.api.utils import (
     get_param,
     response_ok,
     response_error,
-    make_includes,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
 from mbdata.api.serialize import serialize_recording, serialize_release
@@ -27,9 +27,7 @@ def get_recording_by_gid(query, gid):
 @blueprint.route('/get')
 def handle_get():
     gid = get_param('id', type='uuid', required=True)
-
-    includes_class = make_includes('artist_names', 'artist_credits', 'isrcs')
-    include = get_param('include', type='enum+', container=includes_class)
+    include = get_param('include', type='enum+', container=RecordingIncludes.parse)
 
     if include.artist_names and include.artist_credits:
         abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist_names and include=artist_credits are mutually exclusive'))

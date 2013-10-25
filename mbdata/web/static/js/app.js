@@ -18,7 +18,11 @@ var app = angular.module('mbdata', ['ngRoute']).
                 templateUrl: '/static/partial/artist.html',
                 resolve: {
                     artist: function ($route, MB) {
-                        return MB.artist.get({id: $route.current.params.id}).then(function (data) {
+                        var params = {
+                            id: $route.current.params.id,
+                            include: ['areas']
+                        };
+                        return MB.artist.get(params).then(function (data) {
                             return data.artist;
                         });
                     }
@@ -29,7 +33,10 @@ var app = angular.module('mbdata', ['ngRoute']).
                 templateUrl: '/static/partial/place.html',
                 resolve: {
                     place: function ($route, MB) {
-                        return MB.place.get({id: $route.current.params.id}).then(function (data) {
+                        var params = {
+                            id: $route.current.params.id,
+                        };
+                        return MB.place.get(params).then(function (data) {
                             return data.place;
                         });
                     }
@@ -57,7 +64,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     release: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['releaseGroup', 'mediums', 'tracks', 'artistCredits']
+                            include: ['artistCredits', 'releaseGroup', 'releaseGroup.artistCredits', 'mediums', 'mediums.tracks', 'mediums.tracks.artistCredits']
                         };
                         return MB.release.get(params).then(function (data) {
                             return data.release;
@@ -96,7 +103,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     work: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['iswcs']
+                            include: ['iswc']
                         };
                         return MB.work.get(params).then(function (data) {
                             return data.work;

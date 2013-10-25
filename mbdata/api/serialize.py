@@ -29,7 +29,7 @@ def serialize_work(work, include):
         'name': work.name,
     }
 
-    if include.iswcs:
+    if include.iswc:
         data['iswcs'] = [iswc.iswc for iswc in work.iswcs]
 
     return data
@@ -49,7 +49,7 @@ def serialize_recording(recording, include):
     elif include.artist_credits:
         data['artists'] = serialize_artist_credit(recording.artist_credit)
 
-    if include.isrcs:
+    if include.isrc:
         data['isrcs'] = [isrc.isrc for isrc in recording.isrcs]
 
     return data
@@ -90,7 +90,7 @@ def serialize_medium(medium, include):
     if include.tracks:
         tracks_data = []
         for track in medium.tracks:
-            tracks_data.append(serialize_track(track, include))
+            tracks_data.append(serialize_track(track, include.tracks))
         data['tracks'] = tracks_data
     else:
         data['track_count'] = medium.track_count
@@ -144,12 +144,12 @@ def serialize_release(release, include, no_release_group=False, no_mediums=False
         data['artists'] = serialize_artist_credit(release.artist_credit)
 
     if not no_release_group and include.release_group:
-        data['release_group'] = serialize_release_group(release.release_group, include)
+        data['release_group'] = serialize_release_group(release.release_group, include.release_group)
 
     if not no_mediums and include.mediums:
         mediums_data = []
         for medium in release.mediums:
-            mediums_data.append(serialize_medium(medium, include))
+            mediums_data.append(serialize_medium(medium, include.mediums))
         data['mediums'] = mediums_data
 
     return data
@@ -177,14 +177,15 @@ def serialize_artist(artist, include):
     if artist.gender:
         data['gender'] = artist.gender.name
 
-    if artist.area:
-        data['area'] = artist.area.name
+    if include.areas:
+        if artist.area:
+            data['area'] = artist.area.name
 
-    if artist.begin_area:
-        data['begin_area'] = artist.begin_area.name
+        if artist.begin_area:
+            data['begin_area'] = artist.begin_area.name
 
-    if artist.end_area:
-        data['end_area'] = artist.end_area.name
+        if artist.end_area:
+            data['end_area'] = artist.end_area.name
 
     return data
 

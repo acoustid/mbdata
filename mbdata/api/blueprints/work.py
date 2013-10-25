@@ -8,11 +8,11 @@ from mbdata.models import (
     WorkGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
+from mbdata.api.includes import WorkIncludes
 from mbdata.api.utils import (
     get_param,
     response_ok,
     response_error,
-    make_includes,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
 from mbdata.api.serialize import serialize_work, serialize_release
@@ -27,9 +27,7 @@ def get_work_by_gid(query, gid):
 @blueprint.route('/get')
 def handle_get():
     gid = get_param('id', type='uuid', required=True)
-
-    includes_class = make_includes('iswcs')
-    include = get_param('include', type='enum+', container=includes_class)
+    include = get_param('include', type='enum+', container=WorkIncludes.parse)
 
     query = g.db.query(Work)
 
