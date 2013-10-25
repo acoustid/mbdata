@@ -97,8 +97,11 @@ def render_xml(data):
 
 
 def render_json(data):
-    return current_app.response_class(json.dumps(data, ensure_ascii=False, indent=True),
-                                      mimetype='application/json')
+    options = {}
+    if current_app.config['DEBUG']:
+        options['indent'] = 2
+    response = json.dumps(data, ensure_ascii=False, **options)
+    return current_app.response_class(response, mimetype='application/json')
 
 
 def render_response(code, message, data):
