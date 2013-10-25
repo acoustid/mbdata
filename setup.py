@@ -8,6 +8,8 @@ setup(name='mbdata',
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
       url='https://bitbucket.org/lalinsky/mbdata',
+      include_package_data=True,
+      zip_safe=False,
       packages=[
           'mbdata',
           'mbdata.api',
