@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
 from mbdata.models import Label, LabelGIDRedirect
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
@@ -25,10 +25,18 @@ def get_label_by_gid(query, gid):
     return get_something_by_gid(query, LabelGIDRedirect, gid)
 
 
-def query_label(session):
+def query_label(session, include):
     query = session.query(Label).\
-        options(subqueryload_all("area.type")).\
         options(joinedload("type"))
+
+    if include.areas:
+        query = query.options(subqueryload_all("area.type"))
+
+    if include.ipi:
+        query = query.options(subqueryload("ipis"))
+
+    if include.isni:
+        query = query.options(subqueryload("isnis"))
 
     return query
 
@@ -38,7 +46,7 @@ def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=LabelIncludes.parse)
 
-    label = get_label_by_gid(query_label(g.db), gid)
+    label = get_label_by_gid(query_label(g.db, include), gid)
     if label is None:
         abort(response_error(NOT_FOUND_ERROR, 'label not found'))
 
@@ -63,7 +71,7 @@ def handle_search():
         label_ids.append(id)
         scores[id] = result['score']
 
-    labels = query_label(g.db).filter(Label.id.in_(label_ids))
+    labels = query_label(g.db, include).filter(Label.id.in_(label_ids))
     label_by_id = {}
     for label in labels:
         label_by_id[label.id] = label

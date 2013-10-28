@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
 from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
@@ -16,6 +16,7 @@ from mbdata.api.search import (
 )
 from mbdata.api.errors import (
     INVALID_PARAMETER_ERROR,
+    NOT_FOUND_ERROR,
 )
 
 blueprint = Blueprint('artist', __name__)
@@ -34,13 +35,22 @@ def get_plain_artist_by_gid_or_error(gid):
     return artist
 
 
-def query_artist(session):
+def query_artist(session, include):
     query = session.query(Artist).\
-        options(subqueryload_all("end_area.type")).\
-        options(subqueryload_all("begin_area.type")).\
-        options(subqueryload_all("area.type")).\
         options(joinedload("gender")).\
         options(joinedload("type"))
+
+    if include.areas:
+        query = query.\
+            options(subqueryload_all("end_area.type")).\
+            options(subqueryload_all("begin_area.type")).\
+            options(subqueryload_all("area.type"))
+
+    if include.ipi:
+        query = query.options(subqueryload("ipis"))
+
+    if include.isni:
+        query = query.options(subqueryload("isnis"))
 
     return query
 
@@ -50,7 +60,7 @@ def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ArtistIncludes.parse)
 
-    artist = get_artist_by_gid(query_artist(g.db), gid)
+    artist = get_artist_by_gid(query_artist(g.db, include), gid)
     if artist is None:
         abort(response_error(2, 'artist not found'))
 
@@ -75,7 +85,7 @@ def handle_search():
         artist_ids.append(id)
         scores[id] = result['score']
 
-    artists = query_artist(g.db).filter(Artist.id.in_(artist_ids))
+    artists = query_artist(g.db, include).filter(Artist.id.in_(artist_ids))
     artist_by_id = {}
     for artist in artists:
         artist_by_id[artist.id] = artist
