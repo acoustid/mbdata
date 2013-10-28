@@ -83,5 +83,5 @@ Running tests:
     #!sh
 	nosetests -v
 
-Jenkins task that automatically runs the tests after each commit is at https://lukaslalinsky.ci.cloudbees.com/job/mbdata/
+Jenkins task that automatically runs the tests after each commit is on [CloudBees](https://lukaslalinsky.ci.cloudbees.com/job/mbdata/).
 
