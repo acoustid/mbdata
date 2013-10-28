@@ -15,7 +15,10 @@
   <tbody ng-repeat-end>
     <tr ng-repeat="track in medium.tracks">
       <td class="column-track text-muted">{{ track.number || track.position }}.</td>
-      <td class="column-title">{{ track.name }}</td>
+      <td class="column-title">
+        {{ track.name }}
+        <div ng-show="track.artists && track.artists != release.artists"><small> &ndash; <span mb-artist-credit="track.artists"></span></div>
+      </td>
       <td class="column-length text-muted">{{ track.length | duration }}</td>
     </tr>
   </tbody>
