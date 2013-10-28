@@ -74,3 +74,14 @@ Start the development server:
 
     #!sh
     MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.web.app
+
+Development
+-----------
+
+Running tests:
+
+    #!sh
+	nosetests -v
+
+Jenkins task that automatically runs the tests after each commit is at https://lukaslalinsky.ci.cloudbees.com/job/mbdata/
+
