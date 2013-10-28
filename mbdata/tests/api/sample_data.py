@@ -1,11 +1,12 @@
 import datetime
 from mbdata.models import Area, AreaType, Artist, ArtistCredit, ArtistCreditName
 from mbdata.models import ArtistIPI, ArtistISNI, ArtistMeta, ArtistType, CountryArea
-from mbdata.models import Gender, Label, LabelMeta, LabelType, Language
-from mbdata.models import Medium, MediumFormat, Place, PlaceType, Recording
-from mbdata.models import RecordingMeta, Release, ReleaseCountry, ReleaseGroup, ReleaseGroupMeta
-from mbdata.models import ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta
-from mbdata.models import ReleasePackaging, ReleaseStatus, Script, Track
+from mbdata.models import Gender, Label, LabelIPI, LabelISNI, LabelMeta
+from mbdata.models import LabelType, Language, Medium, MediumFormat, Place
+from mbdata.models import PlaceType, Recording, RecordingMeta, Release, ReleaseCountry
+from mbdata.models import ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin
+from mbdata.models import ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus, Script
+from mbdata.models import Track
 
 
 def create_sample_data(session):
@@ -3148,5 +3149,61 @@ def create_sample_data(session):
     place_abbey_road_studios.area = area_westminster
     place_abbey_road_studios.type = placetype_studio
     session.add(place_abbey_road_studios)
+
+    area_japan = Area()
+    area_japan.id = 107
+    area_japan.gid = '2db42837-c832-3c27-b4a3-08198f75693c'
+    area_japan.name = u'Japan'
+    area_japan.sort_name = u'Japan'
+    area_japan.edits_pending = 0
+    area_japan.last_updated = datetime.datetime(2013, 5, 27, 14, 29, 56, 162248)
+    area_japan.ended = False
+    area_japan.comment = u''
+    area_japan.type = areatype_country
+    session.add(area_japan)
+
+    labelipi_1 = LabelIPI()
+    labelipi_1.ipi = u'00173517959'
+    labelipi_1.edits_pending = 0
+    labelipi_1.created = datetime.datetime(2013, 9, 20, 11, 17, 40, 201068)
+    session.add(labelipi_1)
+
+    labelipi_2 = LabelIPI()
+    labelipi_2.ipi = u'00473554732'
+    labelipi_2.edits_pending = 0
+    labelipi_2.created = datetime.datetime(2013, 9, 20, 11, 17, 40, 201068)
+    session.add(labelipi_2)
+
+    labelisni_1 = LabelISNI()
+    labelisni_1.isni = u'000000011781560X'
+    labelisni_1.edits_pending = 0
+    labelisni_1.created = datetime.datetime(2013, 9, 20, 11, 17, 40, 201068)
+    session.add(labelisni_1)
+
+    labelmeta_3 = LabelMeta()
+    session.add(labelmeta_3)
+
+    label_studio_ghibli = Label()
+    label_studio_ghibli.id = 83683
+    label_studio_ghibli.gid = 'ecc049d0-88a6-4806-a5b7-0f1367a7d6e1'
+    label_studio_ghibli.name = u'\u30b9\u30bf\u30b8\u30aa\u30b8\u30d6\u30ea'
+    label_studio_ghibli.sort_name = u'Studio Ghibli'
+    label_studio_ghibli.begin_date_year = 1985
+    label_studio_ghibli.begin_date_month = 6
+    label_studio_ghibli.comment = u''
+    label_studio_ghibli.edits_pending = 0
+    label_studio_ghibli.last_updated = datetime.datetime(2013, 9, 20, 11, 17, 40, 201068)
+    label_studio_ghibli.ended = False
+    label_studio_ghibli.area = area_japan
+    label_studio_ghibli.ipis = [
+        labelipi_1,
+        labelipi_2,
+    ]
+    label_studio_ghibli.isnis = [
+        labelisni_1,
+    ]
+    label_studio_ghibli.meta = labelmeta_3
+    label_studio_ghibli.type = labeltype_production
+    session.add(label_studio_ghibli)
 
     session.commit()

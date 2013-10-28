@@ -13,7 +13,7 @@ def serialize_artist_credit(artist_credit):
         }
 
         if artist_credit_name.name != artist_credit_name.artist.name:
-            artist_credit_name['credited_name'] = artist_credit_name.name
+            artist_credit_data['credited_name'] = artist_credit_name.name
 
         if artist_credit_name.join_phrase:
             artist_credit_data['join_phrase'] = artist_credit_name.join_phrase
@@ -109,7 +109,7 @@ def serialize_release_group(release_group, include):
 
     if release_group.secondary_types:
         data['secondary_types'] = []
-        for type in release_group.secondary_type:
+        for type in release_group.secondary_types:
             data['secondary_types'].append(type.secondary_type.name)
 
     if include.artist:
@@ -186,6 +186,43 @@ def serialize_artist(artist, include):
 
         if artist.end_area:
             data['end_area'] = artist.end_area.name
+
+    if include.ipi:
+        data['ipis'] = [ipi.ipi for ipi in artist.ipis]
+
+    if include.isni:
+        data['isnis'] = [isni.isni for isni in artist.isnis]
+
+    return data
+
+
+def serialize_label(label, include):
+    data = {
+        'id': label.gid,
+        'name': label.name,
+        'sort_name': label.sort_name,
+    }
+
+    if label.comment:
+        data['comment'] = label.comment
+
+    serialize_partial_date(data, 'begin_date', label.begin_date)
+    serialize_partial_date(data, 'end_date', label.end_date)
+
+    if label.ended:
+        data['ended'] = True
+
+    if label.type:
+        data['type'] = label.type.name
+
+    if include.areas and label.area:
+        data['area'] = label.area.name
+
+    if include.ipi:
+        data['ipis'] = [ipi.ipi for ipi in label.ipis]
+
+    if include.isni:
+        data['isnis'] = [isni.isni for isni in label.isnis]
 
     return data
 

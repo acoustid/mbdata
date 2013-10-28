@@ -7,7 +7,7 @@ import unicodedata
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.collections import InstrumentedList
-from mbdata.models import Release, ReleaseGroup, Place
+from mbdata.models import Release, ReleaseGroup, Place, Label
 
 
 RELEASE_GIDS = [
@@ -17,6 +17,10 @@ RELEASE_GIDS = [
 
 PLACE_GIDS = [
     'bd55aeb7-19d1-4607-a500-14b8479d3fed', # Abbey Road Studios
+]
+
+LABEL_GIDS = [
+    'ecc049d0-88a6-4806-a5b7-0f1367a7d6e1', # Studio Ghibli
 ]
 
 
@@ -44,11 +48,18 @@ def unaccent(string):
     return "".join(result)
 
 
+def name_to_variable(name):
+    return re.sub('_+', '_', re.sub('[^0-9a-z]', '_', unaccent(name).lower())).strip('_')
+
+
 def generate_name(obj):
     name = obj.__class__.__name__.lower()
     if hasattr(obj, 'name') and obj.name:
-        suffix = re.sub('_+', '_', re.sub('[^0-9a-z]', '_', unaccent(obj.name).lower())).strip('_')
-        name = '{0}_{1}'.format(name, suffix)
+        suffix = name_to_variable(obj.name)
+        if not suffix and hasattr(obj, 'sort_name') and obj.sort_name:
+            suffix = name_to_variable(obj.sort_name)
+        if suffix:
+            name = '{0}_{1}'.format(name, suffix)
     elif name not in counters:
         counters[name] = 0
 
@@ -131,6 +142,7 @@ def dump_sample_data(session):
     queries = [
         session.query(Release).filter(Release.gid.in_(RELEASE_GIDS)),
         session.query(Place).filter(Place.gid.in_(PLACE_GIDS)),
+        session.query(Label).filter(Label.gid.in_(LABEL_GIDS)),
     ]
     for query in queries:
         for item in query:
