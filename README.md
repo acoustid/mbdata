@@ -81,7 +81,12 @@ Development
 Running tests:
 
     #!sh
-	nosetests -v
+    nosetests -v
+
+If you want to see the SQL queries from a failed test, you can use the following:
+
+    #!sh
+    MBDATA_DATABASE_ECHO=1 nosetests -v
 
 Jenkins task that automatically runs the tests after each commit is on [CloudBees](https://lukaslalinsky.ci.cloudbees.com/job/mbdata/).
 

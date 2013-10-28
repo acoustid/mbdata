@@ -8,6 +8,7 @@ from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
 from mbdata.api.includes import ArtistIncludes
 from mbdata.api.serialize import serialize_artist
+from mbdata.api.data import load_areas
 from mbdata.api.search import (
     parse_page_token,
     prepare_page_info,
@@ -40,12 +41,6 @@ def query_artist(session, include):
         options(joinedload("gender")).\
         options(joinedload("type"))
 
-    if include.areas:
-        query = query.\
-            options(subqueryload_all("end_area.type")).\
-            options(subqueryload_all("begin_area.type")).\
-            options(subqueryload_all("area.type"))
-
     if include.ipi:
         query = query.options(subqueryload("ipis"))
 
@@ -63,6 +58,9 @@ def handle_get():
     artist = get_artist_by_gid(query_artist(g.db, include), gid)
     if artist is None:
         abort(response_error(2, 'artist not found'))
+
+    if include.areas:
+        load_areas(g.db, [artist], include.areas)
 
     return response_ok(artist=serialize_artist(artist, include))
 
@@ -89,6 +87,9 @@ def handle_search():
     artist_by_id = {}
     for artist in artists:
         artist_by_id[artist.id] = artist
+
+    if include.areas:
+        load_areas(g.db, artist_by_id.values(), include.areas)
 
     data = []
     for id in artist_ids:

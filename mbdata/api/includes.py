@@ -52,12 +52,22 @@ class Includes(object):
         return cls(includes)
 
 
+class AreaIncludes(Includes):
+    INCLUDES = [
+        'part_of',
+    ]
+
+
 class ArtistIncludes(Includes):
     INCLUDES = set([
         'areas',
         'ipi',
         'isni',
     ])
+
+    SUB_INCLUDES = {
+        'areas': AreaIncludes,
+    }
 
 
 class LabelIncludes(Includes):
@@ -66,6 +76,10 @@ class LabelIncludes(Includes):
         'ipi',
         'isni',
     ])
+
+    SUB_INCLUDES = {
+        'areas': AreaIncludes,
+    }
 
 
 class RecordingIncludes(Includes):

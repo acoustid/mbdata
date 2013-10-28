@@ -2,11 +2,11 @@ import datetime
 from mbdata.models import Area, AreaType, Artist, ArtistCredit, ArtistCreditName
 from mbdata.models import ArtistIPI, ArtistISNI, ArtistMeta, ArtistType, CountryArea
 from mbdata.models import Gender, Label, LabelIPI, LabelISNI, LabelMeta
-from mbdata.models import LabelType, Language, Medium, MediumFormat, Place
-from mbdata.models import PlaceType, Recording, RecordingMeta, Release, ReleaseCountry
-from mbdata.models import ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin
-from mbdata.models import ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus, Script
-from mbdata.models import Track
+from mbdata.models import LabelType, Language, Link, LinkAreaArea, LinkType
+from mbdata.models import Medium, MediumFormat, Place, PlaceType, Recording
+from mbdata.models import RecordingMeta, Release, ReleaseCountry, ReleaseGroup, ReleaseGroupMeta
+from mbdata.models import ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta
+from mbdata.models import ReleasePackaging, ReleaseStatus, Script, Track
 
 
 def create_sample_data(session):
@@ -43,6 +43,68 @@ def create_sample_data(session):
     area_vordingborg_municipality.comment = u''
     area_vordingborg_municipality.type = areatype_municipality
     session.add(area_vordingborg_municipality)
+
+    areatype_subdivision = AreaType()
+    areatype_subdivision.id = 2
+    areatype_subdivision.name = u'Subdivision'
+    session.add(areatype_subdivision)
+
+    area_region_zealand = Area()
+    area_region_zealand.id = 617
+    area_region_zealand.gid = '7d490078-4542-411d-aece-709afee04256'
+    area_region_zealand.name = u'Region Zealand'
+    area_region_zealand.sort_name = u'Region Zealand'
+    area_region_zealand.edits_pending = 0
+    area_region_zealand.last_updated = datetime.datetime(2013, 10, 17, 23, 58, 27, 443512)
+    area_region_zealand.begin_date_year = 2007
+    area_region_zealand.begin_date_month = 1
+    area_region_zealand.begin_date_day = 1
+    area_region_zealand.ended = False
+    area_region_zealand.comment = u''
+    area_region_zealand.type = areatype_subdivision
+    session.add(area_region_zealand)
+
+    linktype_part_of = LinkType()
+    linktype_part_of.id = 356
+    linktype_part_of.child_order = 0
+    linktype_part_of.gid = 'de7cc874-8b1b-3a05-8272-f3834c968fb7'
+    linktype_part_of.entity_type0 = u'area'
+    linktype_part_of.entity_type1 = u'area'
+    linktype_part_of.name = u'part of'
+    linktype_part_of.description = u'Designates that one area is contained by another.'
+    linktype_part_of.link_phrase = u'parts'
+    linktype_part_of.reverse_link_phrase = u'part of'
+    linktype_part_of.long_link_phrase = u'has part'
+    linktype_part_of.priority = 0
+    linktype_part_of.last_updated = datetime.datetime(2013, 8, 3, 9, 53, 1, 269081)
+    linktype_part_of.is_deprecated = False
+    session.add(linktype_part_of)
+
+    link_1 = Link()
+    link_1.id = 118734
+    link_1.attribute_count = 0
+    link_1.created = datetime.datetime(2013, 5, 17, 22, 5, 50, 534145)
+    link_1.ended = False
+    link_1.link_type = linktype_part_of
+    session.add(link_1)
+
+    linkareaarea_2 = LinkAreaArea()
+    linkareaarea_2.id = 377
+    linkareaarea_2.edits_pending = 0
+    linkareaarea_2.last_updated = datetime.datetime(2013, 5, 19, 2, 59, 5, 652615)
+    linkareaarea_2.entity0 = area_denmark
+    linkareaarea_2.entity1 = area_region_zealand
+    linkareaarea_2.link = link_1
+    session.add(linkareaarea_2)
+
+    linkareaarea_1 = LinkAreaArea()
+    linkareaarea_1.id = 12609
+    linkareaarea_1.edits_pending = 0
+    linkareaarea_1.last_updated = datetime.datetime(2013, 7, 16, 11, 24, 41, 4892)
+    linkareaarea_1.entity0 = area_region_zealand
+    linkareaarea_1.entity1 = area_vordingborg_municipality
+    linkareaarea_1.link = link_1
+    session.add(linkareaarea_1)
 
     gender_male = Gender()
     gender_male.id = 1
@@ -367,11 +429,6 @@ def create_sample_data(session):
     area_united_states.type = areatype_country
     session.add(area_united_states)
 
-    areatype_subdivision = AreaType()
-    areatype_subdivision.id = 2
-    areatype_subdivision.name = u'Subdivision'
-    session.add(areatype_subdivision)
-
     area_new_york = Area()
     area_new_york.id = 295
     area_new_york.gid = '75e398a3-5f3f-4224-9cd8-0fe44715bc95'
@@ -383,6 +440,15 @@ def create_sample_data(session):
     area_new_york.comment = u''
     area_new_york.type = areatype_subdivision
     session.add(area_new_york)
+
+    linkareaarea_3 = LinkAreaArea()
+    linkareaarea_3.id = 35
+    linkareaarea_3.edits_pending = 0
+    linkareaarea_3.last_updated = datetime.datetime(2013, 5, 17, 22, 23, 44, 235720)
+    linkareaarea_3.entity0 = area_united_states
+    linkareaarea_3.entity1 = area_new_york
+    linkareaarea_3.link = link_1
+    session.add(linkareaarea_3)
 
     areatype_city = AreaType()
     areatype_city.id = 3
@@ -400,6 +466,48 @@ def create_sample_data(session):
     area_montreal.comment = u''
     area_montreal.type = areatype_city
     session.add(area_montreal)
+
+    area_quebec = Area()
+    area_quebec.id = 322
+    area_quebec.gid = 'a510b9b1-404d-4e23-8db8-0f6585909ed8'
+    area_quebec.name = u'Quebec'
+    area_quebec.sort_name = u'Quebec'
+    area_quebec.edits_pending = 0
+    area_quebec.last_updated = datetime.datetime(2013, 5, 17, 23, 30, 9, 455218)
+    area_quebec.ended = False
+    area_quebec.comment = u''
+    area_quebec.type = areatype_subdivision
+    session.add(area_quebec)
+
+    area_canada = Area()
+    area_canada.id = 38
+    area_canada.gid = '71bbafaa-e825-3e15-8ca9-017dcad1748b'
+    area_canada.name = u'Canada'
+    area_canada.sort_name = u'Canada'
+    area_canada.edits_pending = 0
+    area_canada.last_updated = datetime.datetime(2013, 5, 27, 15, 15, 52, 179105)
+    area_canada.ended = False
+    area_canada.comment = u''
+    area_canada.type = areatype_country
+    session.add(area_canada)
+
+    linkareaarea_5 = LinkAreaArea()
+    linkareaarea_5.id = 63
+    linkareaarea_5.edits_pending = 0
+    linkareaarea_5.last_updated = datetime.datetime(2013, 5, 17, 23, 30, 18, 168673)
+    linkareaarea_5.entity0 = area_canada
+    linkareaarea_5.entity1 = area_quebec
+    linkareaarea_5.link = link_1
+    session.add(linkareaarea_5)
+
+    linkareaarea_4 = LinkAreaArea()
+    linkareaarea_4.id = 7045
+    linkareaarea_4.edits_pending = 0
+    linkareaarea_4.last_updated = datetime.datetime(2013, 5, 26, 19, 19, 37, 773186)
+    linkareaarea_4.entity0 = area_quebec
+    linkareaarea_4.entity1 = area_montreal
+    linkareaarea_4.link = link_1
+    session.add(linkareaarea_4)
 
     gender_female = Gender()
     gender_female.id = 2
@@ -708,6 +816,57 @@ def create_sample_data(session):
     area_coventry.type = areatype_subdivision
     session.add(area_coventry)
 
+    area_west_midlands = Area()
+    area_west_midlands.id = 4025
+    area_west_midlands.gid = '07607044-8140-47ba-bb24-7129babe586b'
+    area_west_midlands.name = u'West Midlands'
+    area_west_midlands.sort_name = u'West Midlands'
+    area_west_midlands.edits_pending = 0
+    area_west_midlands.last_updated = datetime.datetime(2013, 8, 28, 15, 50, 43, 164525)
+    area_west_midlands.ended = False
+    area_west_midlands.comment = u''
+    area_west_midlands.type = areatype_subdivision
+    session.add(area_west_midlands)
+
+    area_england = Area()
+    area_england.id = 432
+    area_england.gid = '9d5dd675-3cf4-4296-9e39-67865ebee758'
+    area_england.name = u'England'
+    area_england.sort_name = u'England'
+    area_england.edits_pending = 0
+    area_england.last_updated = datetime.datetime(2013, 5, 18, 2, 11, 46, 530087)
+    area_england.ended = False
+    area_england.comment = u''
+    area_england.type = areatype_subdivision
+    session.add(area_england)
+
+    linkareaarea_8 = LinkAreaArea()
+    linkareaarea_8.id = 173
+    linkareaarea_8.edits_pending = 0
+    linkareaarea_8.last_updated = datetime.datetime(2013, 5, 18, 2, 12, 5, 966838)
+    linkareaarea_8.entity0 = area_united_kingdom
+    linkareaarea_8.entity1 = area_england
+    linkareaarea_8.link = link_1
+    session.add(linkareaarea_8)
+
+    linkareaarea_7 = LinkAreaArea()
+    linkareaarea_7.id = 3791
+    linkareaarea_7.edits_pending = 0
+    linkareaarea_7.last_updated = datetime.datetime(2013, 5, 21, 18, 41, 26, 84075)
+    linkareaarea_7.entity0 = area_england
+    linkareaarea_7.entity1 = area_west_midlands
+    linkareaarea_7.link = link_1
+    session.add(linkareaarea_7)
+
+    linkareaarea_6 = LinkAreaArea()
+    linkareaarea_6.id = 3683
+    linkareaarea_6.edits_pending = 0
+    linkareaarea_6.last_updated = datetime.datetime(2013, 5, 21, 18, 40, 51, 794729)
+    linkareaarea_6.entity0 = area_west_midlands
+    linkareaarea_6.entity1 = area_coventry
+    linkareaarea_6.link = link_1
+    session.add(linkareaarea_6)
+
     artistisni_2 = ArtistISNI()
     artistisni_2.isni = u'0000000122859471'
     artistisni_2.edits_pending = 0
@@ -936,6 +1095,36 @@ def create_sample_data(session):
     area_los_angeles.type = areatype_city
     session.add(area_los_angeles)
 
+    area_california = Area()
+    area_california.id = 266
+    area_california.gid = 'ae0110b6-13d4-4998-9116-5b926287aa23'
+    area_california.name = u'California'
+    area_california.sort_name = u'California'
+    area_california.edits_pending = 0
+    area_california.last_updated = datetime.datetime(2013, 6, 5, 9, 15, 15, 329304)
+    area_california.ended = False
+    area_california.comment = u''
+    area_california.type = areatype_subdivision
+    session.add(area_california)
+
+    linkareaarea_10 = LinkAreaArea()
+    linkareaarea_10.id = 6
+    linkareaarea_10.edits_pending = 0
+    linkareaarea_10.last_updated = datetime.datetime(2013, 5, 17, 22, 8, 33, 220791)
+    linkareaarea_10.entity0 = area_united_states
+    linkareaarea_10.entity1 = area_california
+    linkareaarea_10.link = link_1
+    session.add(linkareaarea_10)
+
+    linkareaarea_9 = LinkAreaArea()
+    linkareaarea_9.id = 7469
+    linkareaarea_9.edits_pending = 0
+    linkareaarea_9.last_updated = datetime.datetime(2013, 5, 29, 2, 9, 31, 440330)
+    linkareaarea_9.entity0 = area_california
+    linkareaarea_9.entity1 = area_los_angeles
+    linkareaarea_9.link = link_1
+    session.add(linkareaarea_9)
+
     artistisni_3 = ArtistISNI()
     artistisni_3.isni = u'0000000115160232'
     artistisni_3.edits_pending = 0
@@ -1025,6 +1214,36 @@ def create_sample_data(session):
     area_glasgow.type = areatype_city
     session.add(area_glasgow)
 
+    area_scotland = Area()
+    area_scotland.id = 434
+    area_scotland.gid = '6fa1c7da-6689-4cec-85f9-680f853e8a08'
+    area_scotland.name = u'Scotland'
+    area_scotland.sort_name = u'Scotland'
+    area_scotland.edits_pending = 0
+    area_scotland.last_updated = datetime.datetime(2013, 5, 18, 2, 12, 35, 79349)
+    area_scotland.ended = False
+    area_scotland.comment = u''
+    area_scotland.type = areatype_subdivision
+    session.add(area_scotland)
+
+    linkareaarea_12 = LinkAreaArea()
+    linkareaarea_12.id = 175
+    linkareaarea_12.edits_pending = 0
+    linkareaarea_12.last_updated = datetime.datetime(2013, 5, 18, 2, 12, 45, 164066)
+    linkareaarea_12.entity0 = area_united_kingdom
+    linkareaarea_12.entity1 = area_scotland
+    linkareaarea_12.link = link_1
+    session.add(linkareaarea_12)
+
+    linkareaarea_11 = LinkAreaArea()
+    linkareaarea_11.id = 3621
+    linkareaarea_11.edits_pending = 0
+    linkareaarea_11.last_updated = datetime.datetime(2013, 5, 21, 16, 42, 19, 310319)
+    linkareaarea_11.entity0 = area_scotland
+    linkareaarea_11.entity1 = area_glasgow
+    linkareaarea_11.link = link_1
+    session.add(linkareaarea_11)
+
     artistmeta_9 = ArtistMeta()
     artistmeta_9.rating = 88
     artistmeta_9.rating_count = 12
@@ -1103,6 +1322,15 @@ def create_sample_data(session):
     area_new_york_1.comment = u''
     area_new_york_1.type = areatype_city
     session.add(area_new_york_1)
+
+    linkareaarea_13 = LinkAreaArea()
+    linkareaarea_13.id = 6786
+    linkareaarea_13.edits_pending = 0
+    linkareaarea_13.last_updated = datetime.datetime(2013, 5, 26, 14, 1, 42, 787582)
+    linkareaarea_13.entity0 = area_new_york
+    linkareaarea_13.entity1 = area_new_york_1
+    linkareaarea_13.link = link_1
+    session.add(linkareaarea_13)
 
     artistmeta_10 = ArtistMeta()
     session.add(artistmeta_10)
@@ -1401,6 +1629,15 @@ def create_sample_data(session):
     area_manhattan.type = areatype_district
     session.add(area_manhattan)
 
+    linkareaarea_14 = LinkAreaArea()
+    linkareaarea_14.id = 10626
+    linkareaarea_14.edits_pending = 0
+    linkareaarea_14.last_updated = datetime.datetime(2013, 6, 21, 0, 9, 0, 648765)
+    linkareaarea_14.entity0 = area_new_york_1
+    linkareaarea_14.entity1 = area_manhattan
+    linkareaarea_14.link = link_1
+    session.add(linkareaarea_14)
+
     artistipi_2 = ArtistIPI()
     artistipi_2.ipi = u'00232910003'
     artistipi_2.edits_pending = 0
@@ -1507,6 +1744,36 @@ def create_sample_data(session):
     area_stockholm.comment = u''
     area_stockholm.type = areatype_city
     session.add(area_stockholm)
+
+    area_stockholms_lan = Area()
+    area_stockholms_lan.id = 469
+    area_stockholms_lan.gid = '63ee9426-d32f-4593-a262-6401bc85c6ba'
+    area_stockholms_lan.name = u'Stockholms l\xe4n'
+    area_stockholms_lan.sort_name = u'Stockholms l\xe4n'
+    area_stockholms_lan.edits_pending = 0
+    area_stockholms_lan.last_updated = datetime.datetime(2013, 5, 19, 0, 42, 10, 590961)
+    area_stockholms_lan.ended = False
+    area_stockholms_lan.comment = u''
+    area_stockholms_lan.type = areatype_subdivision
+    session.add(area_stockholms_lan)
+
+    linkareaarea_16 = LinkAreaArea()
+    linkareaarea_16.id = 229
+    linkareaarea_16.edits_pending = 0
+    linkareaarea_16.last_updated = datetime.datetime(2013, 5, 19, 0, 42, 19, 419007)
+    linkareaarea_16.entity0 = area_sweden
+    linkareaarea_16.entity1 = area_stockholms_lan
+    linkareaarea_16.link = link_1
+    session.add(linkareaarea_16)
+
+    linkareaarea_15 = LinkAreaArea()
+    linkareaarea_15.id = 4880
+    linkareaarea_15.edits_pending = 0
+    linkareaarea_15.last_updated = datetime.datetime(2013, 5, 24, 22, 30, 17, 245957)
+    linkareaarea_15.entity0 = area_stockholms_lan
+    linkareaarea_15.entity1 = area_stockholm
+    linkareaarea_15.link = link_1
+    session.add(linkareaarea_15)
 
     artistmeta_15 = ArtistMeta()
     artistmeta_15.rating = 100
@@ -2334,18 +2601,6 @@ def create_sample_data(session):
     track_zauberberg_iv.recording = recording_zauberberg_iv
     session.add(track_zauberberg_iv)
 
-    area_canada = Area()
-    area_canada.id = 38
-    area_canada.gid = '71bbafaa-e825-3e15-8ca9-017dcad1748b'
-    area_canada.name = u'Canada'
-    area_canada.sort_name = u'Canada'
-    area_canada.edits_pending = 0
-    area_canada.last_updated = datetime.datetime(2013, 5, 27, 15, 15, 52, 179105)
-    area_canada.ended = False
-    area_canada.comment = u''
-    area_canada.type = areatype_country
-    session.add(area_canada)
-
     artistmeta_25 = ArtistMeta()
     session.add(artistmeta_25)
 
@@ -2499,6 +2754,36 @@ def create_sample_data(session):
     area_baltimore.comment = u''
     area_baltimore.type = areatype_city
     session.add(area_baltimore)
+
+    area_maryland = Area()
+    area_maryland.id = 261
+    area_maryland.gid = '1ed51cbe-4272-4df9-9b18-44b0d4714086'
+    area_maryland.name = u'Maryland'
+    area_maryland.sort_name = u'Maryland'
+    area_maryland.edits_pending = 0
+    area_maryland.last_updated = datetime.datetime(2013, 5, 17, 22, 5, 30, 115942)
+    area_maryland.ended = False
+    area_maryland.comment = u''
+    area_maryland.type = areatype_subdivision
+    session.add(area_maryland)
+
+    linkareaarea_18 = LinkAreaArea()
+    linkareaarea_18.id = 1
+    linkareaarea_18.edits_pending = 0
+    linkareaarea_18.last_updated = datetime.datetime(2013, 5, 17, 22, 7, 10, 420660)
+    linkareaarea_18.entity0 = area_united_states
+    linkareaarea_18.entity1 = area_maryland
+    linkareaarea_18.link = link_1
+    session.add(linkareaarea_18)
+
+    linkareaarea_17 = LinkAreaArea()
+    linkareaarea_17.id = 4914
+    linkareaarea_17.edits_pending = 0
+    linkareaarea_17.last_updated = datetime.datetime(2013, 5, 24, 22, 36, 53, 493341)
+    linkareaarea_17.entity0 = area_maryland
+    linkareaarea_17.entity1 = area_baltimore
+    linkareaarea_17.link = link_1
+    session.add(linkareaarea_17)
 
     artistipi_4 = ArtistIPI()
     artistipi_4.ipi = u'00012034058'
@@ -3129,6 +3414,36 @@ def create_sample_data(session):
     area_westminster.comment = u''
     area_westminster.type = areatype_subdivision
     session.add(area_westminster)
+
+    area_london = Area()
+    area_london.id = 1178
+    area_london.gid = 'f03d09b3-39dc-4083-afd6-159e3f0d462f'
+    area_london.name = u'London'
+    area_london.sort_name = u'London'
+    area_london.edits_pending = 0
+    area_london.last_updated = datetime.datetime(2013, 5, 24, 2, 4, 48, 706550)
+    area_london.ended = False
+    area_london.comment = u''
+    area_london.type = areatype_city
+    session.add(area_london)
+
+    linkareaarea_20 = LinkAreaArea()
+    linkareaarea_20.id = 964
+    linkareaarea_20.edits_pending = 0
+    linkareaarea_20.last_updated = datetime.datetime(2013, 5, 19, 22, 29, 59, 930277)
+    linkareaarea_20.entity0 = area_england
+    linkareaarea_20.entity1 = area_london
+    linkareaarea_20.link = link_1
+    session.add(linkareaarea_20)
+
+    linkareaarea_19 = LinkAreaArea()
+    linkareaarea_19.id = 3672
+    linkareaarea_19.edits_pending = 0
+    linkareaarea_19.last_updated = datetime.datetime(2013, 5, 21, 17, 55, 43, 356589)
+    linkareaarea_19.entity0 = area_london
+    linkareaarea_19.entity1 = area_westminster
+    linkareaarea_19.link = link_1
+    session.add(linkareaarea_19)
 
     placetype_studio = PlaceType()
     placetype_studio.id = 1

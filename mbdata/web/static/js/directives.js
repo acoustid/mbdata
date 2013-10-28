@@ -18,3 +18,30 @@ app.directive('mbArtistCredit', function () {
     };
 });
 
+app.directive('mbArea', function () {
+    return {
+        scope: {
+            areas: '=mbArea'
+        },
+        template:
+            '<span ng-repeat="area in [areas] | mbAreaExpand">' +
+                '<span ng-hide="$first">, </span>' +
+                '{{ area.name }}' +
+            '</span>'
+    };
+});
+
+app.filter('mbAreaExpand', function () {
+    return function (areas) {
+        var result = [];
+        for (var i = 0; i < areas.length; i++) {
+            var area = areas[i];
+            while (typeof area !== 'undefined') {
+                result.push(area);
+                area = area.partOf;
+            }
+        }
+        return result;
+    };
+});
+

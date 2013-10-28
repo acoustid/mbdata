@@ -23,6 +23,15 @@ def serialize_artist_credit(artist_credit):
     return data
 
 
+def serialize_area(data, name, area, include):
+    if not area:
+        return
+
+    data[name] = {'name': area.name}
+    if include.part_of:
+        serialize_area(data[name], 'part_of', area.part_of, include)
+
+
 def serialize_work(work, include):
     data = {
         'id': work.gid,
@@ -178,14 +187,9 @@ def serialize_artist(artist, include):
         data['gender'] = artist.gender.name
 
     if include.areas:
-        if artist.area:
-            data['area'] = artist.area.name
-
-        if artist.begin_area:
-            data['begin_area'] = artist.begin_area.name
-
-        if artist.end_area:
-            data['end_area'] = artist.end_area.name
+        serialize_area(data, 'area', artist.area, include.areas)
+        serialize_area(data, 'begin_area', artist.begin_area, include.areas)
+        serialize_area(data, 'end_area', artist.end_area, include.areas)
 
     if include.ipi:
         data['ipis'] = [ipi.ipi for ipi in artist.ipis]
@@ -215,8 +219,8 @@ def serialize_label(label, include):
     if label.type:
         data['type'] = label.type.name
 
-    if include.areas and label.area:
-        data['area'] = label.area.name
+    if include.areas:
+        serialize_area(data, 'area', label.area, include.areas)
 
     if include.ipi:
         data['ipis'] = [ipi.ipi for ipi in label.ipis]

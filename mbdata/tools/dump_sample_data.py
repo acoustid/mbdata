@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import argparse
 import datetime
 import re
 import unicodedata
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, sql
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.collections import InstrumentedList
-from mbdata.models import Release, ReleaseGroup, Place, Label
+from mbdata.models import Release, ReleaseGroup, Place, Label, Area, LinkAreaArea
 
 
 RELEASE_GIDS = [
@@ -86,6 +88,8 @@ def find_name(output, names, obj):
     if key in in_progress:
         return None
 
+    print >>sys.stderr, 'dumping', key
+
     if key in names:
         return names[key]
 
@@ -131,6 +135,14 @@ def find_name(output, names, obj):
 
     names[key] = name
     in_progress.remove(key)
+
+    # special case -- dump parent relationships for areas
+    if isinstance(obj, Area):
+        session = object_session(obj)
+        query = session.query(LinkAreaArea).\
+            filter(LinkAreaArea.entity1_id == obj.id)
+        for sub_obj in query:
+            find_name(output, names, sub_obj)
 
     return name
 

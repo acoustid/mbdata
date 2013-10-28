@@ -21,7 +21,9 @@ def test_label_get(client):
                     u"month": 6
                 },
                 u"name": u"\u30b9\u30bf\u30b8\u30aa\u30b8\u30d6\u30ea",
-                u"area": u"Japan",
+                u"area": {
+                    u"name": u"Japan"
+                },
                 u"ipis": [
                     u"00173517959",
                     u"00473554732"

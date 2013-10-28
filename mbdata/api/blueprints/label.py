@@ -8,6 +8,7 @@ from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import LabelIncludes
 from mbdata.api.serialize import serialize_label
+from mbdata.api.data import load_areas
 from mbdata.api.search import (
     prepare_page_info,
     prepare_search_options,
@@ -29,9 +30,6 @@ def query_label(session, include):
     query = session.query(Label).\
         options(joinedload("type"))
 
-    if include.areas:
-        query = query.options(subqueryload_all("area.type"))
-
     if include.ipi:
         query = query.options(subqueryload("ipis"))
 
@@ -49,6 +47,9 @@ def handle_get():
     label = get_label_by_gid(query_label(g.db, include), gid)
     if label is None:
         abort(response_error(NOT_FOUND_ERROR, 'label not found'))
+
+    if include.areas:
+        load_areas(g.db, [label], include.areas)
 
     return response_ok(label=serialize_label(label, include))
 
@@ -75,6 +76,9 @@ def handle_search():
     label_by_id = {}
     for label in labels:
         label_by_id[label.id] = label
+
+    if include.areas:
+        load_areas(g.db, label_by_id.values(), include.areas)
 
     data = []
     for id in label_ids:

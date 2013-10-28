@@ -10,6 +10,7 @@ import difflib
 from unittest import TestCase
 from unittest.util import safe_repr
 from nose.tools import *
+from flask import g
 
 os.environ['MBDATA_API_SETTINGS'] = os.path.join(os.path.dirname(__file__), 'settings.py')
 from mbdata import patch_model_schemas, NO_SCHEMAS
@@ -44,6 +45,10 @@ def setup_package():
     create_sample_data(session)
     session.close()
 
+    if os.environ.get('MBDATA_DATABASE_ECHO'):
+        app.app.config['DATABASE_ECHO'] = True
+        app.setup_db()
+
 
 def teardown_package():
     if use_file_db:
@@ -56,6 +61,15 @@ def with_client(func):
     def wrapper(*args, **kwargs):
         with app.app.test_client() as client:
             return func(client, *args, **kwargs)
+    return wrapper
+
+
+def with_database(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        with app.app.test_request_context('/'):
+            app.app.preprocess_request()
+            return func(g.db, *args, **kwargs)
     return wrapper
 
 

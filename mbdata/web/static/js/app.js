@@ -20,7 +20,7 @@ var app = angular.module('mbdata', ['ngRoute']).
                     artist: function ($route, MB) {
                         var params = {
                             id: $route.current.params.id,
-                            include: ['areas']
+                            include: ['areas.partOf']
                         };
                         return MB.artist.get(params).then(function (data) {
                             return data.artist;
