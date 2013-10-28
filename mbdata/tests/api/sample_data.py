@@ -1,15 +1,20 @@
 import datetime
 from mbdata.models import Area, AreaType, Artist, ArtistCredit, ArtistCreditName
 from mbdata.models import ArtistIPI, ArtistISNI, ArtistMeta, ArtistType, CountryArea
-from mbdata.models import Gender, Label, LabelIPI, LabelISNI, LabelMeta
-from mbdata.models import LabelType, Language, Link, LinkAreaArea, LinkType
-from mbdata.models import Medium, MediumFormat, Place, PlaceType, Recording
-from mbdata.models import RecordingMeta, Release, ReleaseCountry, ReleaseGroup, ReleaseGroupMeta
-from mbdata.models import ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta
-from mbdata.models import ReleasePackaging, ReleaseStatus, Script, Track
+from mbdata.models import Gender, ISO31661, ISO31662, Label, LabelIPI
+from mbdata.models import LabelISNI, LabelMeta, LabelType, Language, Link
+from mbdata.models import LinkAreaArea, LinkType, Medium, MediumFormat, Place
+from mbdata.models import PlaceType, Recording, RecordingMeta, Release, ReleaseCountry
+from mbdata.models import ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin
+from mbdata.models import ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus, Script
+from mbdata.models import Track
 
 
 def create_sample_data(session):
+    iso31661_1 = ISO31661()
+    iso31661_1.code = u'DK'
+    session.add(iso31661_1)
+
     areatype_country = AreaType()
     areatype_country.id = 1
     areatype_country.name = u'Country'
@@ -24,6 +29,9 @@ def create_sample_data(session):
     area_denmark.last_updated = datetime.datetime(2013, 5, 27, 15, 28, 43, 191347)
     area_denmark.ended = False
     area_denmark.comment = u''
+    area_denmark.iso_3166_1_codes = [
+        iso31661_1,
+    ]
     area_denmark.type = areatype_country
     session.add(area_denmark)
 
@@ -44,6 +52,10 @@ def create_sample_data(session):
     area_vordingborg_municipality.type = areatype_municipality
     session.add(area_vordingborg_municipality)
 
+    iso31662_1 = ISO31662()
+    iso31662_1.code = u'DK-85'
+    session.add(iso31662_1)
+
     areatype_subdivision = AreaType()
     areatype_subdivision.id = 2
     areatype_subdivision.name = u'Subdivision'
@@ -61,6 +73,9 @@ def create_sample_data(session):
     area_region_zealand.begin_date_day = 1
     area_region_zealand.ended = False
     area_region_zealand.comment = u''
+    area_region_zealand.iso_3166_2_codes = [
+        iso31662_1,
+    ]
     area_region_zealand.type = areatype_subdivision
     session.add(area_region_zealand)
 
@@ -176,6 +191,10 @@ def create_sample_data(session):
     ]
     session.add(artistcredit_trentemoller)
 
+    iso31661_2 = ISO31661()
+    iso31661_2.code = u'GB'
+    session.add(iso31661_2)
+
     area_united_kingdom = Area()
     area_united_kingdom.id = 221
     area_united_kingdom.gid = '8a754a16-0027-3a29-b6d7-2b40ea0481ed'
@@ -185,6 +204,9 @@ def create_sample_data(session):
     area_united_kingdom.last_updated = datetime.datetime(2013, 5, 16, 13, 6, 19, 672350)
     area_united_kingdom.ended = False
     area_united_kingdom.comment = u''
+    area_united_kingdom.iso_3166_1_codes = [
+        iso31661_2,
+    ]
     area_united_kingdom.type = areatype_country
     session.add(area_united_kingdom)
 
@@ -417,6 +439,10 @@ def create_sample_data(session):
     track_miss_you.recording = recording_miss_you
     session.add(track_miss_you)
 
+    iso31661_3 = ISO31661()
+    iso31661_3.code = u'US'
+    session.add(iso31661_3)
+
     area_united_states = Area()
     area_united_states.id = 222
     area_united_states.gid = '489ce91b-6658-3307-9877-795b68554c98'
@@ -426,8 +452,15 @@ def create_sample_data(session):
     area_united_states.last_updated = datetime.datetime(2013, 6, 15, 20, 6, 39, 593230)
     area_united_states.ended = False
     area_united_states.comment = u''
+    area_united_states.iso_3166_1_codes = [
+        iso31661_3,
+    ]
     area_united_states.type = areatype_country
     session.add(area_united_states)
+
+    iso31662_2 = ISO31662()
+    iso31662_2.code = u'US-NY'
+    session.add(iso31662_2)
 
     area_new_york = Area()
     area_new_york.id = 295
@@ -438,6 +471,9 @@ def create_sample_data(session):
     area_new_york.last_updated = datetime.datetime(2013, 5, 17, 22, 23, 26, 631791)
     area_new_york.ended = False
     area_new_york.comment = u''
+    area_new_york.iso_3166_2_codes = [
+        iso31662_2,
+    ]
     area_new_york.type = areatype_subdivision
     session.add(area_new_york)
 
@@ -467,6 +503,10 @@ def create_sample_data(session):
     area_montreal.type = areatype_city
     session.add(area_montreal)
 
+    iso31662_3 = ISO31662()
+    iso31662_3.code = u'CA-QC'
+    session.add(iso31662_3)
+
     area_quebec = Area()
     area_quebec.id = 322
     area_quebec.gid = 'a510b9b1-404d-4e23-8db8-0f6585909ed8'
@@ -476,8 +516,15 @@ def create_sample_data(session):
     area_quebec.last_updated = datetime.datetime(2013, 5, 17, 23, 30, 9, 455218)
     area_quebec.ended = False
     area_quebec.comment = u''
+    area_quebec.iso_3166_2_codes = [
+        iso31662_3,
+    ]
     area_quebec.type = areatype_subdivision
     session.add(area_quebec)
+
+    iso31661_4 = ISO31661()
+    iso31661_4.code = u'CA'
+    session.add(iso31661_4)
 
     area_canada = Area()
     area_canada.id = 38
@@ -488,6 +535,9 @@ def create_sample_data(session):
     area_canada.last_updated = datetime.datetime(2013, 5, 27, 15, 15, 52, 179105)
     area_canada.ended = False
     area_canada.comment = u''
+    area_canada.iso_3166_1_codes = [
+        iso31661_4,
+    ]
     area_canada.type = areatype_country
     session.add(area_canada)
 
@@ -589,6 +639,10 @@ def create_sample_data(session):
     track_de_carla_a_pered.recording = recording_de_carla_a_pered
     session.add(track_de_carla_a_pered)
 
+    iso31661_5 = ISO31661()
+    iso31661_5.code = u'MX'
+    session.add(iso31661_5)
+
     area_mexico = Area()
     area_mexico.id = 138
     area_mexico.gid = '3e08b2cd-69f3-317c-b1e4-e71be581839e'
@@ -598,6 +652,9 @@ def create_sample_data(session):
     area_mexico.last_updated = datetime.datetime(2013, 5, 27, 15, 41, 13, 615269)
     area_mexico.ended = False
     area_mexico.comment = u''
+    area_mexico.iso_3166_1_codes = [
+        iso31661_5,
+    ]
     area_mexico.type = areatype_country
     session.add(area_mexico)
 
@@ -696,6 +753,10 @@ def create_sample_data(session):
     track_snowflake.recording = recording_snowflake
     session.add(track_snowflake)
 
+    iso31661_6 = ISO31661()
+    iso31661_6.code = u'JM'
+    session.add(iso31661_6)
+
     area_jamaica = Area()
     area_jamaica.id = 106
     area_jamaica.gid = '2dd47a64-91d5-3b13-bc94-80043ed063d7'
@@ -705,6 +766,9 @@ def create_sample_data(session):
     area_jamaica.last_updated = datetime.datetime(2013, 5, 27, 14, 32, 31, 72979)
     area_jamaica.ended = False
     area_jamaica.comment = u''
+    area_jamaica.iso_3166_1_codes = [
+        iso31661_6,
+    ]
     area_jamaica.type = areatype_country
     session.add(area_jamaica)
 
@@ -804,6 +868,10 @@ def create_sample_data(session):
     track_evil_dub.recording = recording_evil_dub
     session.add(track_evil_dub)
 
+    iso31662_4 = ISO31662()
+    iso31662_4.code = u'GB-COV'
+    session.add(iso31662_4)
+
     area_coventry = Area()
     area_coventry.id = 3917
     area_coventry.gid = 'aab979a4-b106-4baa-a4a3-fc45f775cff9'
@@ -813,6 +881,9 @@ def create_sample_data(session):
     area_coventry.last_updated = datetime.datetime(2013, 6, 5, 12, 26, 16, 645060)
     area_coventry.ended = False
     area_coventry.comment = u''
+    area_coventry.iso_3166_2_codes = [
+        iso31662_4,
+    ]
     area_coventry.type = areatype_subdivision
     session.add(area_coventry)
 
@@ -828,6 +899,10 @@ def create_sample_data(session):
     area_west_midlands.type = areatype_subdivision
     session.add(area_west_midlands)
 
+    iso31662_5 = ISO31662()
+    iso31662_5.code = u'GB-ENG'
+    session.add(iso31662_5)
+
     area_england = Area()
     area_england.id = 432
     area_england.gid = '9d5dd675-3cf4-4296-9e39-67865ebee758'
@@ -837,6 +912,9 @@ def create_sample_data(session):
     area_england.last_updated = datetime.datetime(2013, 5, 18, 2, 11, 46, 530087)
     area_england.ended = False
     area_england.comment = u''
+    area_england.iso_3166_2_codes = [
+        iso31662_5,
+    ]
     area_england.type = areatype_subdivision
     session.add(area_england)
 
@@ -1095,6 +1173,10 @@ def create_sample_data(session):
     area_los_angeles.type = areatype_city
     session.add(area_los_angeles)
 
+    iso31662_6 = ISO31662()
+    iso31662_6.code = u'US-CA'
+    session.add(iso31662_6)
+
     area_california = Area()
     area_california.id = 266
     area_california.gid = 'ae0110b6-13d4-4998-9116-5b926287aa23'
@@ -1104,6 +1186,9 @@ def create_sample_data(session):
     area_california.last_updated = datetime.datetime(2013, 6, 5, 9, 15, 15, 329304)
     area_california.ended = False
     area_california.comment = u''
+    area_california.iso_3166_2_codes = [
+        iso31662_6,
+    ]
     area_california.type = areatype_subdivision
     session.add(area_california)
 
@@ -1202,6 +1287,10 @@ def create_sample_data(session):
     track_break_on_through_dark_ride_dub_mix.recording = recording_break_on_through_dark_ride_dub_mix
     session.add(track_break_on_through_dark_ride_dub_mix)
 
+    iso31662_7 = ISO31662()
+    iso31662_7.code = u'GB-GLG'
+    session.add(iso31662_7)
+
     area_glasgow = Area()
     area_glasgow.id = 3855
     area_glasgow.gid = 'c279f805-01f8-46f5-99cf-51f165a1adad'
@@ -1211,8 +1300,15 @@ def create_sample_data(session):
     area_glasgow.last_updated = datetime.datetime(2013, 5, 24, 2, 2, 38, 336242)
     area_glasgow.ended = False
     area_glasgow.comment = u''
+    area_glasgow.iso_3166_2_codes = [
+        iso31662_7,
+    ]
     area_glasgow.type = areatype_city
     session.add(area_glasgow)
+
+    iso31662_8 = ISO31662()
+    iso31662_8.code = u'GB-SCT'
+    session.add(iso31662_8)
 
     area_scotland = Area()
     area_scotland.id = 434
@@ -1223,6 +1319,9 @@ def create_sample_data(session):
     area_scotland.last_updated = datetime.datetime(2013, 5, 18, 2, 12, 35, 79349)
     area_scotland.ended = False
     area_scotland.comment = u''
+    area_scotland.iso_3166_2_codes = [
+        iso31662_8,
+    ]
     area_scotland.type = areatype_subdivision
     session.add(area_scotland)
 
@@ -1459,6 +1558,10 @@ def create_sample_data(session):
     track_contort_yourself.recording = recording_contort_yourself
     session.add(track_contort_yourself)
 
+    iso31661_7 = ISO31661()
+    iso31661_7.code = u'SE'
+    session.add(iso31661_7)
+
     area_sweden = Area()
     area_sweden.id = 202
     area_sweden.gid = '23d10872-f5ae-3f0c-bf55-332788a16ecb'
@@ -1468,6 +1571,9 @@ def create_sample_data(session):
     area_sweden.last_updated = datetime.datetime(2013, 5, 27, 15, 49, 3, 298388)
     area_sweden.ended = False
     area_sweden.comment = u''
+    area_sweden.iso_3166_1_codes = [
+        iso31661_7,
+    ]
     area_sweden.type = areatype_country
     session.add(area_sweden)
 
@@ -1534,6 +1640,10 @@ def create_sample_data(session):
     track_someone_like_you.recording = recording_someone_like_you
     session.add(track_someone_like_you)
 
+    iso31661_8 = ISO31661()
+    iso31661_8.code = u'DE'
+    session.add(iso31661_8)
+
     area_germany = Area()
     area_germany.id = 81
     area_germany.gid = '85752fda-13c4-31a3-bee5-0e5cb1f51dad'
@@ -1543,6 +1653,9 @@ def create_sample_data(session):
     area_germany.last_updated = datetime.datetime(2013, 5, 27, 14, 44, 37, 529747)
     area_germany.ended = False
     area_germany.comment = u''
+    area_germany.iso_3166_1_codes = [
+        iso31661_8,
+    ]
     area_germany.type = areatype_country
     session.add(area_germany)
 
@@ -1745,6 +1858,10 @@ def create_sample_data(session):
     area_stockholm.type = areatype_city
     session.add(area_stockholm)
 
+    iso31662_9 = ISO31662()
+    iso31662_9.code = u'SE-AB'
+    session.add(iso31662_9)
+
     area_stockholms_lan = Area()
     area_stockholms_lan.id = 469
     area_stockholms_lan.gid = '63ee9426-d32f-4593-a262-6401bc85c6ba'
@@ -1754,6 +1871,9 @@ def create_sample_data(session):
     area_stockholms_lan.last_updated = datetime.datetime(2013, 5, 19, 0, 42, 10, 590961)
     area_stockholms_lan.ended = False
     area_stockholms_lan.comment = u''
+    area_stockholms_lan.iso_3166_2_codes = [
+        iso31662_9,
+    ]
     area_stockholms_lan.type = areatype_subdivision
     session.add(area_stockholms_lan)
 
@@ -2397,6 +2517,10 @@ def create_sample_data(session):
     track_zuhause.recording = recording_zuhause
     session.add(track_zuhause)
 
+    iso31661_9 = ISO31661()
+    iso31661_9.code = u'FR'
+    session.add(iso31661_9)
+
     area_france = Area()
     area_france.id = 73
     area_france.gid = '08310658-51eb-3801-80de-5a0739207115'
@@ -2406,6 +2530,9 @@ def create_sample_data(session):
     area_france.last_updated = datetime.datetime(2013, 5, 27, 14, 50, 32, 702645)
     area_france.ended = False
     area_france.comment = u''
+    area_france.iso_3166_1_codes = [
+        iso31661_9,
+    ]
     area_france.type = areatype_country
     session.add(area_france)
 
@@ -2667,6 +2794,10 @@ def create_sample_data(session):
     track_he_poos_clouds.recording = recording_he_poos_clouds
     session.add(track_he_poos_clouds)
 
+    iso31661_10 = ISO31661()
+    iso31661_10.code = u'LU'
+    session.add(iso31661_10)
+
     area_luxembourg = Area()
     area_luxembourg.id = 124
     area_luxembourg.gid = '563d21b7-4a8e-35e2-83a7-7804baefbfa7'
@@ -2676,6 +2807,9 @@ def create_sample_data(session):
     area_luxembourg.last_updated = datetime.datetime(2013, 5, 27, 15, 51, 12, 674706)
     area_luxembourg.ended = False
     area_luxembourg.comment = u''
+    area_luxembourg.iso_3166_1_codes = [
+        iso31661_10,
+    ]
     area_luxembourg.type = areatype_country
     session.add(area_luxembourg)
 
@@ -2755,6 +2889,10 @@ def create_sample_data(session):
     area_baltimore.type = areatype_city
     session.add(area_baltimore)
 
+    iso31662_10 = ISO31662()
+    iso31662_10.code = u'US-MD'
+    session.add(iso31662_10)
+
     area_maryland = Area()
     area_maryland.id = 261
     area_maryland.gid = '1ed51cbe-4272-4df9-9b18-44b0d4714086'
@@ -2764,6 +2902,9 @@ def create_sample_data(session):
     area_maryland.last_updated = datetime.datetime(2013, 5, 17, 22, 5, 30, 115942)
     area_maryland.ended = False
     area_maryland.comment = u''
+    area_maryland.iso_3166_2_codes = [
+        iso31662_10,
+    ]
     area_maryland.type = areatype_subdivision
     session.add(area_maryland)
 
@@ -3403,6 +3544,10 @@ def create_sample_data(session):
     release_xvi_reflections_on_classical_music.status = releasestatus_official
     session.add(release_xvi_reflections_on_classical_music)
 
+    iso31662_11 = ISO31662()
+    iso31662_11.code = u'GB-WSM'
+    session.add(iso31662_11)
+
     area_westminster = Area()
     area_westminster.id = 3906
     area_westminster.gid = '48d08ee1-db45-4566-bb1d-c47ab6dbaf98'
@@ -3412,6 +3557,9 @@ def create_sample_data(session):
     area_westminster.last_updated = datetime.datetime(2013, 5, 21, 16, 51, 57, 923559)
     area_westminster.ended = False
     area_westminster.comment = u''
+    area_westminster.iso_3166_2_codes = [
+        iso31662_11,
+    ]
     area_westminster.type = areatype_subdivision
     session.add(area_westminster)
 
@@ -3465,6 +3613,10 @@ def create_sample_data(session):
     place_abbey_road_studios.type = placetype_studio
     session.add(place_abbey_road_studios)
 
+    iso31661_11 = ISO31661()
+    iso31661_11.code = u'JP'
+    session.add(iso31661_11)
+
     area_japan = Area()
     area_japan.id = 107
     area_japan.gid = '2db42837-c832-3c27-b4a3-08198f75693c'
@@ -3474,6 +3626,9 @@ def create_sample_data(session):
     area_japan.last_updated = datetime.datetime(2013, 5, 27, 14, 29, 56, 162248)
     area_japan.ended = False
     area_japan.comment = u''
+    area_japan.iso_3166_1_codes = [
+        iso31661_11,
+    ]
     area_japan.type = areatype_country
     session.add(area_japan)
 

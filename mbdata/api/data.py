@@ -19,26 +19,37 @@ def load_areas(session, objs, include):
                     attrs.append((obj, id, attr))
                     ids.add(id)
 
-    areas = fetch_areas(session, ids, recursive=bool(include.part_of))
+    areas = fetch_areas(session, ids, include)
     for obj, id, attr in attrs:
         setattr(obj, attr, areas[id])
 
 
-def fetch_areas(session, ids, recursive=False):
+def fetch_areas(session, ids, include):
     areas = {}
     if not ids:
         return areas
 
-    for area in session.query(Area).filter(Area.id.in_(ids)):
+    options = []
+
+    if include.iso_3166:
+        options.append(joinedload('iso_3166_1_codes'))
+        options.append(joinedload('iso_3166_2_codes'))
+        options.append(joinedload('iso_3166_3_codes'))
+
+    if include.type:
+        options.append(joinedload('type'))
+
+    query = session.query(Area).filter(Area.id.in_(ids)).options(*options)
+    for area in query:
         areas[area.id] = area
 
-    if recursive and areas:
-        _fetch_parent_areas(session, areas)
+    if include.part_of and areas:
+        _fetch_parent_areas(session, areas, options)
 
     return areas
 
 
-def _fetch_parent_areas(session, areas):
+def _fetch_parent_areas(session, areas, options):
     for area in areas.itervalues():
         area.part_of = None
 
@@ -56,18 +67,19 @@ def _fetch_parent_areas(session, areas):
         subquery()
 
     if session.bind.dialect.name == 'postgresql':
-        _fetch_parent_areas_cte(session, area_parent_query, areas)
+        _fetch_parent_areas_cte(session, area_parent_query, areas, options)
     else:
-        _fetch_parent_areas_iterate(session, area_parent_query, areas)
+        _fetch_parent_areas_iterate(session, area_parent_query, areas, options)
 
 
-def _fetch_parent_areas_iterate(session, area_parent_query, areas):
+def _fetch_parent_areas_iterate(session, area_parent_query, areas, options):
     while True:
         area_ids = [area.id for area in areas.itervalues() if area.part_of is None]
 
         query = session.query(Area, area_parent_query.c.child_id).\
             filter(Area.id == area_parent_query.c.parent_id).\
-            filter(area_parent_query.c.child_id.in_(area_ids))
+            filter(area_parent_query.c.child_id.in_(area_ids)).\
+            options(*options)
 
         found = False
         for area, child_id in query:
@@ -80,7 +92,7 @@ def _fetch_parent_areas_iterate(session, area_parent_query, areas):
             break
 
 
-def _fetch_parent_areas_cte(session, area_parent_query, areas):
+def _fetch_parent_areas_cte(session, area_parent_query, areas, options):
     area_ids = [area.id for area in areas.itervalues() if area.part_of is None]
 
     area_ancestors_cte = session.query(
@@ -104,7 +116,7 @@ def _fetch_parent_areas_cte(session, area_parent_query, areas):
 
     query = session.query(Area, area_ancestors_cte.c.child_id, area_ancestors_cte.c.depth).\
         filter(Area.id == area_ancestors_cte.c.parent_id).\
-        order_by(area_ancestors_cte.c.depth)
+        order_by(area_ancestors_cte.c.depth).options(*options)
 
     for area, child_id, depth in query:
         area.part_of = None

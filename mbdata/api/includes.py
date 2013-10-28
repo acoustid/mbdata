@@ -55,6 +55,8 @@ class Includes(object):
 class AreaIncludes(Includes):
     INCLUDES = [
         'part_of',
+        'iso_3166',
+        'type',
     ]
 
 

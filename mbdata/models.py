@@ -714,7 +714,7 @@ class ISO31661(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_1_fk_area'), nullable=False)
     code = Column(CHAR(2), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_1_codes'))
 
 
 class ISO31662(Base):
@@ -724,7 +724,7 @@ class ISO31662(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_2_fk_area'), nullable=False)
     code = Column(String(10), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_2_codes'))
 
 
 class ISO31663(Base):
@@ -734,7 +734,7 @@ class ISO31663(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_3_fk_area'), nullable=False)
     code = Column(CHAR(4), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_3_codes'))
 
 
 class ISRC(Base):

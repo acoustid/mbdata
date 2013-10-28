@@ -28,6 +28,18 @@ def serialize_area(data, name, area, include):
         return
 
     data[name] = {'name': area.name}
+
+    if include.type and area.type:
+        data[name]['type'] = area.type.name
+
+    if include.iso_3166:
+        if area.iso_3166_1_codes:
+            data[name]['iso_3166_1'] = [r.code for r in area.iso_3166_1_codes]
+        if area.iso_3166_2_codes:
+            data[name]['iso_3166_2'] = [r.code for r in area.iso_3166_2_codes]
+        if area.iso_3166_3_codes:
+            data[name]['iso_3166_2'] = [r.code for r in area.iso_3166_3_codes]
+
     if include.part_of:
         serialize_area(data[name], 'part_of', area.part_of, include)
 

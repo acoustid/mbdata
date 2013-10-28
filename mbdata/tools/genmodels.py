@@ -342,6 +342,8 @@ def generate_models_from_sql(sql):
                         backref = 'secondary_types'
                     if table.schema == 'musicbrainz' and table.name.endswith('_meta') and column.name == 'id':
                         backref = 'meta', 'uselist=False'
+                    if table.schema == 'musicbrainz' and table.name.startswith('iso_') and column.name == 'area':
+                        backref = table.name + '_codes'
                     if attribute_name == 'id':
                         if table.schema == 'cover_art_archive' and table.name == 'cover_art_type':
                             relationship_name = 'cover_art'
