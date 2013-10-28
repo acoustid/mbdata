@@ -20,6 +20,9 @@ if __name__ == '__main__':
     from werkzeug.wsgi import DispatcherMiddleware
     from mbdata.api.app import app as api_app
 
+    app.debug = True
+    api_app.debug = True
+
     combined_app = DispatcherMiddleware(app, {'/api': api_app})
     run_simple('127.0.0.1', 5001, combined_app, use_reloader=True, use_debugger=True)
 
