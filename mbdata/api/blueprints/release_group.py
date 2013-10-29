@@ -77,7 +77,7 @@ def handle_list_releases():
 
     releases_data = []
     for release in query:
-        releases_data.append(serialize_release(release, include, no_release_group=True, no_mediums=True))
+        releases_data.append(serialize_release(release, include))
 
     return response_ok(releases=releases_data)
 

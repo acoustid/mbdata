@@ -15,7 +15,7 @@ from mbdata.api.utils import (
     response_error,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
-from mbdata.api.serialize import serialize_recording, serialize_release
+from mbdata.api.serialize import serialize_recording
 
 blueprint = Blueprint('recording', __name__)
 

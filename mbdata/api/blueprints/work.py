@@ -15,7 +15,7 @@ from mbdata.api.utils import (
     response_error,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
-from mbdata.api.serialize import serialize_work, serialize_release
+from mbdata.api.serialize import serialize_work
 
 blueprint = Blueprint('work', __name__)
 
@@ -24,18 +24,18 @@ def get_work_by_gid(query, gid):
     return get_something_by_gid(query, WorkGIDRedirect, gid)
 
 
+def query_work(db, include):
+    return db.query(Work).options(joinedload('type'))
+
+
 @blueprint.route('/get')
 def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=WorkIncludes.parse)
 
-    query = g.db.query(Work)
-
-    work = get_work_by_gid(query, gid)
+    work = get_work_by_gid(query_work(g.db, include), gid)
     if work is None:
         abort(response_error(NOT_FOUND_ERROR, 'work not found'))
 
-    work_data = serialize_work(work, include)
-
-    return response_ok(work=work_data)
+    return response_ok(work=serialize_work(work, include))
 

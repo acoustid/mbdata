@@ -59,6 +59,9 @@ def serialize_work(work, include):
         'name': work.name,
     }
 
+    if work.type:
+        work['type'] = work.type.name
+
     if include.iswc:
         data['iswcs'] = [iswc.iswc for iswc in work.iswcs]
 
@@ -71,8 +74,14 @@ def serialize_recording(recording, include):
         'name': recording.name,
     }
 
+    if recording.comment:
+        data['comment'] = recording.comment
+
     if recording.length:
         data['length'] = recording.length / 1000.0
+
+    if recording.video:
+        data['video'] = True
 
     if include.artist:
         data['artist'] = recording.artist_credit.name
@@ -134,6 +143,9 @@ def serialize_release_group(release_group, include):
         'name': release_group.name,
     }
 
+    if release_group.comment:
+        data['comment'] = release_group.comment
+
     if release_group.type:
         data['type'] = release_group.type.name
 
@@ -150,11 +162,14 @@ def serialize_release_group(release_group, include):
     return data
 
 
-def serialize_release(release, include, no_release_group=False, no_mediums=False):
+def serialize_release(release, include):
     data = {
         'id': release.gid,
         'name': release.name,
     }
+
+    if release.comment:
+        data['comment'] = release.comment
 
     if release.status:
         data['status'] = release.status.name
@@ -173,10 +188,10 @@ def serialize_release(release, include, no_release_group=False, no_mediums=False
     elif include.artists:
         data['artists'] = serialize_artist_credit(release.artist_credit)
 
-    if not no_release_group and include.release_group:
+    if include.release_group:
         data['release_group'] = serialize_release_group(release.release_group, include.release_group)
 
-    if not no_mediums and include.mediums:
+    if include.mediums:
         mediums_data = []
         for medium in release.mediums:
             mediums_data.append(serialize_medium(medium, include.mediums))
@@ -257,6 +272,9 @@ def serialize_place(place, include):
         'id': place.gid,
         'name': place.name,
     }
+
+    if place.comment:
+        data['comment'] = place.comment
 
     serialize_partial_date(data, 'begin_date', place.begin_date)
     serialize_partial_date(data, 'end_date', place.end_date)
