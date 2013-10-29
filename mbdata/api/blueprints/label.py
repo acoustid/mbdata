@@ -48,8 +48,8 @@ def handle_get():
     if label is None:
         abort(response_error(NOT_FOUND_ERROR, 'label not found'))
 
-    if include.areas:
-        load_areas(g.db, [label], include.areas)
+    if include.area:
+        load_areas(g.db, [label], include.area)
 
     return response_ok(label=serialize_label(label, include))
 

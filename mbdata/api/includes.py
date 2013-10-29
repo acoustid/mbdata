@@ -74,13 +74,13 @@ class ArtistIncludes(Includes):
 
 class LabelIncludes(Includes):
     INCLUDES = set([
-        'areas',
+        'area',
         'ipi',
         'isni',
     ])
 
     SUB_INCLUDES = {
-        'areas': AreaIncludes,
+        'area': AreaIncludes,
     }
 
 

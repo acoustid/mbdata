@@ -6,7 +6,7 @@ from mbdata.tests.api import with_client, assert_json_response_equal
 
 @with_client
 def test_label_get(client):
-    rv = client.get('/v1/label/get?id=ecc049d0-88a6-4806-a5b7-0f1367a7d6e1&include=areas&include=ipi&include=isni')
+    rv = client.get('/v1/label/get?id=ecc049d0-88a6-4806-a5b7-0f1367a7d6e1&include=area&include=ipi&include=isni')
 
     expected = {
         u"response": {

@@ -240,8 +240,8 @@ def serialize_label(label, include):
     if label.type:
         data['type'] = label.type.name
 
-    if include.areas:
-        serialize_area(data, 'area', label.area, include.areas)
+    if include.area:
+        serialize_area(data, 'area', label.area, include.area)
 
     if include.ipi:
         data['ipis'] = [ipi.ipi for ipi in label.ipis]
