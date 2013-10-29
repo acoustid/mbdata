@@ -135,14 +135,3 @@ def response_error(code, message, **data):
     response.status_code = ERROR_STATUS_CODES.get(code, ERROR_DEFAULT_STATUS_CODE)
     return response
 
-
-def serialize_partial_date(data, name, date):
-    if not date:
-        return False
-    d = data[name] = {'year': date.year}
-    if date.month:
-        d['month'] = date.month
-        if date.day:
-            d['day'] = date.day
-    return True
-

@@ -1,26 +1,16 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
-from mbdata.api.utils import serialize_partial_date
 
+def serialize_partial_date(data, name, date):
+    if not date:
+        return
 
-def serialize_artist_credit(artist_credit):
-    data = []
-    for artist_credit_name in artist_credit.artists:
-        artist_credit_data = {
-            'id': artist_credit_name.artist.gid,
-            'name': artist_credit_name.artist.name,
-        }
-
-        if artist_credit_name.name != artist_credit_name.artist.name:
-            artist_credit_data['credited_name'] = artist_credit_name.name
-
-        if artist_credit_name.join_phrase:
-            artist_credit_data['join_phrase'] = artist_credit_name.join_phrase
-
-        data.append(artist_credit_data)
-
-    return data
+    d = data[name] = {'year': date.year}
+    if date.month:
+        d['month'] = date.month
+        if date.day:
+            d['day'] = date.day
 
 
 def serialize_area(data, name, area, include):
@@ -42,6 +32,25 @@ def serialize_area(data, name, area, include):
 
     if include.part_of:
         serialize_area(data[name], 'part_of', area.part_of, include)
+
+
+def serialize_artist_credit(artist_credit):
+    data = []
+    for artist_credit_name in artist_credit.artists:
+        artist_credit_data = {
+            'id': artist_credit_name.artist.gid,
+            'name': artist_credit_name.artist.name,
+        }
+
+        if artist_credit_name.name != artist_credit_name.artist.name:
+            artist_credit_data['credited_name'] = artist_credit_name.name
+
+        if artist_credit_name.join_phrase:
+            artist_credit_data['join_phrase'] = artist_credit_name.join_phrase
+
+        data.append(artist_credit_data)
+
+    return data
 
 
 def serialize_work(work, include):
@@ -239,6 +248,33 @@ def serialize_label(label, include):
 
     if include.isni:
         data['isnis'] = [isni.isni for isni in label.isnis]
+
+    return data
+
+
+def serialize_place(place, include):
+    data = {
+        'id': place.gid,
+        'name': place.name,
+    }
+
+    serialize_partial_date(data, 'begin_date', place.begin_date)
+    serialize_partial_date(data, 'end_date', place.end_date)
+
+    if place.address:
+        data['address'] = place.address
+
+    if place.ended:
+        data['ended'] = True
+
+    if place.type:
+        data['type'] = place.type.name
+
+    if place.coordinates:
+        data['coordinates'] = {
+            'latitude': place.coordinates[0],
+            'longitude': place.coordinates[1],
+        }
 
     return data
 

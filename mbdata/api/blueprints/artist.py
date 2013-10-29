@@ -5,7 +5,7 @@ from flask import Blueprint, g, abort
 from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
 from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag
 from mbdata.utils import defer_everything_but, get_something_by_gid
-from mbdata.api.utils import get_param, response_ok, response_error, serialize_partial_date
+from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import ArtistIncludes
 from mbdata.api.serialize import serialize_artist
 from mbdata.api.data import load_areas
@@ -32,7 +32,7 @@ def get_plain_artist_by_gid_or_error(gid):
         options(*defer_everything_but(Artist, "id", "gid"))
     artist = get_artist_by_gid(query, gid)
     if artist is None:
-        abort(response_error(2, 'artist not found'))
+        abort(response_error(NOT_FOUND_ERROR, 'artist not found'))
     return artist
 
 
@@ -57,7 +57,7 @@ def handle_get():
 
     artist = get_artist_by_gid(query_artist(g.db, include), gid)
     if artist is None:
-        abort(response_error(2, 'artist not found'))
+        abort(response_error(NOT_FOUND_ERROR, 'artist not found'))
 
     if include.areas:
         load_areas(g.db, [artist], include.areas)

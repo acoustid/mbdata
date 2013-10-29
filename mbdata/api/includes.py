@@ -140,3 +140,7 @@ class WorkIncludes(Includes):
         'iswc',
     ]
 
+
+class PlaceIncludes(Includes):
+    INCLUDES = []
+

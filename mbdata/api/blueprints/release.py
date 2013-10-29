@@ -13,7 +13,6 @@ from mbdata.api.utils import (
     get_param,
     response_ok,
     response_error,
-    serialize_partial_date,
 )
 from mbdata.api.errors import NOT_FOUND_ERROR, INCLUDE_DEPENDENCY_ERROR
 from mbdata.api.serialize import serialize_release
