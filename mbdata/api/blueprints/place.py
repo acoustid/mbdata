@@ -8,6 +8,7 @@ from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import PlaceIncludes
 from mbdata.api.serialize import serialize_place
+from mbdata.api.data import load_areas
 from mbdata.api.errors import NOT_FOUND_ERROR
 
 blueprint = Blueprint('place', __name__)
@@ -29,6 +30,9 @@ def handle_get():
     place = get_place_by_gid(query_place(g.db, include), gid)
     if place is None:
         abort(response_error(NOT_FOUND_ERROR, 'place not found'))
+
+    if include.area:
+        load_areas(g.db, [place], include.area)
 
     return response_ok(place=serialize_place(place, include))
 

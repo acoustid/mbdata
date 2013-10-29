@@ -276,5 +276,8 @@ def serialize_place(place, include):
             'longitude': place.coordinates[1],
         }
 
+    if include.area:
+        serialize_area(data, 'area', place.area, include.area)
+
     return data
 

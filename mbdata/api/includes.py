@@ -142,5 +142,11 @@ class WorkIncludes(Includes):
 
 
 class PlaceIncludes(Includes):
-    INCLUDES = []
+    INCLUDES = [
+        'area',
+    ]
+
+    SUB_INCLUDES = {
+        'area': AreaIncludes,
+    }
 

@@ -6,7 +6,7 @@ from mbdata.tests.api import with_client, assert_json_response_equal
 
 @with_client
 def test_place_get(client):
-    rv = client.get('/v1/place/get?id=bd55aeb7-19d1-4607-a500-14b8479d3fed')
+    rv = client.get('/v1/place/get?id=bd55aeb7-19d1-4607-a500-14b8479d3fed&include=area.part_of')
 
     expected = {
         u'response': {
@@ -16,6 +16,18 @@ def test_place_get(client):
                 u'address': u"3 Abbey Road, St John's Wood, London",
                 u'type': u'Studio',
                 u'coordinates': {u'latitude': 51.53192, u'longitude': -0.17835},
+                u"area": {
+                    u"part_of": {
+                        u"part_of": {
+                            u"part_of": {
+                                u"name": u"United Kingdom"
+                            },
+                            u"name": u"England"
+                        },
+                        u"name": u"London"
+                    },
+                    u"name": u"Westminster"
+                },
                 u'begin_date': {u'year': 1931},
             },
             u'status': {
