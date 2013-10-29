@@ -26,7 +26,6 @@ class Includes(object):
 
     @classmethod
     def parse(cls, params, prefix=''):
-        print cls, "parse", params, prefix
         includes = {}
         sub_includes = {}
 
