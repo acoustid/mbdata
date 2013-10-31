@@ -18,7 +18,6 @@ setup(name='mbdata',
           'mbdata.tests.api',
           'mbdata.tools',
           'mbdata.utils',
-          'mbdata.web',
       ],
       namespace_packages=['mbdata'],
      )

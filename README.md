@@ -64,17 +64,6 @@ For production use, you should use server software like
 [uWSGI](http://projects.unbit.it/uwsgi/) and
 [nginx](http://nginx.org/) to run the service.
 
-Web Application
----------------
-
-To help you view the contents of the MusicBrainz database, there is also a simple JavaScript
-application that uses the HTTP API and allows you to browse database.
-
-Start the development server:
-
-    #!sh
-    MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.web.app
-
 Development
 -----------
 
