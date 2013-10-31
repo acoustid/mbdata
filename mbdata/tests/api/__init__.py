@@ -13,9 +13,9 @@ from nose.tools import *
 from flask import g
 
 os.environ['MBDATA_API_SETTINGS'] = os.path.join(os.path.dirname(__file__), 'settings.py')
-from mbdata import patch_model_schemas, NO_SCHEMAS
 from mbdata.api import app
 from mbdata.models import Base
+from mbdata.utils import patch_model_schemas, NO_SCHEMAS
 from mbdata.tests.api.sample_data import create_sample_data
 
 

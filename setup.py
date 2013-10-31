@@ -20,4 +20,5 @@ setup(name='mbdata',
           'mbdata.utils',
           'mbdata.web',
       ],
+      namespace_packages=['mbdata'],
      )
