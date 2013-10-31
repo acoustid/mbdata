@@ -34,6 +34,19 @@ a:hover {
     width: 50px;
 }
 
+.table-release thead tr th {
+    border-bottom-width: 1px;
+    border-top-width: 0px;
+}
+
+/*.table-release thead:not(first-child) tr th {
+    padding-top: 1em;
+}*/
+
+.table-release tbody tr:first-child td {
+    border-top: none;
+}
+
 .loading {
 	position: fixed;
 	top: 0px;
@@ -50,5 +63,19 @@ a:hover {
 	border: 0;
 	border-bottom-left-radius: 5px;
 	border-bottom-right-radius: 5px;
+}
+
+dl.detail {
+    margin-top: 0;
+}
+
+dl.detail dt {
+    font-weight: normal;
+    font-size: 90%;
+    color: #666;
+}
+
+dl.detail dd {
+    margin-bottom: 0.5em;
 }
 

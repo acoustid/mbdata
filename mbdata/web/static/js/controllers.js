@@ -95,6 +95,39 @@ app.controller('RecordingCtrl', function ($scope, recording) {
 app.controller('ReleaseCtrl', function ($scope, release) {
     $scope.$root.title = release.name;
     $scope.release = release;
+
+    $scope.showArtistCredit = function (track) {
+        return !angular.equals(track.artists, $scope.release.artists);
+    }
+
+    $scope.getCombinedFormat = function (mediums) {
+        var formats = [], format = "", count = 0;
+        for (var i = 0; i < mediums.length; i++) {
+            var medium = mediums[i];
+            if (medium.format != format) {
+                if (count) {
+                    if (count > 1) {
+                        formats.push(count + ' x ' + format);
+                    }
+                    else {
+                        formats.push(format);
+                    }
+                }
+                format = medium.format;
+                count = 0;
+            }
+            count += 1;
+        }
+        if (count) {
+            if (count > 1) {
+                formats.push(count + ' x ' + format);
+            }
+            else {
+                formats.push(format);
+            }
+        }
+        return formats.join(' + ');
+    }
 });
 
 app.controller('ReleaseGroupCtrl', function ($scope, releaseGroup, releases) {
