@@ -1,5 +1,5 @@
 from nose.tools import *
-from mbdata.tests.api import with_client
+from mbdata.api.tests import with_client
 
 
 @with_client

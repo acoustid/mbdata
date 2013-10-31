@@ -3,7 +3,7 @@ from sqlalchemy.orm import noload
 from mbdata.models import Artist
 from mbdata.api.data import load_areas
 from mbdata.api.includes import AreaIncludes
-from mbdata.tests.api import with_database
+from mbdata.api.tests import with_database
 
 
 @with_database

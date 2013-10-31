@@ -1,7 +1,7 @@
 # -*- coding: utf8 -*-
 
 from nose.tools import *
-from mbdata.tests.api import with_client, assert_json_response_equal
+from mbdata.api.tests import with_client, assert_json_response_equal
 
 
 @with_client
