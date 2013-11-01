@@ -3,11 +3,13 @@ from mbdata.models import Area, AreaType, Artist, ArtistCredit, ArtistCreditName
 from mbdata.models import ArtistIPI, ArtistISNI, ArtistMeta, ArtistType, CountryArea
 from mbdata.models import Gender, ISO31661, ISO31662, Label, LabelIPI
 from mbdata.models import LabelISNI, LabelMeta, LabelType, Language, Link
-from mbdata.models import LinkAreaArea, LinkType, Medium, MediumFormat, Place
-from mbdata.models import PlaceType, Recording, RecordingMeta, Release, ReleaseCountry
-from mbdata.models import ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType, ReleaseGroupSecondaryTypeJoin
-from mbdata.models import ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus, Script
-from mbdata.models import Track
+from mbdata.models import LinkAreaArea, LinkArtistRecording, LinkArtistRelease, LinkArtistWork, LinkRecordingWork
+from mbdata.models import LinkReleaseURL, LinkType, LinkURLWork, Medium, MediumFormat
+from mbdata.models import Place, PlaceType, Recording, RecordingMeta, Release
+from mbdata.models import ReleaseCountry, ReleaseGroup, ReleaseGroupMeta, ReleaseGroupPrimaryType, ReleaseGroupSecondaryType
+from mbdata.models import ReleaseGroupSecondaryTypeJoin, ReleaseLabel, ReleaseMeta, ReleasePackaging, ReleaseStatus
+from mbdata.models import Script, Track, URL, Work, WorkMeta
+from mbdata.models import WorkType
 
 
 def create_sample_data(session):
@@ -1397,6 +1399,292 @@ def create_sample_data(session):
     recording_the_fallen_justice_remix.meta = recordingmeta_15
     session.add(recording_the_fallen_justice_remix)
 
+    workmeta_1 = WorkMeta()
+    session.add(workmeta_1)
+
+    work_the_fallen = Work()
+    work_the_fallen.id = 6688572
+    work_the_fallen.gid = '30524491-df69-3678-aa67-64c5da804d93'
+    work_the_fallen.name = u'The Fallen'
+    work_the_fallen.comment = u''
+    work_the_fallen.edits_pending = 0
+    work_the_fallen.last_updated = datetime.datetime(2011, 7, 26, 10, 0, 16, 808255)
+    work_the_fallen.meta = workmeta_1
+    session.add(work_the_fallen)
+
+    artistipi_2 = ArtistIPI()
+    artistipi_2.ipi = u'00267327940'
+    artistipi_2.edits_pending = 0
+    artistipi_2.created = datetime.datetime(2013, 5, 6, 8, 0, 14, 518494)
+    session.add(artistipi_2)
+
+    artistmeta_10 = ArtistMeta()
+    session.add(artistmeta_10)
+
+    artist_alex_kapranos = Artist()
+    artist_alex_kapranos.id = 314063
+    artist_alex_kapranos.gid = '262b08bd-539c-43b4-9dbf-1d85d25e79b8'
+    artist_alex_kapranos.name = u'Alex Kapranos'
+    artist_alex_kapranos.sort_name = u'Kapranos, Alex'
+    artist_alex_kapranos.begin_date_year = 1972
+    artist_alex_kapranos.begin_date_month = 3
+    artist_alex_kapranos.begin_date_day = 20
+    artist_alex_kapranos.comment = u''
+    artist_alex_kapranos.edits_pending = 0
+    artist_alex_kapranos.last_updated = datetime.datetime(2013, 5, 7, 1, 0, 40, 658242)
+    artist_alex_kapranos.ended = False
+    artist_alex_kapranos.area = area_united_kingdom
+    artist_alex_kapranos.gender = gender_male
+    artist_alex_kapranos.ipis = [
+        artistipi_2,
+    ]
+    artist_alex_kapranos.meta = artistmeta_10
+    artist_alex_kapranos.type = artisttype_person
+    session.add(artist_alex_kapranos)
+
+    linktype_composer = LinkType()
+    linktype_composer.id = 168
+    linktype_composer.child_order = 0
+    linktype_composer.gid = 'd59d99ea-23d4-4a80-b066-edca32ee158f'
+    linktype_composer.entity_type0 = u'artist'
+    linktype_composer.entity_type1 = u'work'
+    linktype_composer.name = u'composer'
+    linktype_composer.description = u'Indicates the composer for this work, i.e. the person who wrote the music (not necessarily the lyrics) of this work. (<a href="http://musicbrainz.org/doc/Composer_Relationship_Type">Details</a>)'
+    linktype_composer.link_phrase = u'{additional:additionally} composed'
+    linktype_composer.reverse_link_phrase = u'{additional} composer'
+    linktype_composer.long_link_phrase = u'{additional:additionally} composed'
+    linktype_composer.priority = 0
+    linktype_composer.last_updated = datetime.datetime(2013, 8, 4, 10, 58, 13, 631502)
+    linktype_composer.is_deprecated = False
+    session.add(linktype_composer)
+
+    link_2 = Link()
+    link_2.id = 12757
+    link_2.attribute_count = 0
+    link_2.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_2.ended = False
+    link_2.link_type = linktype_composer
+    session.add(link_2)
+
+    linkartistwork_1 = LinkArtistWork()
+    linkartistwork_1.id = 566017
+    linkartistwork_1.edits_pending = 0
+    linkartistwork_1.last_updated = datetime.datetime(2013, 5, 7, 1, 0, 40, 658242)
+    linkartistwork_1.entity0 = artist_alex_kapranos
+    linkartistwork_1.entity1 = work_the_fallen
+    linkartistwork_1.link = link_2
+    session.add(linkartistwork_1)
+
+    linktype_lyricist = LinkType()
+    linktype_lyricist.id = 165
+    linktype_lyricist.child_order = 1
+    linktype_lyricist.gid = '3e48faba-ec01-47fd-8e89-30e81161661c'
+    linktype_lyricist.entity_type0 = u'artist'
+    linktype_lyricist.entity_type1 = u'work'
+    linktype_lyricist.name = u'lyricist'
+    linktype_lyricist.description = u'Indicates the lyricist for this work. (<a href="http://musicbrainz.org/doc/Lyricist_Relationship_Type">Details</a>)'
+    linktype_lyricist.link_phrase = u'{additional} {translated} lyrics'
+    linktype_lyricist.reverse_link_phrase = u'{additional} {translated:translator|lyricist}'
+    linktype_lyricist.long_link_phrase = u'{additional:additionally} {translated:translated|wrote} the lyrics for'
+    linktype_lyricist.priority = 0
+    linktype_lyricist.last_updated = datetime.datetime(2011, 5, 25, 22, 0, 47, 940102)
+    linktype_lyricist.is_deprecated = False
+    session.add(linktype_lyricist)
+
+    link_3 = Link()
+    link_3.id = 12776
+    link_3.attribute_count = 0
+    link_3.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_3.ended = False
+    link_3.link_type = linktype_lyricist
+    session.add(link_3)
+
+    linkartistwork_2 = LinkArtistWork()
+    linkartistwork_2.id = 566019
+    linkartistwork_2.edits_pending = 0
+    linkartistwork_2.last_updated = datetime.datetime(2013, 5, 7, 1, 0, 40, 658242)
+    linkartistwork_2.entity0 = artist_alex_kapranos
+    linkartistwork_2.entity1 = work_the_fallen
+    linkartistwork_2.link = link_3
+    session.add(linkartistwork_2)
+
+    artistipi_3 = ArtistIPI()
+    artistipi_3.ipi = u'00443131398'
+    artistipi_3.edits_pending = 0
+    artistipi_3.created = datetime.datetime(2013, 5, 6, 8, 0, 14, 566553)
+    session.add(artistipi_3)
+
+    artistmeta_11 = ArtistMeta()
+    session.add(artistmeta_11)
+
+    artist_nicholas_mccarthy = Artist()
+    artist_nicholas_mccarthy.id = 314075
+    artist_nicholas_mccarthy.gid = 'deaf2729-cc2b-4a84-8acb-0cea2e5fee49'
+    artist_nicholas_mccarthy.name = u'Nicholas McCarthy'
+    artist_nicholas_mccarthy.sort_name = u'McCarthy, Nicholas'
+    artist_nicholas_mccarthy.begin_date_year = 1974
+    artist_nicholas_mccarthy.begin_date_month = 12
+    artist_nicholas_mccarthy.begin_date_day = 13
+    artist_nicholas_mccarthy.comment = u''
+    artist_nicholas_mccarthy.edits_pending = 0
+    artist_nicholas_mccarthy.last_updated = datetime.datetime(2013, 5, 6, 8, 0, 14, 566553)
+    artist_nicholas_mccarthy.ended = False
+    artist_nicholas_mccarthy.area = area_united_kingdom
+    artist_nicholas_mccarthy.gender = gender_male
+    artist_nicholas_mccarthy.ipis = [
+        artistipi_3,
+    ]
+    artist_nicholas_mccarthy.meta = artistmeta_11
+    artist_nicholas_mccarthy.type = artisttype_person
+    session.add(artist_nicholas_mccarthy)
+
+    linkartistwork_3 = LinkArtistWork()
+    linkartistwork_3.id = 566039
+    linkartistwork_3.edits_pending = 0
+    linkartistwork_3.last_updated = datetime.datetime(2012, 7, 24, 14, 16, 17, 271740)
+    linkartistwork_3.entity0 = artist_nicholas_mccarthy
+    linkartistwork_3.entity1 = work_the_fallen
+    linkartistwork_3.link = link_2
+    session.add(linkartistwork_3)
+
+    linkartistwork_4 = LinkArtistWork()
+    linkartistwork_4.id = 566040
+    linkartistwork_4.edits_pending = 0
+    linkartistwork_4.last_updated = datetime.datetime(2012, 7, 24, 14, 16, 18, 812026)
+    linkartistwork_4.entity0 = artist_nicholas_mccarthy
+    linkartistwork_4.entity1 = work_the_fallen
+    linkartistwork_4.link = link_3
+    session.add(linkartistwork_4)
+
+    artistipi_4 = ArtistIPI()
+    artistipi_4.ipi = u'00448626528'
+    artistipi_4.edits_pending = 0
+    artistipi_4.created = datetime.datetime(2013, 5, 6, 8, 0, 14, 540367)
+    session.add(artistipi_4)
+
+    artistmeta_12 = ArtistMeta()
+    session.add(artistmeta_12)
+
+    artist_robert_hardy = Artist()
+    artist_robert_hardy.id = 314073
+    artist_robert_hardy.gid = '6797e740-b6a5-4019-9369-dd49e1381ff6'
+    artist_robert_hardy.name = u'Robert Hardy'
+    artist_robert_hardy.sort_name = u'Hardy, Robert'
+    artist_robert_hardy.begin_date_year = 1980
+    artist_robert_hardy.begin_date_month = 8
+    artist_robert_hardy.begin_date_day = 16
+    artist_robert_hardy.comment = u''
+    artist_robert_hardy.edits_pending = 0
+    artist_robert_hardy.last_updated = datetime.datetime(2013, 5, 6, 8, 0, 14, 540367)
+    artist_robert_hardy.ended = False
+    artist_robert_hardy.area = area_united_kingdom
+    artist_robert_hardy.gender = gender_male
+    artist_robert_hardy.ipis = [
+        artistipi_4,
+    ]
+    artist_robert_hardy.meta = artistmeta_12
+    artist_robert_hardy.type = artisttype_person
+    session.add(artist_robert_hardy)
+
+    linkartistwork_5 = LinkArtistWork()
+    linkartistwork_5.id = 566061
+    linkartistwork_5.edits_pending = 0
+    linkartistwork_5.last_updated = datetime.datetime(2012, 7, 24, 14, 17, 14, 846711)
+    linkartistwork_5.entity0 = artist_robert_hardy
+    linkartistwork_5.entity1 = work_the_fallen
+    linkartistwork_5.link = link_2
+    session.add(linkartistwork_5)
+
+    linkartistwork_6 = LinkArtistWork()
+    linkartistwork_6.id = 566062
+    linkartistwork_6.edits_pending = 0
+    linkartistwork_6.last_updated = datetime.datetime(2012, 7, 24, 14, 17, 16, 351483)
+    linkartistwork_6.entity0 = artist_robert_hardy
+    linkartistwork_6.entity1 = work_the_fallen
+    linkartistwork_6.link = link_3
+    session.add(linkartistwork_6)
+
+    artistipi_5 = ArtistIPI()
+    artistipi_5.ipi = u'00448625825'
+    artistipi_5.edits_pending = 0
+    artistipi_5.created = datetime.datetime(2013, 5, 6, 8, 0, 14, 475190)
+    session.add(artistipi_5)
+
+    artistmeta_13 = ArtistMeta()
+    session.add(artistmeta_13)
+
+    artist_paul_thomson = Artist()
+    artist_paul_thomson.id = 314064
+    artist_paul_thomson.gid = '72ee22fc-938b-45f8-8e9f-8870d7639805'
+    artist_paul_thomson.name = u'Paul Thomson'
+    artist_paul_thomson.sort_name = u'Thomson, Paul'
+    artist_paul_thomson.begin_date_year = 1976
+    artist_paul_thomson.begin_date_month = 9
+    artist_paul_thomson.begin_date_day = 15
+    artist_paul_thomson.comment = u''
+    artist_paul_thomson.edits_pending = 0
+    artist_paul_thomson.last_updated = datetime.datetime(2013, 5, 6, 8, 0, 14, 475190)
+    artist_paul_thomson.ended = False
+    artist_paul_thomson.area = area_united_kingdom
+    artist_paul_thomson.gender = gender_male
+    artist_paul_thomson.ipis = [
+        artistipi_5,
+    ]
+    artist_paul_thomson.meta = artistmeta_13
+    artist_paul_thomson.type = artisttype_person
+    session.add(artist_paul_thomson)
+
+    linkartistwork_7 = LinkArtistWork()
+    linkartistwork_7.id = 566083
+    linkartistwork_7.edits_pending = 0
+    linkartistwork_7.last_updated = datetime.datetime(2012, 7, 24, 14, 18, 12, 318295)
+    linkartistwork_7.entity0 = artist_paul_thomson
+    linkartistwork_7.entity1 = work_the_fallen
+    linkartistwork_7.link = link_2
+    session.add(linkartistwork_7)
+
+    linkartistwork_8 = LinkArtistWork()
+    linkartistwork_8.id = 566084
+    linkartistwork_8.edits_pending = 0
+    linkartistwork_8.last_updated = datetime.datetime(2012, 7, 24, 14, 18, 13, 558797)
+    linkartistwork_8.entity0 = artist_paul_thomson
+    linkartistwork_8.entity1 = work_the_fallen
+    linkartistwork_8.link = link_3
+    session.add(linkartistwork_8)
+
+    linktype_performance = LinkType()
+    linktype_performance.id = 278
+    linktype_performance.child_order = 0
+    linktype_performance.gid = 'a3005666-a872-32c3-ad06-98af558e99b0'
+    linktype_performance.entity_type0 = u'recording'
+    linktype_performance.entity_type1 = u'work'
+    linktype_performance.name = u'performance'
+    linktype_performance.description = u'This is used to link works to their recordings. (<a href="http://musicbrainz.org/doc/Performance_Relationship_Type">Details</a>)'
+    linktype_performance.link_phrase = u'{partial} {live} {instrumental} {cover} recording of'
+    linktype_performance.reverse_link_phrase = u'{partial} {live} {instrumental} {cover} recordings'
+    linktype_performance.long_link_phrase = u'is a {partial} {live} {instrumental} {cover} recording of'
+    linktype_performance.priority = 0
+    linktype_performance.last_updated = datetime.datetime(2013, 8, 3, 10, 25, 47, 933757)
+    linktype_performance.is_deprecated = False
+    session.add(linktype_performance)
+
+    link_4 = Link()
+    link_4.id = 27124
+    link_4.attribute_count = 0
+    link_4.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_4.ended = False
+    link_4.link_type = linktype_performance
+    session.add(link_4)
+
+    linkrecordingwork_1 = LinkRecordingWork()
+    linkrecordingwork_1.id = 705613
+    linkrecordingwork_1.edits_pending = 0
+    linkrecordingwork_1.last_updated = datetime.datetime(2012, 9, 15, 17, 32, 53, 774726)
+    linkrecordingwork_1.entity0 = recording_the_fallen_justice_remix
+    linkrecordingwork_1.entity1 = work_the_fallen
+    linkrecordingwork_1.link = link_4
+    session.add(linkrecordingwork_1)
+
     track_the_fallen_justice_remix = Track()
     track_the_fallen_justice_remix.id = 5918645
     track_the_fallen_justice_remix.gid = '0291a4dd-f5c0-3fce-aea0-516755e75a1f'
@@ -1431,8 +1719,8 @@ def create_sample_data(session):
     linkareaarea_13.link = link_1
     session.add(linkareaarea_13)
 
-    artistmeta_10 = ArtistMeta()
-    session.add(artistmeta_10)
+    artistmeta_14 = ArtistMeta()
+    session.add(artistmeta_14)
 
     artist_le_tigre = Artist()
     artist_le_tigre.id = 51
@@ -1446,7 +1734,7 @@ def create_sample_data(session):
     artist_le_tigre.ended = False
     artist_le_tigre.area = area_united_states
     artist_le_tigre.begin_area = area_new_york_1
-    artist_le_tigre.meta = artistmeta_10
+    artist_le_tigre.meta = artistmeta_14
     artist_le_tigre.type = artisttype_group
     session.add(artist_le_tigre)
 
@@ -1496,8 +1784,8 @@ def create_sample_data(session):
     track_nanny_nanny_boo_boo_junior_senior_remix.recording = recording_nanny_nanny_boo_boo_junior_senior_remix
     session.add(track_nanny_nanny_boo_boo_junior_senior_remix)
 
-    artistmeta_11 = ArtistMeta()
-    session.add(artistmeta_11)
+    artistmeta_15 = ArtistMeta()
+    session.add(artistmeta_15)
 
     artist_james_white_and_the_blacks = Artist()
     artist_james_white_and_the_blacks.id = 107002
@@ -1508,7 +1796,7 @@ def create_sample_data(session):
     artist_james_white_and_the_blacks.edits_pending = 0
     artist_james_white_and_the_blacks.last_updated = datetime.datetime(2010, 7, 25, 6, 44, 13, 723447)
     artist_james_white_and_the_blacks.ended = False
-    artist_james_white_and_the_blacks.meta = artistmeta_11
+    artist_james_white_and_the_blacks.meta = artistmeta_15
     artist_james_white_and_the_blacks.type = artisttype_group
     session.add(artist_james_white_and_the_blacks)
 
@@ -1577,8 +1865,8 @@ def create_sample_data(session):
     area_sweden.type = areatype_country
     session.add(area_sweden)
 
-    artistmeta_12 = ArtistMeta()
-    session.add(artistmeta_12)
+    artistmeta_16 = ArtistMeta()
+    session.add(artistmeta_16)
 
     artist_revl9n = Artist()
     artist_revl9n.id = 226950
@@ -1590,7 +1878,7 @@ def create_sample_data(session):
     artist_revl9n.last_updated = datetime.datetime(2011, 12, 6, 21, 27, 11, 764329)
     artist_revl9n.ended = False
     artist_revl9n.area = area_sweden
-    artist_revl9n.meta = artistmeta_12
+    artist_revl9n.meta = artistmeta_16
     artist_revl9n.type = artisttype_group
     session.add(artist_revl9n)
 
@@ -1659,10 +1947,10 @@ def create_sample_data(session):
     area_germany.type = areatype_country
     session.add(area_germany)
 
-    artistmeta_13 = ArtistMeta()
-    artistmeta_13.rating = 100
-    artistmeta_13.rating_count = 1
-    session.add(artistmeta_13)
+    artistmeta_17 = ArtistMeta()
+    artistmeta_17.rating = 100
+    artistmeta_17.rating_count = 1
+    session.add(artistmeta_17)
 
     artist_thomas_schumacher = Artist()
     artist_thomas_schumacher.id = 43060
@@ -1675,7 +1963,7 @@ def create_sample_data(session):
     artist_thomas_schumacher.ended = False
     artist_thomas_schumacher.area = area_germany
     artist_thomas_schumacher.gender = gender_male
-    artist_thomas_schumacher.meta = artistmeta_13
+    artist_thomas_schumacher.meta = artistmeta_17
     artist_thomas_schumacher.type = artisttype_person
     session.add(artist_thomas_schumacher)
 
@@ -1751,17 +2039,17 @@ def create_sample_data(session):
     linkareaarea_14.link = link_1
     session.add(linkareaarea_14)
 
-    artistipi_2 = ArtistIPI()
-    artistipi_2.ipi = u'00232910003'
-    artistipi_2.edits_pending = 0
-    artistipi_2.created = datetime.datetime(2013, 1, 23, 18, 0, 16, 122251)
-    session.add(artistipi_2)
+    artistipi_6 = ArtistIPI()
+    artistipi_6.ipi = u'00232910003'
+    artistipi_6.edits_pending = 0
+    artistipi_6.created = datetime.datetime(2013, 1, 23, 18, 0, 16, 122251)
+    session.add(artistipi_6)
 
-    artistipi_3 = ArtistIPI()
-    artistipi_3.ipi = u'00232910101'
-    artistipi_3.edits_pending = 0
-    artistipi_3.created = datetime.datetime(2013, 1, 23, 18, 0, 16, 122251)
-    session.add(artistipi_3)
+    artistipi_7 = ArtistIPI()
+    artistipi_7.ipi = u'00232910101'
+    artistipi_7.edits_pending = 0
+    artistipi_7.created = datetime.datetime(2013, 1, 23, 18, 0, 16, 122251)
+    session.add(artistipi_7)
 
     artistisni_4 = ArtistISNI()
     artistisni_4.isni = u'0000000078243206'
@@ -1769,10 +2057,10 @@ def create_sample_data(session):
     artistisni_4.created = datetime.datetime(2013, 8, 30, 7, 1, 40, 485286)
     session.add(artistisni_4)
 
-    artistmeta_14 = ArtistMeta()
-    artistmeta_14.rating = 78
-    artistmeta_14.rating_count = 12
-    session.add(artistmeta_14)
+    artistmeta_18 = ArtistMeta()
+    artistmeta_18.rating = 78
+    artistmeta_18.rating_count = 12
+    session.add(artistmeta_18)
 
     artist_moby = Artist()
     artist_moby.id = 359
@@ -1790,13 +2078,13 @@ def create_sample_data(session):
     artist_moby.begin_area = area_manhattan
     artist_moby.gender = gender_male
     artist_moby.ipis = [
-        artistipi_2,
-        artistipi_3,
+        artistipi_6,
+        artistipi_7,
     ]
     artist_moby.isnis = [
         artistisni_4,
     ]
-    artist_moby.meta = artistmeta_14
+    artist_moby.meta = artistmeta_18
     artist_moby.type = artisttype_person
     session.add(artist_moby)
 
@@ -1832,6 +2120,192 @@ def create_sample_data(session):
     recording_go_trentemoller_remix.artist_credit = artistcredit_moby
     recording_go_trentemoller_remix.meta = recordingmeta_20
     session.add(recording_go_trentemoller_remix)
+
+    linktype_remixer = LinkType()
+    linktype_remixer.id = 153
+    linktype_remixer.child_order = 0
+    linktype_remixer.gid = '7950be4d-13a3-48e7-906b-5af562e39544'
+    linktype_remixer.entity_type0 = u'artist'
+    linktype_remixer.entity_type1 = u'recording'
+    linktype_remixer.name = u'remixer'
+    linktype_remixer.description = u'Indicates the person who remixed the track by taking one or more other tracks, substanially altering them and mixing them together with other material. Note that this one is used for the artist who created a mash-up or used samples as well. (<a href="http://musicbrainz.org/doc/Remixer_Relationship_Type">Details</a>)'
+    linktype_remixer.link_phrase = u'{additional:additionally} remixed'
+    linktype_remixer.reverse_link_phrase = u'{additional} remixer'
+    linktype_remixer.long_link_phrase = u'{additional:additionally} remixed'
+    linktype_remixer.priority = 0
+    linktype_remixer.last_updated = datetime.datetime(2013, 8, 4, 11, 7, 4, 288441)
+    linktype_remixer.is_deprecated = False
+    session.add(linktype_remixer)
+
+    link_5 = Link()
+    link_5.id = 12735
+    link_5.attribute_count = 0
+    link_5.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_5.ended = False
+    link_5.link_type = linktype_remixer
+    session.add(link_5)
+
+    linkartistrecording_1 = LinkArtistRecording()
+    linkartistrecording_1.id = 106130
+    linkartistrecording_1.edits_pending = 0
+    linkartistrecording_1.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
+    linkartistrecording_1.entity0 = artist_trentemoller
+    linkartistrecording_1.entity1 = recording_go_trentemoller_remix
+    linkartistrecording_1.link = link_5
+    session.add(linkartistrecording_1)
+
+    workmeta_2 = WorkMeta()
+    session.add(workmeta_2)
+
+    work_go = Work()
+    work_go.id = 231738
+    work_go.gid = 'e02ccc5b-d39f-31d2-aaf5-b56ad67e4ffe'
+    work_go.name = u'Go'
+    work_go.comment = u''
+    work_go.edits_pending = 0
+    work_go.last_updated = datetime.datetime(2011, 6, 19, 18, 0, 41, 600042)
+    work_go.meta = workmeta_2
+    session.add(work_go)
+
+    artistipi_8 = ArtistIPI()
+    artistipi_8.ipi = u'00232910003'
+    artistipi_8.edits_pending = 0
+    artistipi_8.created = datetime.datetime(2012, 5, 15, 21, 4, 48, 684349)
+    session.add(artistipi_8)
+
+    artistmeta_19 = ArtistMeta()
+    session.add(artistmeta_19)
+
+    artist_richard_melville_hall = Artist()
+    artist_richard_melville_hall.id = 245110
+    artist_richard_melville_hall.gid = '8abdbc82-b5f0-4bd8-9c06-9c3393c9f99f'
+    artist_richard_melville_hall.name = u'Richard Melville Hall'
+    artist_richard_melville_hall.sort_name = u'Hall, Richard Melville'
+    artist_richard_melville_hall.begin_date_year = 1965
+    artist_richard_melville_hall.begin_date_month = 9
+    artist_richard_melville_hall.begin_date_day = 11
+    artist_richard_melville_hall.comment = u''
+    artist_richard_melville_hall.edits_pending = 0
+    artist_richard_melville_hall.last_updated = datetime.datetime(2013, 5, 23, 21, 28, 26, 93452)
+    artist_richard_melville_hall.ended = False
+    artist_richard_melville_hall.area = area_united_states
+    artist_richard_melville_hall.begin_area = area_new_york
+    artist_richard_melville_hall.gender = gender_male
+    artist_richard_melville_hall.ipis = [
+        artistipi_8,
+    ]
+    artist_richard_melville_hall.meta = artistmeta_19
+    artist_richard_melville_hall.type = artisttype_person
+    session.add(artist_richard_melville_hall)
+
+    linkartistwork_9 = LinkArtistWork()
+    linkartistwork_9.id = 262864
+    linkartistwork_9.edits_pending = 0
+    linkartistwork_9.last_updated = datetime.datetime(2011, 6, 19, 18, 0, 41, 600042)
+    linkartistwork_9.entity0 = artist_richard_melville_hall
+    linkartistwork_9.entity1 = work_go
+    linkartistwork_9.link = link_2
+    session.add(linkartistwork_9)
+
+    linkartistwork_10 = LinkArtistWork()
+    linkartistwork_10.id = 296042
+    linkartistwork_10.edits_pending = 0
+    linkartistwork_10.last_updated = datetime.datetime(2011, 6, 19, 18, 0, 41, 600042)
+    linkartistwork_10.entity0 = artist_richard_melville_hall
+    linkartistwork_10.entity1 = work_go
+    linkartistwork_10.link = link_3
+    session.add(linkartistwork_10)
+
+    url_1 = URL()
+    url_1.id = 1779416
+    url_1.gid = 'a6f1aa9a-ccc0-4ee8-a464-5e8366ace995'
+    url_1.url = u'http://www.wikidata.org/wiki/Q1652489'
+    url_1.edits_pending = 0
+    url_1.last_updated = datetime.datetime(2013, 6, 19, 0, 28, 12, 854874)
+    session.add(url_1)
+
+    linktype_wikidata = LinkType()
+    linktype_wikidata.id = 351
+    linktype_wikidata.child_order = 0
+    linktype_wikidata.gid = '587fdd8f-080e-46a9-97af-6425ebbcb3a2'
+    linktype_wikidata.entity_type0 = u'url'
+    linktype_wikidata.entity_type1 = u'work'
+    linktype_wikidata.name = u'wikidata'
+    linktype_wikidata.description = u'Points to the Wikidata page for this work. (<a href="http://musicbrainz.org/doc/Wikidata_Relationship_Type">Details</a>)'
+    linktype_wikidata.link_phrase = u'Wikidata page for'
+    linktype_wikidata.reverse_link_phrase = u'Wikidata'
+    linktype_wikidata.long_link_phrase = u'is a Wikidata page for'
+    linktype_wikidata.priority = 0
+    linktype_wikidata.last_updated = datetime.datetime(2013, 5, 9, 11, 30, 31, 313405)
+    linktype_wikidata.is_deprecated = False
+    session.add(linktype_wikidata)
+
+    link_6 = Link()
+    link_6.id = 117676
+    link_6.attribute_count = 0
+    link_6.created = datetime.datetime(2013, 5, 9, 11, 38, 52, 992053)
+    link_6.ended = False
+    link_6.link_type = linktype_wikidata
+    session.add(link_6)
+
+    linkurlwork_1 = LinkURLWork()
+    linkurlwork_1.id = 45904
+    linkurlwork_1.edits_pending = 0
+    linkurlwork_1.last_updated = datetime.datetime(2013, 6, 19, 0, 28, 12, 863852)
+    linkurlwork_1.entity0 = url_1
+    linkurlwork_1.entity1 = work_go
+    linkurlwork_1.link = link_6
+    session.add(linkurlwork_1)
+
+    url_2 = URL()
+    url_2.id = 739027
+    url_2.gid = '9561bf19-8b0f-4c8b-a5b9-9ea1f607d406'
+    url_2.url = u'http://en.wikipedia.org/wiki/Go_(Moby_song)'
+    url_2.edits_pending = 0
+    url_2.last_updated = datetime.datetime(2011, 5, 16, 18, 31, 52)
+    session.add(url_2)
+
+    linktype_wikipedia = LinkType()
+    linktype_wikipedia.id = 279
+    linktype_wikipedia.child_order = 0
+    linktype_wikipedia.gid = 'b45a88d6-851e-4a6e-9ec8-9a5f4ebe76ab'
+    linktype_wikipedia.entity_type0 = u'url'
+    linktype_wikipedia.entity_type1 = u'work'
+    linktype_wikipedia.name = u'wikipedia'
+    linktype_wikipedia.description = u'Points to the Wikipedia page for this work. (<a href="http://musicbrainz.org/doc/Wikipedia_Relationship_Type">Details</a>)'
+    linktype_wikipedia.link_phrase = u'Wikipedia page for'
+    linktype_wikipedia.reverse_link_phrase = u'Wikipedia'
+    linktype_wikipedia.long_link_phrase = u'is a Wikipedia page for'
+    linktype_wikipedia.priority = 0
+    linktype_wikipedia.last_updated = datetime.datetime(2011, 8, 24, 12, 6, 14, 901408)
+    linktype_wikipedia.is_deprecated = False
+    session.add(linktype_wikipedia)
+
+    link_7 = Link()
+    link_7.id = 27229
+    link_7.attribute_count = 0
+    link_7.created = datetime.datetime(2011, 5, 20, 22, 25, 58, 991299)
+    link_7.ended = False
+    link_7.link_type = linktype_wikipedia
+    session.add(link_7)
+
+    linkurlwork_2 = LinkURLWork()
+    linkurlwork_2.id = 45842
+    linkurlwork_2.edits_pending = 0
+    linkurlwork_2.last_updated = datetime.datetime(2013, 6, 18, 3, 32, 35, 421600)
+    linkurlwork_2.entity0 = url_2
+    linkurlwork_2.entity1 = work_go
+    linkurlwork_2.link = link_7
+    session.add(linkurlwork_2)
+
+    linkrecordingwork_2 = LinkRecordingWork()
+    linkrecordingwork_2.id = 1095562
+    linkrecordingwork_2.edits_pending = 0
+    linkrecordingwork_2.last_updated = datetime.datetime(2013, 6, 18, 3, 50, 31, 199668)
+    linkrecordingwork_2.entity0 = recording_go_trentemoller_remix
+    linkrecordingwork_2.entity1 = work_go
+    linkrecordingwork_2.link = link_4
+    session.add(linkrecordingwork_2)
 
     track_go_trentemoller_remix = Track()
     track_go_trentemoller_remix.id = 5918650
@@ -1895,10 +2369,10 @@ def create_sample_data(session):
     linkareaarea_15.link = link_1
     session.add(linkareaarea_15)
 
-    artistmeta_15 = ArtistMeta()
-    artistmeta_15.rating = 100
-    artistmeta_15.rating_count = 2
-    session.add(artistmeta_15)
+    artistmeta_20 = ArtistMeta()
+    artistmeta_20.rating = 100
+    artistmeta_20.rating_count = 2
+    session.add(artistmeta_20)
 
     artist_the_knife = Artist()
     artist_the_knife.id = 61967
@@ -1912,7 +2386,7 @@ def create_sample_data(session):
     artist_the_knife.ended = False
     artist_the_knife.area = area_sweden
     artist_the_knife.begin_area = area_stockholm
-    artist_the_knife.meta = artistmeta_15
+    artist_the_knife.meta = artistmeta_20
     artist_the_knife.type = artisttype_group
     session.add(artist_the_knife)
 
@@ -1949,6 +2423,15 @@ def create_sample_data(session):
     recording_silent_shout_trente_short_edit.meta = recordingmeta_21
     session.add(recording_silent_shout_trente_short_edit)
 
+    linkartistrecording_2 = LinkArtistRecording()
+    linkartistrecording_2.id = 106129
+    linkartistrecording_2.edits_pending = 0
+    linkartistrecording_2.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
+    linkartistrecording_2.entity0 = artist_trentemoller
+    linkartistrecording_2.entity1 = recording_silent_shout_trente_short_edit
+    linkartistrecording_2.link = link_5
+    session.add(linkartistrecording_2)
+
     track_silent_shout_trente_short_edit = Track()
     track_silent_shout_trente_short_edit.id = 5918651
     track_silent_shout_trente_short_edit.gid = '88d0b720-1aca-3513-8ab3-50d2a1293743'
@@ -1962,8 +2445,8 @@ def create_sample_data(session):
     track_silent_shout_trente_short_edit.recording = recording_silent_shout_trente_short_edit
     session.add(track_silent_shout_trente_short_edit)
 
-    artistmeta_16 = ArtistMeta()
-    session.add(artistmeta_16)
+    artistmeta_21 = ArtistMeta()
+    session.add(artistmeta_21)
 
     artist_jokke_ilsoe = Artist()
     artist_jokke_ilsoe.id = 362912
@@ -1973,7 +2456,7 @@ def create_sample_data(session):
     artist_jokke_ilsoe.comment = u''
     artist_jokke_ilsoe.edits_pending = 0
     artist_jokke_ilsoe.ended = False
-    artist_jokke_ilsoe.meta = artistmeta_16
+    artist_jokke_ilsoe.meta = artistmeta_21
     artist_jokke_ilsoe.type = artisttype_person
     session.add(artist_jokke_ilsoe)
 
@@ -2010,6 +2493,15 @@ def create_sample_data(session):
     recording_feelin_good_trentemoller_remix.meta = recordingmeta_22
     session.add(recording_feelin_good_trentemoller_remix)
 
+    linkartistrecording_3 = LinkArtistRecording()
+    linkartistrecording_3.id = 106128
+    linkartistrecording_3.edits_pending = 0
+    linkartistrecording_3.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
+    linkartistrecording_3.entity0 = artist_trentemoller
+    linkartistrecording_3.entity1 = recording_feelin_good_trentemoller_remix
+    linkartistrecording_3.link = link_5
+    session.add(linkartistrecording_3)
+
     track_feelin_good_trentemoller_remix = Track()
     track_feelin_good_trentemoller_remix.id = 5918652
     track_feelin_good_trentemoller_remix.gid = '8a14c288-f753-3c2b-9cb0-306b3eca70dc'
@@ -2023,8 +2515,8 @@ def create_sample_data(session):
     track_feelin_good_trentemoller_remix.recording = recording_feelin_good_trentemoller_remix
     session.add(track_feelin_good_trentemoller_remix)
 
-    artistmeta_17 = ArtistMeta()
-    session.add(artistmeta_17)
+    artistmeta_22 = ArtistMeta()
+    session.add(artistmeta_22)
 
     artist_isolee = Artist()
     artist_isolee.id = 57862
@@ -2037,7 +2529,7 @@ def create_sample_data(session):
     artist_isolee.ended = False
     artist_isolee.area = area_germany
     artist_isolee.gender = gender_male
-    artist_isolee.meta = artistmeta_17
+    artist_isolee.meta = artistmeta_22
     artist_isolee.type = artisttype_person
     session.add(artist_isolee)
 
@@ -2130,6 +2622,15 @@ def create_sample_data(session):
     recording_we_share_our_mothers_health_trentemoller_remix.artist_credit = artistcredit_the_knife
     recording_we_share_our_mothers_health_trentemoller_remix.meta = recordingmeta_25
     session.add(recording_we_share_our_mothers_health_trentemoller_remix)
+
+    linkartistrecording_4 = LinkArtistRecording()
+    linkartistrecording_4.id = 106127
+    linkartistrecording_4.edits_pending = 0
+    linkartistrecording_4.last_updated = datetime.datetime(2011, 5, 16, 18, 8, 20, 288158)
+    linkartistrecording_4.entity0 = artist_trentemoller
+    linkartistrecording_4.entity1 = recording_we_share_our_mothers_health_trentemoller_remix
+    linkartistrecording_4.link = link_5
+    session.add(linkartistrecording_4)
 
     track_we_share_our_mother_s_health_trentemoller_remix = Track()
     track_we_share_our_mother_s_health_trentemoller_remix.id = 5918655
@@ -2251,10 +2752,84 @@ def create_sample_data(session):
     release_trentemoller_the_polar_mix.status = releasestatus_promotion
     session.add(release_trentemoller_the_polar_mix)
 
-    artistmeta_18 = ArtistMeta()
-    artistmeta_18.rating = 78
-    artistmeta_18.rating_count = 18
-    session.add(artistmeta_18)
+    linktype_mix_dj = LinkType()
+    linktype_mix_dj.id = 43
+    linktype_mix_dj.child_order = 0
+    linktype_mix_dj.gid = '9162dedd-790c-446c-838e-240f877dbfe2'
+    linktype_mix_dj.entity_type0 = u'artist'
+    linktype_mix_dj.entity_type1 = u'release'
+    linktype_mix_dj.name = u'mix-DJ'
+    linktype_mix_dj.description = u'Indicates the person who created the DJ-Mix album (or \'Mixtape\'). The person usually selected the tracks, chose their sequence, and slightly changed them by fading (so that one track blends in smoothly with the other) or pitching (so that the tempo of one track matches the tempo of the following track). (<a href="http://musicbrainz.org/doc/Mix-DJ_Relationship_Type">Details</a>)'
+    linktype_mix_dj.link_phrase = u'DJ-mixed {medium}'
+    linktype_mix_dj.reverse_link_phrase = u'DJ-mixer {medium}'
+    linktype_mix_dj.long_link_phrase = u'DJ-mixed {medium:% of}'
+    linktype_mix_dj.priority = 0
+    linktype_mix_dj.last_updated = datetime.datetime(2013, 8, 4, 11, 0, 38, 48302)
+    linktype_mix_dj.is_deprecated = False
+    session.add(linktype_mix_dj)
+
+    link_8 = Link()
+    link_8.id = 90
+    link_8.attribute_count = 0
+    link_8.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_8.ended = False
+    link_8.link_type = linktype_mix_dj
+    session.add(link_8)
+
+    linkartistrelease_1 = LinkArtistRelease()
+    linkartistrelease_1.id = 52649
+    linkartistrelease_1.edits_pending = 0
+    linkartistrelease_1.last_updated = datetime.datetime(2012, 5, 27, 13, 5, 54, 679406)
+    linkartistrelease_1.entity0 = artist_trentemoller
+    linkartistrelease_1.entity1 = release_trentemoller_the_polar_mix
+    linkartistrelease_1.link = link_8
+    session.add(linkartistrelease_1)
+
+    url_3 = URL()
+    url_3.id = 234836
+    url_3.gid = '261acd6e-6025-4698-ac78-c8a3058c6d2c'
+    url_3.url = u'http://www.discogs.com/release/986613'
+    url_3.edits_pending = 0
+    url_3.last_updated = datetime.datetime(2011, 5, 16, 18, 31, 52)
+    session.add(url_3)
+
+    linktype_discogs = LinkType()
+    linktype_discogs.id = 76
+    linktype_discogs.child_order = 0
+    linktype_discogs.gid = '4a78823c-1c53-4176-a5f3-58026c76f2bc'
+    linktype_discogs.entity_type0 = u'release'
+    linktype_discogs.entity_type1 = u'url'
+    linktype_discogs.name = u'discogs'
+    linktype_discogs.description = u'Points to the Discogs page for this album. Always use the domain <code>www.discogs.com</code> and no genre subdomains. (<a href="http://musicbrainz.org/doc/Discogs_Relationship_Type">Details</a>)'
+    linktype_discogs.link_phrase = u'Discogs'
+    linktype_discogs.reverse_link_phrase = u'Discogs page for'
+    linktype_discogs.long_link_phrase = u'has a Discogs page at'
+    linktype_discogs.priority = 0
+    linktype_discogs.last_updated = datetime.datetime(2013, 3, 26, 16, 59, 25, 19889)
+    linktype_discogs.is_deprecated = False
+    session.add(linktype_discogs)
+
+    link_9 = Link()
+    link_9.id = 6301
+    link_9.attribute_count = 0
+    link_9.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_9.ended = False
+    link_9.link_type = linktype_discogs
+    session.add(link_9)
+
+    linkreleaseurl_1 = LinkReleaseURL()
+    linkreleaseurl_1.id = 92637
+    linkreleaseurl_1.edits_pending = 0
+    linkreleaseurl_1.last_updated = datetime.datetime(2012, 5, 27, 13, 5, 54, 679406)
+    linkreleaseurl_1.entity0 = release_trentemoller_the_polar_mix
+    linkreleaseurl_1.entity1 = url_3
+    linkreleaseurl_1.link = link_9
+    session.add(linkreleaseurl_1)
+
+    artistmeta_23 = ArtistMeta()
+    artistmeta_23.rating = 78
+    artistmeta_23.rating_count = 18
+    session.add(artistmeta_23)
 
     artisttype_other = ArtistType()
     artisttype_other.id = 3
@@ -2270,7 +2845,7 @@ def create_sample_data(session):
     artist_various_artists.edits_pending = 9
     artist_various_artists.last_updated = datetime.datetime(2013, 10, 18, 18, 0, 20, 936389)
     artist_various_artists.ended = False
-    artist_various_artists.meta = artistmeta_18
+    artist_various_artists.meta = artistmeta_23
     artist_various_artists.type = artisttype_other
     session.add(artist_various_artists)
 
@@ -2330,8 +2905,8 @@ def create_sample_data(session):
     releaselabel_2.label = label_universal_music
     session.add(releaselabel_2)
 
-    artistmeta_19 = ArtistMeta()
-    session.add(artistmeta_19)
+    artistmeta_24 = ArtistMeta()
+    session.add(artistmeta_24)
 
     artist_lawrence = Artist()
     artist_lawrence.id = 168462
@@ -2341,7 +2916,7 @@ def create_sample_data(session):
     artist_lawrence.comment = u'Electronic artist Peter M. Kersten'
     artist_lawrence.edits_pending = 0
     artist_lawrence.ended = False
-    artist_lawrence.meta = artistmeta_19
+    artist_lawrence.meta = artistmeta_24
     artist_lawrence.type = artisttype_person
     session.add(artist_lawrence)
 
@@ -2391,8 +2966,8 @@ def create_sample_data(session):
     track_daydream.recording = recording_daydream
     session.add(track_daydream)
 
-    artistmeta_20 = ArtistMeta()
-    session.add(artistmeta_20)
+    artistmeta_25 = ArtistMeta()
+    session.add(artistmeta_25)
 
     artist_takeo_toyama = Artist()
     artist_takeo_toyama.id = 299529
@@ -2402,7 +2977,7 @@ def create_sample_data(session):
     artist_takeo_toyama.comment = u''
     artist_takeo_toyama.edits_pending = 0
     artist_takeo_toyama.ended = False
-    artist_takeo_toyama.meta = artistmeta_20
+    artist_takeo_toyama.meta = artistmeta_25
     artist_takeo_toyama.type = artisttype_person
     session.add(artist_takeo_toyama)
 
@@ -2452,8 +3027,8 @@ def create_sample_data(session):
     track_lithium.recording = recording_lithium
     session.add(track_lithium)
 
-    artistmeta_21 = ArtistMeta()
-    session.add(artistmeta_21)
+    artistmeta_26 = ArtistMeta()
+    session.add(artistmeta_26)
 
     artist_hauschka = Artist()
     artist_hauschka.id = 299525
@@ -2467,7 +3042,7 @@ def create_sample_data(session):
     artist_hauschka.ended = False
     artist_hauschka.area = area_germany
     artist_hauschka.gender = gender_male
-    artist_hauschka.meta = artistmeta_21
+    artist_hauschka.meta = artistmeta_26
     artist_hauschka.type = artisttype_person
     session.add(artist_hauschka)
 
@@ -2536,8 +3111,8 @@ def create_sample_data(session):
     area_france.type = areatype_country
     session.add(area_france)
 
-    artistmeta_22 = ArtistMeta()
-    session.add(artistmeta_22)
+    artistmeta_27 = ArtistMeta()
+    session.add(artistmeta_27)
 
     artist_sylvain_chauveau = Artist()
     artist_sylvain_chauveau.id = 139706
@@ -2551,7 +3126,7 @@ def create_sample_data(session):
     artist_sylvain_chauveau.ended = False
     artist_sylvain_chauveau.area = area_france
     artist_sylvain_chauveau.gender = gender_male
-    artist_sylvain_chauveau.meta = artistmeta_22
+    artist_sylvain_chauveau.meta = artistmeta_27
     artist_sylvain_chauveau.type = artisttype_person
     session.add(artist_sylvain_chauveau)
 
@@ -2601,8 +3176,8 @@ def create_sample_data(session):
     track_il_fait_nuit_noire_a_berlin.recording = recording_il_fait_nuit_noire_a_berlin
     session.add(track_il_fait_nuit_noire_a_berlin)
 
-    artistmeta_23 = ArtistMeta()
-    session.add(artistmeta_23)
+    artistmeta_28 = ArtistMeta()
+    session.add(artistmeta_28)
 
     artist_alva_noto_ryuichi_sakamoto = Artist()
     artist_alva_noto_ryuichi_sakamoto.id = 127630
@@ -2613,7 +3188,7 @@ def create_sample_data(session):
     artist_alva_noto_ryuichi_sakamoto.edits_pending = 0
     artist_alva_noto_ryuichi_sakamoto.last_updated = datetime.datetime(2013, 1, 23, 20, 0, 17, 638468)
     artist_alva_noto_ryuichi_sakamoto.ended = False
-    artist_alva_noto_ryuichi_sakamoto.meta = artistmeta_23
+    artist_alva_noto_ryuichi_sakamoto.meta = artistmeta_28
     artist_alva_noto_ryuichi_sakamoto.type = artisttype_group
     session.add(artist_alva_noto_ryuichi_sakamoto)
 
@@ -2663,10 +3238,10 @@ def create_sample_data(session):
     track_moon.recording = recording_moon
     session.add(track_moon)
 
-    artistmeta_24 = ArtistMeta()
-    artistmeta_24.rating = 100
-    artistmeta_24.rating_count = 1
-    session.add(artistmeta_24)
+    artistmeta_29 = ArtistMeta()
+    artistmeta_29.rating = 100
+    artistmeta_29.rating_count = 1
+    session.add(artistmeta_29)
 
     artist_gas = Artist()
     artist_gas.id = 51632
@@ -2678,7 +3253,7 @@ def create_sample_data(session):
     artist_gas.last_updated = datetime.datetime(2012, 3, 11, 20, 9, 29, 240384)
     artist_gas.ended = False
     artist_gas.area = area_germany
-    artist_gas.meta = artistmeta_24
+    artist_gas.meta = artistmeta_29
     artist_gas.type = artisttype_person
     session.add(artist_gas)
 
@@ -2728,8 +3303,8 @@ def create_sample_data(session):
     track_zauberberg_iv.recording = recording_zauberberg_iv
     session.add(track_zauberberg_iv)
 
-    artistmeta_25 = ArtistMeta()
-    session.add(artistmeta_25)
+    artistmeta_30 = ArtistMeta()
+    session.add(artistmeta_30)
 
     artist_final_fantasy = Artist()
     artist_final_fantasy.id = 238993
@@ -2743,7 +3318,7 @@ def create_sample_data(session):
     artist_final_fantasy.last_updated = datetime.datetime(2012, 9, 25, 23, 0, 14, 891477)
     artist_final_fantasy.ended = True
     artist_final_fantasy.area = area_canada
-    artist_final_fantasy.meta = artistmeta_25
+    artist_final_fantasy.meta = artistmeta_30
     artist_final_fantasy.type = artisttype_group
     session.add(artist_final_fantasy)
 
@@ -2781,6 +3356,74 @@ def create_sample_data(session):
     recording_he_poos_clouds.meta = recordingmeta_32
     session.add(recording_he_poos_clouds)
 
+    workmeta_3 = WorkMeta()
+    session.add(workmeta_3)
+
+    worktype_song = WorkType()
+    worktype_song.id = 17
+    worktype_song.name = u'Song'
+    session.add(worktype_song)
+
+    work_he_poos_clouds = Work()
+    work_he_poos_clouds.id = 12642856
+    work_he_poos_clouds.gid = '5cc3e760-bcab-4721-995e-7950807e045b'
+    work_he_poos_clouds.name = u'He Poos Clouds'
+    work_he_poos_clouds.comment = u''
+    work_he_poos_clouds.edits_pending = 0
+    work_he_poos_clouds.last_updated = datetime.datetime(2013, 8, 1, 14, 5, 51, 364186)
+    work_he_poos_clouds.language = language_english
+    work_he_poos_clouds.meta = workmeta_3
+    work_he_poos_clouds.type = worktype_song
+    session.add(work_he_poos_clouds)
+
+    artistmeta_31 = ArtistMeta()
+    session.add(artistmeta_31)
+
+    artist_owen_pallett = Artist()
+    artist_owen_pallett.id = 238992
+    artist_owen_pallett.gid = '6d394418-a565-4c16-9dec-f5a89e213cde'
+    artist_owen_pallett.name = u'Owen Pallett'
+    artist_owen_pallett.sort_name = u'Pallett, Owen'
+    artist_owen_pallett.begin_date_year = 1979
+    artist_owen_pallett.begin_date_month = 9
+    artist_owen_pallett.begin_date_day = 7
+    artist_owen_pallett.comment = u''
+    artist_owen_pallett.edits_pending = 0
+    artist_owen_pallett.last_updated = datetime.datetime(2011, 12, 26, 18, 16, 4, 92000)
+    artist_owen_pallett.ended = False
+    artist_owen_pallett.area = area_canada
+    artist_owen_pallett.gender = gender_male
+    artist_owen_pallett.meta = artistmeta_31
+    artist_owen_pallett.type = artisttype_person
+    session.add(artist_owen_pallett)
+
+    linkartistwork_11 = LinkArtistWork()
+    linkartistwork_11.id = 785337
+    linkartistwork_11.edits_pending = 0
+    linkartistwork_11.last_updated = datetime.datetime(2013, 8, 1, 14, 10, 4, 859337)
+    linkartistwork_11.entity0 = artist_owen_pallett
+    linkartistwork_11.entity1 = work_he_poos_clouds
+    linkartistwork_11.link = link_3
+    session.add(linkartistwork_11)
+
+    linkartistwork_12 = LinkArtistWork()
+    linkartistwork_12.id = 785336
+    linkartistwork_12.edits_pending = 0
+    linkartistwork_12.last_updated = datetime.datetime(2013, 8, 1, 14, 10, 4, 859337)
+    linkartistwork_12.entity0 = artist_owen_pallett
+    linkartistwork_12.entity1 = work_he_poos_clouds
+    linkartistwork_12.link = link_2
+    session.add(linkartistwork_12)
+
+    linkrecordingwork_3 = LinkRecordingWork()
+    linkrecordingwork_3.id = 1132131
+    linkrecordingwork_3.edits_pending = 0
+    linkrecordingwork_3.last_updated = datetime.datetime(2013, 8, 8, 15, 0, 42, 88409)
+    linkrecordingwork_3.entity0 = recording_he_poos_clouds
+    linkrecordingwork_3.entity1 = work_he_poos_clouds
+    linkrecordingwork_3.link = link_4
+    session.add(linkrecordingwork_3)
+
     track_he_poos_clouds = Track()
     track_he_poos_clouds.id = 10364141
     track_he_poos_clouds.gid = '59b034d9-1bcb-32be-8890-f1f555a279aa'
@@ -2813,8 +3456,8 @@ def create_sample_data(session):
     area_luxembourg.type = areatype_country
     session.add(area_luxembourg)
 
-    artistmeta_26 = ArtistMeta()
-    session.add(artistmeta_26)
+    artistmeta_32 = ArtistMeta()
+    session.add(artistmeta_32)
 
     artist_francesco_tristano = Artist()
     artist_francesco_tristano.id = 314969
@@ -2827,7 +3470,7 @@ def create_sample_data(session):
     artist_francesco_tristano.ended = False
     artist_francesco_tristano.area = area_luxembourg
     artist_francesco_tristano.gender = gender_male
-    artist_francesco_tristano.meta = artistmeta_26
+    artist_francesco_tristano.meta = artistmeta_32
     artist_francesco_tristano.type = artisttype_person
     session.add(artist_francesco_tristano)
 
@@ -2926,17 +3569,17 @@ def create_sample_data(session):
     linkareaarea_17.link = link_1
     session.add(linkareaarea_17)
 
-    artistipi_4 = ArtistIPI()
-    artistipi_4.ipi = u'00012034058'
-    artistipi_4.edits_pending = 0
-    artistipi_4.created = datetime.datetime(2013, 3, 26, 18, 40, 13, 338175)
-    session.add(artistipi_4)
+    artistipi_9 = ArtistIPI()
+    artistipi_9.ipi = u'00012034058'
+    artistipi_9.edits_pending = 0
+    artistipi_9.created = datetime.datetime(2013, 3, 26, 18, 40, 13, 338175)
+    session.add(artistipi_9)
 
-    artistipi_5 = ArtistIPI()
-    artistipi_5.ipi = u'00125609583'
-    artistipi_5.edits_pending = 0
-    artistipi_5.created = datetime.datetime(2013, 3, 26, 18, 40, 13, 338175)
-    session.add(artistipi_5)
+    artistipi_10 = ArtistIPI()
+    artistipi_10.ipi = u'00125609583'
+    artistipi_10.edits_pending = 0
+    artistipi_10.created = datetime.datetime(2013, 3, 26, 18, 40, 13, 338175)
+    session.add(artistipi_10)
 
     artistisni_5 = ArtistISNI()
     artistisni_5.isni = u'0000000121367029'
@@ -2944,10 +3587,10 @@ def create_sample_data(session):
     artistisni_5.created = datetime.datetime(2013, 10, 12, 18, 52, 44, 358667)
     session.add(artistisni_5)
 
-    artistmeta_27 = ArtistMeta()
-    artistmeta_27.rating = 95
-    artistmeta_27.rating_count = 8
-    session.add(artistmeta_27)
+    artistmeta_33 = ArtistMeta()
+    artistmeta_33.rating = 95
+    artistmeta_33.rating_count = 8
+    session.add(artistmeta_33)
 
     artist_philip_glass = Artist()
     artist_philip_glass.id = 9193
@@ -2965,13 +3608,13 @@ def create_sample_data(session):
     artist_philip_glass.begin_area = area_baltimore
     artist_philip_glass.gender = gender_male
     artist_philip_glass.ipis = [
-        artistipi_4,
-        artistipi_5,
+        artistipi_9,
+        artistipi_10,
     ]
     artist_philip_glass.isnis = [
         artistisni_5,
     ]
-    artist_philip_glass.meta = artistmeta_27
+    artist_philip_glass.meta = artistmeta_33
     artist_philip_glass.type = artisttype_person
     session.add(artist_philip_glass)
 
@@ -3049,8 +3692,8 @@ def create_sample_data(session):
     track_maiz.recording = recording_maiz
     session.add(track_maiz)
 
-    artistmeta_28 = ArtistMeta()
-    session.add(artistmeta_28)
+    artistmeta_34 = ArtistMeta()
+    session.add(artistmeta_34)
 
     artist_slowcream = Artist()
     artist_slowcream.id = 775683
@@ -3061,7 +3704,7 @@ def create_sample_data(session):
     artist_slowcream.edits_pending = 0
     artist_slowcream.last_updated = datetime.datetime(2011, 1, 1, 22, 3, 35, 272282)
     artist_slowcream.ended = False
-    artist_slowcream.meta = artistmeta_28
+    artist_slowcream.meta = artistmeta_34
     artist_slowcream.type = artisttype_person
     session.add(artist_slowcream)
 
@@ -3111,16 +3754,16 @@ def create_sample_data(session):
     track_suburb_novel.recording = recording_suburb_novel
     session.add(track_suburb_novel)
 
-    artistipi_6 = ArtistIPI()
-    artistipi_6.ipi = u'00269472428'
-    artistipi_6.edits_pending = 0
-    artistipi_6.created = datetime.datetime(2013, 3, 14, 9, 40, 55, 93741)
-    session.add(artistipi_6)
+    artistipi_11 = ArtistIPI()
+    artistipi_11.ipi = u'00269472428'
+    artistipi_11.edits_pending = 0
+    artistipi_11.created = datetime.datetime(2013, 3, 14, 9, 40, 55, 93741)
+    session.add(artistipi_11)
 
-    artistmeta_29 = ArtistMeta()
-    artistmeta_29.rating = 100
-    artistmeta_29.rating_count = 3
-    session.add(artistmeta_29)
+    artistmeta_35 = ArtistMeta()
+    artistmeta_35.rating = 100
+    artistmeta_35.rating_count = 3
+    session.add(artistmeta_35)
 
     artist_max_richter = Artist()
     artist_max_richter.id = 152260
@@ -3135,9 +3778,9 @@ def create_sample_data(session):
     artist_max_richter.area = area_united_kingdom
     artist_max_richter.gender = gender_male
     artist_max_richter.ipis = [
-        artistipi_6,
+        artistipi_11,
     ]
-    artist_max_richter.meta = artistmeta_29
+    artist_max_richter.meta = artistmeta_35
     artist_max_richter.type = artisttype_person
     session.add(artist_max_richter)
 
@@ -3187,8 +3830,8 @@ def create_sample_data(session):
     track_arboretum.recording = recording_arboretum
     session.add(track_arboretum)
 
-    artistmeta_30 = ArtistMeta()
-    session.add(artistmeta_30)
+    artistmeta_36 = ArtistMeta()
+    session.add(artistmeta_36)
 
     artist_akira_rabelais = Artist()
     artist_akira_rabelais.id = 127886
@@ -3200,7 +3843,7 @@ def create_sample_data(session):
     artist_akira_rabelais.edits_pending = 0
     artist_akira_rabelais.last_updated = datetime.datetime(2011, 12, 12, 22, 22, 45, 74149)
     artist_akira_rabelais.ended = False
-    artist_akira_rabelais.meta = artistmeta_30
+    artist_akira_rabelais.meta = artistmeta_36
     artist_akira_rabelais.type = artisttype_person
     session.add(artist_akira_rabelais)
 
@@ -3250,8 +3893,8 @@ def create_sample_data(session):
     track_1382_wyclif_gen_ii_7.recording = recording_1382_wyclif_gen_ii_7
     session.add(track_1382_wyclif_gen_ii_7)
 
-    artistmeta_31 = ArtistMeta()
-    session.add(artistmeta_31)
+    artistmeta_37 = ArtistMeta()
+    session.add(artistmeta_37)
 
     artist_ryan_teague = Artist()
     artist_ryan_teague.id = 249985
@@ -3261,7 +3904,7 @@ def create_sample_data(session):
     artist_ryan_teague.comment = u''
     artist_ryan_teague.edits_pending = 0
     artist_ryan_teague.ended = False
-    artist_ryan_teague.meta = artistmeta_31
+    artist_ryan_teague.meta = artistmeta_37
     artist_ryan_teague.type = artisttype_person
     session.add(artist_ryan_teague)
 
@@ -3311,8 +3954,8 @@ def create_sample_data(session):
     track_prelude_iii.recording = recording_prelude_iii
     session.add(track_prelude_iii)
 
-    artistmeta_32 = ArtistMeta()
-    session.add(artistmeta_32)
+    artistmeta_38 = ArtistMeta()
+    session.add(artistmeta_38)
 
     artist_greg_haines = Artist()
     artist_greg_haines.id = 366648
@@ -3322,7 +3965,7 @@ def create_sample_data(session):
     artist_greg_haines.comment = u''
     artist_greg_haines.edits_pending = 0
     artist_greg_haines.ended = False
-    artist_greg_haines.meta = artistmeta_32
+    artist_greg_haines.meta = artistmeta_38
     artist_greg_haines.type = artisttype_person
     session.add(artist_greg_haines)
 
@@ -3372,14 +4015,14 @@ def create_sample_data(session):
     track_snow_airport.recording = recording_snow_airport
     session.add(track_snow_airport)
 
-    artistipi_7 = ArtistIPI()
-    artistipi_7.ipi = u'00065393756'
-    artistipi_7.edits_pending = 0
-    artistipi_7.created = datetime.datetime(2012, 5, 15, 21, 4, 48, 684349)
-    session.add(artistipi_7)
+    artistipi_12 = ArtistIPI()
+    artistipi_12.ipi = u'00065393756'
+    artistipi_12.edits_pending = 0
+    artistipi_12.created = datetime.datetime(2012, 5, 15, 21, 4, 48, 684349)
+    session.add(artistipi_12)
 
-    artistmeta_33 = ArtistMeta()
-    session.add(artistmeta_33)
+    artistmeta_39 = ArtistMeta()
+    session.add(artistmeta_39)
 
     artist_gavin_bryars = Artist()
     artist_gavin_bryars.id = 34465
@@ -3396,9 +4039,9 @@ def create_sample_data(session):
     artist_gavin_bryars.area = area_united_kingdom
     artist_gavin_bryars.gender = gender_male
     artist_gavin_bryars.ipis = [
-        artistipi_7,
+        artistipi_12,
     ]
-    artist_gavin_bryars.meta = artistmeta_33
+    artist_gavin_bryars.meta = artistmeta_39
     artist_gavin_bryars.type = artisttype_person
     session.add(artist_gavin_bryars)
 
@@ -3543,6 +4186,47 @@ def create_sample_data(session):
     release_xvi_reflections_on_classical_music.script = script_latin
     release_xvi_reflections_on_classical_music.status = releasestatus_official
     session.add(release_xvi_reflections_on_classical_music)
+
+    url_4 = URL()
+    url_4.id = 848180
+    url_4.gid = '59db77f3-c903-405a-8d62-40b14496c2e7'
+    url_4.url = u'http://www.amazon.de/gp/product/B002JP1LCK'
+    url_4.edits_pending = 0
+    url_4.last_updated = datetime.datetime(2011, 5, 16, 18, 31, 52)
+    session.add(url_4)
+
+    linktype_amazon_asin = LinkType()
+    linktype_amazon_asin.id = 77
+    linktype_amazon_asin.child_order = 0
+    linktype_amazon_asin.gid = '4f2e710d-166c-480c-a293-2e2c8d658d87'
+    linktype_amazon_asin.entity_type0 = u'release'
+    linktype_amazon_asin.entity_type1 = u'url'
+    linktype_amazon_asin.name = u'amazon asin'
+    linktype_amazon_asin.description = u'This link type is used for Amazon ASINs. This allows users to link to the Amazon pages to show the right cover art if MusicBrainz does not have the right ASIN link already. <p/> Paste any URL to any Amazon product page that contains an Amazon ASIN and the ASIN will be parsed from that URL. (<a href="http://musicbrainz.org/doc/Amazon_Relationship_Type">Details</a>)'
+    linktype_amazon_asin.link_phrase = u'ASIN'
+    linktype_amazon_asin.reverse_link_phrase = u'ASIN'
+    linktype_amazon_asin.long_link_phrase = u'has Amazon ASIN'
+    linktype_amazon_asin.priority = 0
+    linktype_amazon_asin.last_updated = datetime.datetime(2013, 8, 3, 10, 17, 27, 674389)
+    linktype_amazon_asin.is_deprecated = False
+    session.add(linktype_amazon_asin)
+
+    link_10 = Link()
+    link_10.id = 6300
+    link_10.attribute_count = 0
+    link_10.created = datetime.datetime(2011, 5, 16, 17, 3, 23, 368437)
+    link_10.ended = False
+    link_10.link_type = linktype_amazon_asin
+    session.add(link_10)
+
+    linkreleaseurl_2 = LinkReleaseURL()
+    linkreleaseurl_2.id = 573288
+    linkreleaseurl_2.edits_pending = 0
+    linkreleaseurl_2.last_updated = datetime.datetime(2011, 5, 16, 18, 31, 52, 155025)
+    linkreleaseurl_2.entity0 = release_xvi_reflections_on_classical_music
+    linkreleaseurl_2.entity1 = url_4
+    linkreleaseurl_2.link = link_10
+    session.add(linkreleaseurl_2)
 
     iso31662_11 = ISO31662()
     iso31662_11.code = u'GB-WSM'

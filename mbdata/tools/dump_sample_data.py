@@ -9,7 +9,19 @@ from sqlalchemy import create_engine, inspect, sql
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.collections import InstrumentedList
-from mbdata.models import Release, ReleaseGroup, Place, Label, Area, LinkAreaArea
+from mbdata.models import (
+    Area,
+    Artist,
+    Label,
+    LinkAreaArea,
+    Place,
+    Recording,
+    Release,
+    ReleaseGroup,
+    Work,
+    URL,
+)
+from mbdata.utils.models import query_links
 
 
 RELEASE_GIDS = [
@@ -142,6 +154,17 @@ def find_name(output, names, obj):
         query = session.query(LinkAreaArea).\
             filter(LinkAreaArea.entity1_id == obj.id)
         for sub_obj in query:
+            find_name(output, names, sub_obj)
+
+    # special case -- dump artist/place/label/url relationships for "music" entities
+    if isinstance(obj, (ReleaseGroup, Release, Recording, Work)):
+        for target_model in (Artist, Place, Label, URL):
+            for sub_obj in query_links(obj, target_model):
+                find_name(output, names, sub_obj)
+
+    # special case -- dump work relationships for recordings and works
+    if isinstance(obj, (Recording, Work)):
+        for sub_obj in query_links(obj, Work):
             find_name(output, names, sub_obj)
 
     return name
