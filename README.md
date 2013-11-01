@@ -67,6 +67,18 @@ For production use, you should use server software like
 Development
 -----------
 
+Normally you should work against a regular PostgreSQL database with MusicBrainz
+data, but for testing purposes, you can use a SQLite database with small data
+sub-set used in unit tests. You can create the database using:
+
+    #!sh
+	./bin/create_sample_db.py sample.db
+
+Then you can change your configuration:
+
+    #!python
+    DATABASE_URI = 'sqlite:///sample.db'
+
 Running tests:
 
     #!sh
@@ -77,5 +89,5 @@ If you want to see the SQL queries from a failed test, you can use the following
     #!sh
     MBDATA_DATABASE_ECHO=1 nosetests -v
 
-Jenkins task that automatically runs the tests after each commit is on [CloudBees](https://lukaslalinsky.ci.cloudbees.com/job/mbdata/).
+Jenkins task that automatically runs the tests after each commit is at [CloudBees](https://lukaslalinsky.ci.cloudbees.com/job/mbdata/).
 

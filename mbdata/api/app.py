@@ -12,6 +12,7 @@ from mbdata.api.blueprints.recording import blueprint as recording_blueprint
 from mbdata.api.blueprints.release import blueprint as release_blueprint
 from mbdata.api.blueprints.release_group import blueprint as release_group_blueprint
 from mbdata.api.blueprints.work import blueprint as work_blueprint
+from mbdata.utils import patch_model_schemas, NO_SCHEMAS
 
 
 app = Flask(__name__)
@@ -31,6 +32,8 @@ Session = engine = None
 def setup_db():
     global engine, Session
     engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
+    if engine.url.drivername == 'sqlite': # XXX replace this with explicit schema mapping configuration
+        patch_model_schemas(NO_SCHEMAS)
     Session = sessionmaker(bind=engine)
 
 setup_db()
