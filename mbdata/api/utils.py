@@ -93,7 +93,7 @@ def render_xml(data):
         dumpxml(output, name, value)
     output.flush()
     return current_app.response_class(output.getvalue(),
-                                      mimetype='application/xml')
+        content_type='application/xml; charset=UTF-8')
 
 
 def render_json(data):
@@ -101,7 +101,8 @@ def render_json(data):
     if current_app.config['DEBUG']:
         options['indent'] = 2
     response = json.dumps(data, ensure_ascii=False, **options)
-    return current_app.response_class(response, mimetype='application/json')
+    return current_app.response_class(response,
+        content_type='application/json; charset=UTF-8')
 
 
 def render_response(code, message, data):
