@@ -10,7 +10,7 @@ from mbdata.models import (
 )
 from mbdata.utils import get_something_by_gid
 from mbdata.api.includes import ReleaseGroupIncludes, ReleaseIncludes
-from mbdata.api.data import query_release
+from mbdata.api.data import query_release, query_release_group
 from mbdata.api.utils import (
     get_param,
     response_ok,
@@ -31,22 +31,7 @@ def handle_get():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ReleaseGroupIncludes.parse)
 
-    if include.artist and include.artists:
-        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
-
-    query = g.db.query(ReleaseGroup).\
-        options(joinedload("type")).\
-        options(subqueryload("secondary_types")).\
-        options(joinedload("secondary_types.secondary_type", innerjoin=True))
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    release_group = get_release_group_by_gid(query, gid)
+    release_group = get_release_group_by_gid(query_release_group(g.db, include), gid)
     if release_group is None:
         abort(response_error(NOT_FOUND_ERROR, 'release group not found'))
 

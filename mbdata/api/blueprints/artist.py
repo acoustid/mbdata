@@ -3,12 +3,22 @@
 
 from flask import Blueprint, g, abort
 from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
-from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag, ArtistCreditName, Release
+from mbdata.models import (
+    Artist,
+    ArtistCreditName,
+    ArtistGIDRedirect,
+    Release,
+    ReleaseGroup,
+)
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import ArtistIncludes, ReleaseIncludes
-from mbdata.api.serialize import serialize_artist, serialize_release
-from mbdata.api.data import load_areas, query_artist, query_release
+from mbdata.api.serialize import (
+    serialize_artist,
+    serialize_release,
+    serialize_release_group,
+)
+from mbdata.api.data import load_areas, query_artist, query_release, query_release_group
 from mbdata.api.search import (
     parse_page_token,
     prepare_page_info,
@@ -105,4 +115,24 @@ def handle_list_releases():
         releases_data.append(serialize_release(release, include))
 
     return response_ok(releases=releases_data)
+
+
+@blueprint.route('/list_release_groups')
+def handle_list_release_groups():
+    gid = get_param('id', type='uuid', required=True)
+    include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
+
+    artist = get_plain_artist_by_gid_or_error(gid)
+    artist_credits_query = g.db.query(ArtistCreditName.artist_credit_id).\
+        filter_by(artist_id=artist.id)
+
+    query = query_release_group(g.db, include).\
+        filter(ReleaseGroup.artist_credit_id.in_(artist_credits_query)).\
+        order_by(ReleaseGroup.id).limit(10) # FIXME
+
+    release_groups_data = []
+    for release_group in query:
+        release_groups_data.append(serialize_release_group(release_group, include))
+
+    return response_ok(release_groups=release_groups_data)
 

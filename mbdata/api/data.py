@@ -1,7 +1,15 @@
 from sqlalchemy import sql
 from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.inspection import inspect
-from mbdata.models import Area, Link, LinkType, LinkAreaArea, Release, Artist
+from mbdata.models import (
+    Area,
+    Artist,
+    Link,
+    LinkAreaArea,
+    LinkType,
+    Release,
+    ReleaseGroup,
+)
 
 
 def load_areas(session, objs, include):
@@ -178,6 +186,22 @@ def query_release(db, include):
                 query = query.\
                     options(subqueryload("mediums.tracks.artist_credit.artists")).\
                     options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))
+
+    return query
+
+
+def query_release_group(db, include):
+    query = db.query(ReleaseGroup).\
+        options(joinedload("type")).\
+        options(subqueryload("secondary_types")).\
+        options(joinedload("secondary_types.secondary_type", innerjoin=True))
+
+    if include.artist or include.artists:
+        query = query.options(joinedload("artist_credit", innerjoin=True))
+    if include.artists:
+        query = query.\
+            options(subqueryload("artist_credit.artists")).\
+            options(joinedload("artist_credit.artists.artist", innerjoin=True))
 
     return query
 
