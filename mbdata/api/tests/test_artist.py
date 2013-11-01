@@ -79,3 +79,41 @@ def test_artist_get_va(client):
 
     assert_json_response_equal(rv, expected)
 
+
+@with_client
+def test_artist_list_releases(client):
+    rv = client.get('/v1/artist/list_releases?id=95e9aba6-f85c-48a0-9ec9-395d4f0e3875&include=mediums')
+
+    expected = {
+        u"response": {
+            u"status": {
+                u"message": u"success",
+                u"code": 0,
+                u"version": u"1.0"
+            },
+            u"releases": [
+                {
+                    u"status": u"Promotion",
+                    u"name": u"Trentem\xf8ller: The P\xf8lar Mix",
+                    u"language": u"English",
+                    u"script": u"Latin",
+                    u"mediums": [
+                        {
+                            u"position": 1,
+                            u"track_count": 12,
+                            u"format": u"CD"
+                        },
+                        {
+                            u"position": 2,
+                            u"track_count": 13,
+                            u"format": u"CD"
+                        }
+                    ],
+                    u"id": u"89b1b3ca-07cd-4f67-b9a7-3a3ba86d7149"
+                }
+            ]
+        }
+    }
+
+    assert_json_response_equal(rv, expected)
+

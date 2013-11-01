@@ -9,7 +9,8 @@ from mbdata.models import (
     ReleaseGroupGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
-from mbdata.api.includes import ReleaseGroupIncludes
+from mbdata.api.includes import ReleaseGroupIncludes, ReleaseIncludes
+from mbdata.api.data import query_release
 from mbdata.api.utils import (
     get_param,
     response_ok,
@@ -57,23 +58,11 @@ def handle_list_releases():
     gid = get_param('id', type='uuid', required=True)
     include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
 
-    if include.artist and include.artists:
-        abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
+    release_group_query = g.db.query(ReleaseGroup.id).filter_by(gid=gid).as_scalar()
 
-    release_group_query = g.db.query(ReleaseGroup.id).filter_by(gid=gid)
-    query = g.db.query(Release).\
-        filter(Release.release_group_id.in_(release_group_query)).\
-        options(joinedload("status")).\
-        options(joinedload("packaging")).\
-        options(joinedload("language")).\
-        options(joinedload("script"))
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
+    query = query_release(g.db, include).\
+        filter(Release.release_group_id == release_group_query).\
+        order_by(Release.id).limit(10) # FIXME
 
     releases_data = []
     for release in query:

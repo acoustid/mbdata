@@ -93,17 +93,16 @@ def handle_list_releases():
     include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
 
     artist = get_plain_artist_by_gid_or_error(gid)
-
     artist_credits_query = g.db.query(ArtistCreditName.artist_credit_id).\
         filter_by(artist_id=artist.id)
 
     query = query_release(g.db, include).\
         filter(Release.artist_credit_id.in_(artist_credits_query)).\
-        limit(10)
+        order_by(Release.id).limit(10) # FIXME
 
-    data = []
+    releases_data = []
     for release in query:
-        data.append(serialize_release(release, include))
+        releases_data.append(serialize_release(release, include))
 
-    return response_ok(releases=data)
+    return response_ok(releases=releases_data)
 
