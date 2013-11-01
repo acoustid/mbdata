@@ -3,12 +3,12 @@
 
 from flask import Blueprint, g, abort
 from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
-from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag
+from mbdata.models import Artist, ArtistGIDRedirect, LinkArtistURL, ArtistTag, ArtistCreditName, Release
 from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
-from mbdata.api.includes import ArtistIncludes
-from mbdata.api.serialize import serialize_artist
-from mbdata.api.data import load_areas
+from mbdata.api.includes import ArtistIncludes, ReleaseIncludes
+from mbdata.api.serialize import serialize_artist, serialize_release
+from mbdata.api.data import load_areas, query_artist, query_release
 from mbdata.api.search import (
     parse_page_token,
     prepare_page_info,
@@ -34,20 +34,6 @@ def get_plain_artist_by_gid_or_error(gid):
     if artist is None:
         abort(response_error(NOT_FOUND_ERROR, 'artist not found'))
     return artist
-
-
-def query_artist(session, include):
-    query = session.query(Artist).\
-        options(joinedload("gender")).\
-        options(joinedload("type"))
-
-    if include.ipi:
-        query = query.options(subqueryload("ipis"))
-
-    if include.isni:
-        query = query.options(subqueryload("isnis"))
-
-    return query
 
 
 @blueprint.route('/get')
@@ -101,35 +87,23 @@ def handle_search():
     return response_ok(results=data, page_info=prepare_page_info(search_results, page))
 
 
-@blueprint.route('/urls')
-def handle_urls():
+@blueprint.route('/list_releases')
+def handle_list_releases():
     gid = get_param('id', type='uuid', required=True)
+    include = get_param('include', type='enum+', container=ReleaseIncludes.parse)
+
     artist = get_plain_artist_by_gid_or_error(gid)
 
-    query = g.db.query(LinkArtistURL).filter_by(artist=artist).\
-        options(joinedload('url', innerjoin=True))
+    artist_credits_query = g.db.query(ArtistCreditName.artist_credit_id).\
+        filter_by(artist_id=artist.id)
+
+    query = query_release(g.db, include).\
+        filter(Release.artist_credit_id.in_(artist_credits_query)).\
+        limit(10)
+
     data = []
-    for link in query:
-        data.append(link.url.url)
+    for release in query:
+        data.append(serialize_release(release, include))
 
-    return response_ok(urls=data)
-
-
-@blueprint.route('/tags')
-def handle_tags():
-    gid = get_param('id', type='uuid', required=True)
-    artist = get_plain_artist_by_gid_or_error(gid)
-
-    query = g.db.query(ArtistTag).filter_by(artist=artist).\
-        options(joinedload('tag', innerjoin=True)).\
-        options(defer('last_updated')).\
-        options(defer('tag.ref_count'))
-    data = []
-    for artist_tag in query:
-        data.append({
-            'name': artist_tag.tag.name,
-            'count': artist_tag.count
-        })
-
-    return response_ok(tags=data)
+    return response_ok(releases=data)
 

@@ -1,7 +1,7 @@
 from sqlalchemy import sql
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.inspection import inspect
-from mbdata.models import Area, Link, LinkType, LinkAreaArea
+from mbdata.models import Area, Link, LinkType, LinkAreaArea, Release
 
 
 def load_areas(session, objs, include):
@@ -122,4 +122,62 @@ def _fetch_parent_areas_cte(session, area_parent_query, areas, options):
         area.part_of = None
         areas[area.id] = area
         areas[child_id].part_of = area
+
+
+def query_artist(db, include):
+    query = db.query(Artist).\
+        options(joinedload("gender")).\
+        options(joinedload("type"))
+
+    if include.ipi:
+        query = query.options(subqueryload("ipis"))
+
+    if include.isni:
+        query = query.options(subqueryload("isnis"))
+
+    return query
+
+
+def query_release(db, include):
+    query = db.query(Release).\
+        options(joinedload("status")).\
+        options(joinedload("packaging")).\
+        options(joinedload("language")).\
+        options(joinedload("script"))
+
+    if include.artist or include.artists:
+        query = query.options(joinedload("artist_credit", innerjoin=True))
+    if include.artists:
+        query = query.\
+            options(subqueryload("artist_credit.artists")).\
+            options(joinedload("artist_credit.artists.artist", innerjoin=True))
+
+    if include.release_group:
+        query = query.\
+            options(joinedload("release_group.type")).\
+            options(subqueryload("release_group.secondary_types")).\
+            options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
+
+        if include.release_group.artist or include.release_group.artists:
+            query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
+        if include.release_group.artists:
+            query = query.\
+                options(subqueryload("release_group.artist_credit.artists")).\
+                options(joinedload("release_group.artist_credit.artists.artist", innerjoin=True))
+
+    if include.mediums:
+        query = query.options(subqueryload("mediums"))
+        query = query.options(joinedload("mediums.format"))
+
+        if include.mediums.tracks:
+            query = query.options(subqueryload("mediums.tracks"))
+
+            if include.mediums.tracks.artist or include.mediums.tracks.artists:
+                query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
+            if include.mediums.tracks.artists:
+                query = query.\
+                    options(subqueryload("mediums.tracks.artist_credit.artists")).\
+                    options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))
+
+    return query
 

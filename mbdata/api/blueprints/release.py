@@ -2,12 +2,12 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload
 from mbdata.models import (
     Release,
     ReleaseGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
+from mbdata.api.data import query_release
 from mbdata.api.includes import ReleaseIncludes
 from mbdata.api.utils import (
     get_param,
@@ -32,46 +32,7 @@ def handle_get():
     if include.artist and include.artists:
         abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
 
-    query = g.db.query(Release).\
-        options(joinedload("status")).\
-        options(joinedload("packaging")).\
-        options(joinedload("language")).\
-        options(joinedload("script"))
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    if include.release_group:
-        query = query.\
-            options(joinedload("release_group.type")).\
-            options(subqueryload("release_group.secondary_types")).\
-            options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
-
-        if include.release_group.artist or include.release_group.artists:
-            query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
-        if include.release_group.artists:
-            query = query.\
-                options(subqueryload("release_group.artist_credit.artists")).\
-                options(joinedload("release_group.artist_credit.artists.artist", innerjoin=True))
-
-    if include.mediums:
-        query = query.options(joinedload("mediums.format"))
-
-        if include.mediums.tracks:
-            query = query.options(subqueryload("mediums.tracks"))
-
-            if include.mediums.tracks.artist or include.mediums.tracks.artists:
-                query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
-            if include.mediums.tracks.artists:
-                query = query.\
-                    options(subqueryload("mediums.tracks.artist_credit.artists")).\
-                    options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))
-
-    release = get_release_by_gid(query, gid)
+    release = get_release_by_gid(query_release(g.db, include), gid)
     if release is None:
         abort(response_error(NOT_FOUND_ERROR, 'release not found'))
 
