@@ -99,7 +99,7 @@ def assert_dict_equal(d1, d2):
 
 def assert_json_response_equal(rv, expected):
     assert_equal(rv.status_code, 200, 'expected 200, got {0} with data {1!r}'.format(rv.status_code, rv.data))
-    assert_equal(rv.content_type, 'application/json')
+    assert_equal(rv.content_type, 'application/json; charset=UTF-8')
     actual = json.loads(rv.data)
     try:
         assert_dict_equal(actual, expected)

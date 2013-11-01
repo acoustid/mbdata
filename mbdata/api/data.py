@@ -1,7 +1,7 @@
 from sqlalchemy import sql
 from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.inspection import inspect
-from mbdata.models import Area, Link, LinkType, LinkAreaArea, Release
+from mbdata.models import Area, Link, LinkType, LinkAreaArea, Release, Artist
 
 
 def load_areas(session, objs, include):
