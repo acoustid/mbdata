@@ -1,6 +1,7 @@
 from sqlalchemy import sql
 from sqlalchemy.orm import joinedload, subqueryload
 from sqlalchemy.inspection import inspect
+from mbdata.utils.models import get_entity_type_model, get_link_model, ENTITY_TYPES
 from mbdata.models import (
     Area,
     Artist,
@@ -204,4 +205,65 @@ def query_release_group(db, include):
             options(joinedload("artist_credit.artists.artist", innerjoin=True))
 
     return query
+
+
+def load_links(db, all_objs, include):
+    for type in ENTITY_TYPES:
+        if include.check(type):
+            load_links_by_target_type(db, all_objs, type)
+
+
+def load_links_by_target_type(db, all_objs, target_type):
+    attr = '{0}_links'.format(target_type)
+
+    grouped_objs = {}
+    for obj in all_objs:
+        setattr(obj, attr, [])
+        model = inspect(obj).mapper.class_
+        grouped_objs.setdefault(model, {})[obj.id] = obj
+
+    target_model = get_entity_type_model(target_type)
+    for model, objs in grouped_objs.iteritems():
+        _load_links_by_types(db, objs, attr, model, target_model)
+
+
+def _load_links_by_types(db, objs, attr, source_model, target_model):
+    model = get_link_model(source_model, target_model)
+    query = db.query(model).\
+        options(joinedload("link")).\
+        options(joinedload("link.link_type"))
+
+    entity0_source = False
+    entity1_source = False
+
+    if source_model == model.entity0.property.mapper.class_:
+        entity0_source = True
+        query = query.filter(model.entity0_id.in_(objs))
+    else:
+        query = query.options(joinedload("entity0"))
+
+    if source_model ==  model.entity1.property.mapper.class_:
+        entity1_source = True
+        query = query.filter(model.entity1_id.in_(objs))
+    else:
+        query = query.options(joinedload("entity1"))
+
+    if entity0_source and entity1_source:
+        for link in query:
+            obj = objs.get(link.entity0_id)
+            if obj is not None:
+                getattr(obj, attr).append(link)
+            obj = objs.get(link.entity1_id)
+            if obj is not None:
+                getattr(obj, attr).append(link)
+    elif entity0_source:
+        for link in query:
+            obj = objs.get(link.entity0_id)
+            if obj is not None:
+                getattr(obj, attr).append(link)
+    else:
+        for link in query:
+            obj = objs.get(link.entity1_id)
+            if obj is not None:
+                getattr(obj, attr).append(link)
 

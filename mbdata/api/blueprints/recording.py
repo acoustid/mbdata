@@ -8,6 +8,7 @@ from mbdata.models import (
     RecordingGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
+from mbdata.api.data import load_links
 from mbdata.api.includes import RecordingIncludes
 from mbdata.api.utils import (
     get_param,
@@ -44,6 +45,9 @@ def handle_get():
     recording = get_recording_by_gid(query, gid)
     if recording is None:
         abort(response_error(NOT_FOUND_ERROR, 'recording not found'))
+
+    if include.relationships:
+        load_links(g.db, [recording], include.relationships)
 
     return response_ok(recording=serialize_recording(recording, include))
 

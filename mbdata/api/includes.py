@@ -1,6 +1,8 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
+from mbdata.utils.models import ENTITY_TYPES
+
 
 class Includes(object):
     INCLUDES = set([])
@@ -9,18 +11,25 @@ class Includes(object):
     def __init__(self, includes=None, itself=True):
         self.includes = dict(includes or {})
         for name in self.SUB_INCLUDES:
-            if name not in self.includes:
-                self.includes[name] = self.SUB_INCLUDES[name](itself=False)
-            elif not isinstance(self.includes[name], Includes):
+            if name in self.includes and not isinstance(self.includes[name], Includes):
                 self.includes[name] = self.SUB_INCLUDES[name]()
         self.itself = itself
+
+    def check(self, name):
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            return False
 
     def __nonzero__(self):
         return self.itself
 
     def __getattr__(self, name):
-        if name not in self.INCLUDES:
+        if name not in self.INCLUDES and name not in self.SUB_INCLUDES:
             raise AttributeError(name)
+
+        if name not in self.includes and name in self.SUB_INCLUDES:
+            self.includes[name] = self.SUB_INCLUDES[name](itself=False)
 
         return self.includes.get(name, False)
 
@@ -35,7 +44,7 @@ class Includes(object):
             else:
                 sub_include = None
 
-            if include not in cls.INCLUDES:
+            if include not in cls.INCLUDES and include not in cls.SUB_INCLUDES:
                 raise ValueError('unknown include {0}{1}'.format(prefix, include))
 
             includes[include] = True
@@ -51,35 +60,39 @@ class Includes(object):
         return cls(includes)
 
 
+class RelationshipsIncludes(Includes):
+    INCLUDES = set(ENTITY_TYPES.keys())
+
+
 class AreaIncludes(Includes):
-    INCLUDES = [
+    INCLUDES = set([
         'part_of',
         'iso_3166',
         'type',
-    ]
+    ])
 
 
 class ArtistIncludes(Includes):
     INCLUDES = set([
-        'areas',
         'ipi',
         'isni',
     ])
 
     SUB_INCLUDES = {
         'areas': AreaIncludes,
+        'relationships': RelationshipsIncludes,
     }
 
 
 class LabelIncludes(Includes):
     INCLUDES = set([
-        'area',
         'ipi',
         'isni',
     ])
 
     SUB_INCLUDES = {
         'area': AreaIncludes,
+        'relationships': RelationshipsIncludes,
     }
 
 
@@ -90,12 +103,15 @@ class RecordingIncludes(Includes):
         'isrc',
     ])
 
+    SUB_INCLUDES = {
+        'relationships': RelationshipsIncludes,
+    }
+
 
 class TrackIncludes(Includes):
     INCLUDES = set([
         'artist',
         'artists',
-        'recordings',
     ])
 
     SUB_INCLUDES = {
@@ -104,9 +120,7 @@ class TrackIncludes(Includes):
 
 
 class MediumIncludes(Includes):
-    INCLUDES = set([
-        'tracks',
-    ])
+    INCLUDES = set([])
 
     SUB_INCLUDES = {
         'tracks': TrackIncludes,
@@ -114,38 +128,65 @@ class MediumIncludes(Includes):
 
 
 class ReleaseGroupIncludes(Includes):
-    INCLUDES = [
+    INCLUDES = set([
         'artist',
         'artists',
-    ]
+    ])
+
+    SUB_INCLUDES = {
+        'relationships': RelationshipsIncludes,
+    }
 
 
 class ReleaseIncludes(Includes):
     INCLUDES = set([
         'artist',
         'artists',
-        'mediums',
-        'release_group',
     ])
 
     SUB_INCLUDES = {
         'mediums': MediumIncludes,
         'release_group': ReleaseGroupIncludes,
+        'relationships': RelationshipsIncludes,
     }
 
 
 class WorkIncludes(Includes):
-    INCLUDES = [
+    INCLUDES = set([
         'iswc',
-    ]
+    ])
+
+    SUB_INCLUDES = {
+        'relationships': RelationshipsIncludes,
+    }
 
 
 class PlaceIncludes(Includes):
-    INCLUDES = [
-        'area',
-    ]
+    INCLUDES = set([])
 
     SUB_INCLUDES = {
         'area': AreaIncludes,
+        'relationships': RelationshipsIncludes,
     }
+
+
+class URLIncludes(Includes):
+    INCLUDES = set([])
+
+    SUB_INCLUDES = {
+        'relationships': RelationshipsIncludes,
+    }
+
+
+# this can't be defined directly in the class because of circular dependency
+RelationshipsIncludes.SUB_INCLUDES = {
+    'artist': ArtistIncludes,
+    'label': LabelIncludes,
+    'place': PlaceIncludes,
+    'recording': RecordingIncludes,
+    'release': ReleaseIncludes,
+    'release_group': ReleaseGroupIncludes,
+    'url': URLIncludes,
+    'work': WorkIncludes,
+}
 

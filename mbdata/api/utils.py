@@ -13,6 +13,7 @@ from mbdata.api.errors import (
     ERROR_STATUS_CODES,
     ERROR_DEFAULT_STATUS_CODE,
 )
+from mbdata.utils.models import ENTITY_TYPES
 
 
 logger = logging.getLogger(__name__)
@@ -68,15 +69,18 @@ def singular(plural):
     raise ValueError('unknown plural form %r' % (plural,))
 
 
-def dumpxml(output, name, value):
+def dumpxml(output, name, value, parent_name=None):
     if isinstance(value, dict):
         output.write('<{0}>'.format(name))
         for sub_name, sub_value in value.iteritems():
-            dumpxml(output, sub_name, sub_value)
+            dumpxml(output, sub_name, sub_value, parent_name=name)
         output.write('</{0}>'.format(name))
     elif isinstance(value, list):
         output.write('<{0}>'.format(name))
-        sub_name = singular(name)
+        if parent_name == 'relationships' and name in ENTITY_TYPES:
+            sub_name = 'relationship'
+        else:
+            sub_name = singular(name)
         for sub_value in value:
             dumpxml(output, sub_name, sub_value)
         output.write('</{0}>'.format(name))

@@ -7,7 +7,7 @@ from mbdata.models import (
     ReleaseGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
-from mbdata.api.data import query_release
+from mbdata.api.data import query_release, load_links
 from mbdata.api.includes import ReleaseIncludes
 from mbdata.api.utils import (
     get_param,
@@ -35,6 +35,9 @@ def handle_get():
     release = get_release_by_gid(query_release(g.db, include), gid)
     if release is None:
         abort(response_error(NOT_FOUND_ERROR, 'release not found'))
+
+    if include.relationships:
+        load_links(g.db, [release], include.relationships)
 
     return response_ok(release=serialize_release(release, include))
 

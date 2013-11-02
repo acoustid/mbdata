@@ -18,7 +18,7 @@ from mbdata.api.serialize import (
     serialize_release,
     serialize_release_group,
 )
-from mbdata.api.data import load_areas, query_artist, query_release, query_release_group
+from mbdata.api.data import load_areas, load_links, query_artist, query_release, query_release_group
 from mbdata.api.search import (
     parse_page_token,
     prepare_page_info,
@@ -57,6 +57,9 @@ def handle_get():
 
     if include.areas:
         load_areas(g.db, [artist], include.areas)
+
+    if include.relationships:
+        load_links(g.db, [artist], include.relationships)
 
     return response_ok(artist=serialize_artist(artist, include))
 

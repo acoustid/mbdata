@@ -8,7 +8,7 @@ from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import PlaceIncludes
 from mbdata.api.serialize import serialize_place
-from mbdata.api.data import load_areas
+from mbdata.api.data import load_areas, load_links
 from mbdata.api.errors import NOT_FOUND_ERROR
 
 blueprint = Blueprint('place', __name__)
@@ -33,6 +33,9 @@ def handle_get():
 
     if include.area:
         load_areas(g.db, [place], include.area)
+
+    if include.relationships:
+        load_links(g.db, [place], include.relationships)
 
     return response_ok(place=serialize_place(place, include))
 

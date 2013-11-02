@@ -8,6 +8,7 @@ from mbdata.models import (
     WorkGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
+from mbdata.api.data import load_links
 from mbdata.api.includes import WorkIncludes
 from mbdata.api.utils import (
     get_param,
@@ -36,6 +37,9 @@ def handle_get():
     work = get_work_by_gid(query_work(g.db, include), gid)
     if work is None:
         abort(response_error(NOT_FOUND_ERROR, 'work not found'))
+
+    if include.relationships:
+        load_links(g.db, [work], include.relationships)
 
     return response_ok(work=serialize_work(work, include))
 

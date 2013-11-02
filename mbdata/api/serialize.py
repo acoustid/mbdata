@@ -1,6 +1,8 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
+from mbdata.utils.models import ENTITY_TYPES, get_link_target
+
 
 def serialize_partial_date(data, name, date):
     if not date:
@@ -28,10 +30,25 @@ def serialize_area(data, name, area, include):
         if area.iso_3166_2_codes:
             data[name]['iso_3166_2'] = [r.code for r in area.iso_3166_2_codes]
         if area.iso_3166_3_codes:
-            data[name]['iso_3166_2'] = [r.code for r in area.iso_3166_3_codes]
+            data[name]['iso_3166_3'] = [r.code for r in area.iso_3166_3_codes]
 
     if include.part_of:
         serialize_area(data[name], 'part_of', area.part_of, include)
+
+
+def serialize_relationships(data, obj, include):
+    if include.relationships:
+        data['relationships'] = {}
+
+    for type in ENTITY_TYPES:
+        if include.relationships.check(type):
+            links_data = []
+            for link in getattr(obj, '{0}_links'.format(type), ()):
+                link_data = {'type': link.link.link_type.name}
+                link_data[type] = ENTITY_SERIALIZERS[type](get_link_target(link, obj), include.relationships.check(type))
+                links_data.append(link_data)
+            if links_data:
+                data['relationships'][type] = links_data
 
 
 def serialize_artist_credit(artist_credit):
@@ -53,6 +70,10 @@ def serialize_artist_credit(artist_credit):
     return data
 
 
+def serialize_url(url, include):
+    return {'id': url.gid, 'url': url.url}
+
+
 def serialize_work(work, include):
     data = {
         'id': work.gid,
@@ -64,6 +85,8 @@ def serialize_work(work, include):
 
     if include.iswc:
         data['iswcs'] = [iswc.iswc for iswc in work.iswcs]
+
+    serialize_relationships(data, work, include)
 
     return data
 
@@ -90,6 +113,8 @@ def serialize_recording(recording, include):
 
     if include.isrc:
         data['isrcs'] = [isrc.isrc for isrc in recording.isrcs]
+
+    serialize_relationships(data, recording, include)
 
     return data
 
@@ -159,6 +184,8 @@ def serialize_release_group(release_group, include):
     elif include.artists:
         data['artists'] = serialize_artist_credit(release_group.artist_credit)
 
+    serialize_relationships(data, release_group, include)
+
     return data
 
 
@@ -197,6 +224,8 @@ def serialize_release(release, include):
             mediums_data.append(serialize_medium(medium, include.mediums))
         data['mediums'] = mediums_data
 
+    serialize_relationships(data, release, include)
+
     return data
 
 
@@ -233,6 +262,8 @@ def serialize_artist(artist, include):
     if include.isni:
         data['isnis'] = [isni.isni for isni in artist.isnis]
 
+    serialize_relationships(data, artist, include)
+
     return data
 
 
@@ -263,6 +294,8 @@ def serialize_label(label, include):
 
     if include.isni:
         data['isnis'] = [isni.isni for isni in label.isnis]
+
+    serialize_relationships(data, label, include)
 
     return data
 
@@ -297,5 +330,19 @@ def serialize_place(place, include):
     if include.area:
         serialize_area(data, 'area', place.area, include.area)
 
+    serialize_relationships(data, place, include)
+
     return data
+
+
+ENTITY_SERIALIZERS = {
+    'artist': serialize_artist,
+    'label': serialize_label,
+    'place': serialize_place,
+    'recording': serialize_recording,
+    'release_group': serialize_release_group,
+    'release': serialize_release,
+    'url': serialize_url,
+    'work': serialize_work,
+}
 

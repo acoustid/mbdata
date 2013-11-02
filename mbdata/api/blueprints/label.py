@@ -8,7 +8,7 @@ from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import LabelIncludes
 from mbdata.api.serialize import serialize_label
-from mbdata.api.data import load_areas
+from mbdata.api.data import load_areas, load_links
 from mbdata.api.search import (
     prepare_page_info,
     prepare_search_options,
@@ -50,6 +50,9 @@ def handle_get():
 
     if include.area:
         load_areas(g.db, [label], include.area)
+
+    if include.relationships:
+        load_links(g.db, [label], include.relationships)
 
     return response_ok(label=serialize_label(label, include))
 
