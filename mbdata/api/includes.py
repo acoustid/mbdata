@@ -1,7 +1,53 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
+import re
+import itertools
 from mbdata.utils.models import ENTITY_TYPES
+
+
+def _iter_includes(tokens):
+    if isinstance(tokens, basestring):
+        yield tokens
+        return
+
+    includes = ['']
+    for token in tokens:
+        if token == ',':
+            for include in includes:
+                yield include
+            includes = ['']
+        else:
+            new_includes = []
+            for prefix, suffix in itertools.product(includes, _iter_includes(token)):
+                new_includes.append(prefix + suffix)
+            includes = new_includes
+
+    if includes != ['']:
+        for include in includes:
+            yield include
+
+
+def expand_includes(input):
+    tokens = re.split(r'([,()])', input)
+
+    groups = [[]]
+    for token in tokens:
+        if token == '(':
+            groups.append([])
+        elif token == ')':
+            group = groups.pop()
+            groups[-1].append(group)
+        elif token:
+            groups[-1].append(token)
+    grouped_tokens = groups.pop()
+
+    return _iter_includes(grouped_tokens)
+
+
+def expand_includes_multi(inputs):
+    return itertools.chain.from_iterable(
+        itertools.imap(expand_includes, inputs))
 
 
 class Includes(object):
@@ -38,7 +84,7 @@ class Includes(object):
         includes = {}
         sub_includes = {}
 
-        for include in params:
+        for include in expand_includes_multi(params):
             if '.' in include:
                 include, sub_include = include.split('.', 1)
             else:
@@ -115,7 +161,7 @@ class TrackIncludes(Includes):
     ])
 
     SUB_INCLUDES = {
-        'recordings': RecordingIncludes,
+        'recording': RecordingIncludes,
     }
 
 

@@ -1,5 +1,28 @@
 from nose.tools import *
-from mbdata.api.includes import ReleaseIncludes, MediumIncludes, TrackIncludes
+from mbdata.api.includes import ReleaseIncludes, MediumIncludes, TrackIncludes, expand_includes
+
+
+def check_expand_includes(input, output):
+    assert_equal(list(expand_includes(input)), output)
+
+
+def test_expand_includes():
+    test_cases = [
+        ('artists', [
+            'artists',
+        ]),
+        ('artists,mediums.tracks', [
+            'artists',
+            'mediums.tracks',
+        ]),
+        ('artists,mediums.tracks.(artists,recording)', [
+            'artists',
+            'mediums.tracks.artists',
+            'mediums.tracks.recording',
+        ]),
+    ]
+    for input, output in test_cases:
+        yield check_expand_includes, input, output
 
 
 def test_includes_getters_simple():
@@ -61,6 +84,18 @@ def test_includes_parse_dotted_deep():
     assert_true(include.mediums)
     assert_true(include.mediums.tracks)
     assert_true(include.mediums.tracks.artists)
+
+
+def test_includes_parse_dotted_deep_params():
+    include = ReleaseIncludes.parse(['artists', 'mediums.tracks.(artists,recording.relationships.(artist,work))'])
+    assert_true(include.artists)
+    assert_true(include.mediums)
+    assert_true(include.mediums.tracks)
+    assert_true(include.mediums.tracks.artists)
+    assert_true(include.mediums.tracks.recording)
+    assert_true(include.mediums.tracks.recording.relationships)
+    assert_true(include.mediums.tracks.recording.relationships.artist)
+    assert_true(include.mediums.tracks.recording.relationships.work)
 
 
 def test_includes_parse_unknown_simple():
