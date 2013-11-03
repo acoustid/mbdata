@@ -8,7 +8,7 @@ from mbdata.utils import defer_everything_but, get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import LabelIncludes
 from mbdata.api.serialize import serialize_label
-from mbdata.api.data import load_areas, load_links
+from mbdata.api.data import load_areas, load_links, query_label
 from mbdata.api.search import (
     prepare_page_info,
     prepare_search_options,
@@ -24,19 +24,6 @@ blueprint = Blueprint('label', __name__)
 
 def get_label_by_gid(query, gid):
     return get_something_by_gid(query, LabelGIDRedirect, gid)
-
-
-def query_label(session, include):
-    query = session.query(Label).\
-        options(joinedload("type"))
-
-    if include.ipi:
-        query = query.options(subqueryload("ipis"))
-
-    if include.isni:
-        query = query.options(subqueryload("isnis"))
-
-    return query
 
 
 @blueprint.route('/get')

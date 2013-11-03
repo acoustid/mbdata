@@ -8,7 +8,7 @@ from mbdata.models import (
     WorkGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
-from mbdata.api.data import load_links
+from mbdata.api.data import load_links, query_work
 from mbdata.api.includes import WorkIncludes
 from mbdata.api.utils import (
     get_param,
@@ -23,10 +23,6 @@ blueprint = Blueprint('work', __name__)
 
 def get_work_by_gid(query, gid):
     return get_something_by_gid(query, WorkGIDRedirect, gid)
-
-
-def query_work(db, include):
-    return db.query(Work).options(joinedload('type'))
 
 
 @blueprint.route('/get')

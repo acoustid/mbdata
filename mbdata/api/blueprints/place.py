@@ -8,7 +8,7 @@ from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import PlaceIncludes
 from mbdata.api.serialize import serialize_place
-from mbdata.api.data import load_areas, load_links
+from mbdata.api.data import load_areas, load_links, query_place
 from mbdata.api.errors import NOT_FOUND_ERROR
 
 blueprint = Blueprint('place', __name__)
@@ -16,10 +16,6 @@ blueprint = Blueprint('place', __name__)
 
 def get_place_by_gid(query, gid):
     return get_something_by_gid(query, PlaceGIDRedirect, gid)
-
-
-def query_place(db, include):
-    return g.db.query(Place).options(joinedload("type"))
 
 
 @blueprint.route('/get')

@@ -5,9 +5,11 @@ from mbdata.utils.models import get_entity_type_model, get_link_model, ENTITY_TY
 from mbdata.models import (
     Area,
     Artist,
+    Label,
     Link,
     LinkAreaArea,
     LinkType,
+    Place,
     Release,
     ReleaseGroup,
 )
@@ -205,6 +207,40 @@ def query_release_group(db, include):
             options(joinedload("artist_credit.artists.artist", innerjoin=True))
 
     return query
+
+
+def query_recording(db, include):
+    query = db.query(Recording)
+
+    if include.artist or include.artists:
+        query = query.options(joinedload("artist_credit", innerjoin=True))
+    if include.artists:
+        query = query.\
+            options(subqueryload("artist_credit.artists")).\
+            options(joinedload("artist_credit.artists.artist", innerjoin=True))
+
+    return query
+
+
+def query_place(db, include):
+    return db.query(Place).options(joinedload("type"))
+
+
+def query_label(session, include):
+    query = session.query(Label).\
+        options(joinedload("type"))
+
+    if include.ipi:
+        query = query.options(subqueryload("ipis"))
+
+    if include.isni:
+        query = query.options(subqueryload("isnis"))
+
+    return query
+
+
+def query_work(db, include):
+    return db.query(Work).options(joinedload('type'))
 
 
 def load_links(db, all_objs, include):

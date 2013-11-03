@@ -33,16 +33,7 @@ def handle_get():
     if include.artist and include.artists:
         abort(response_error(INCLUDE_DEPENDENCY_ERROR, 'include=artist and include=artists are mutually exclusive'))
 
-    query = g.db.query(Recording)
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    recording = get_recording_by_gid(query, gid)
+    recording = get_recording_by_gid(query_recording(g.db, include), gid)
     if recording is None:
         abort(response_error(NOT_FOUND_ERROR, 'recording not found'))
 
