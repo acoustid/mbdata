@@ -45,8 +45,16 @@ def serialize_relationships(data, obj, include):
             links_data = []
             for link in getattr(obj, '{0}_links'.format(type), ()):
                 link_data = {'type': link.link.link_type.name}
+
+                serialize_partial_date(link_data, 'begin_data', link.link.begin_date)
+                serialize_partial_date(link_data, 'end_data', link.link.end_date)
+
+                if link.link.ended:
+                    link_data['ended'] = True
+
                 link_data[type] = ENTITY_SERIALIZERS[type](get_link_target(link, obj), include.relationships.check(type))
                 links_data.append(link_data)
+
             if links_data:
                 data['relationships'][type] = links_data
 

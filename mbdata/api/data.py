@@ -136,120 +136,156 @@ def _fetch_parent_areas_cte(session, area_parent_query, areas, options):
 
 
 def query_artist(db, include):
-    query = db.query(Artist).\
-        options(joinedload("gender")).\
-        options(joinedload("type"))
-
-    if include.ipi:
-        query = query.options(subqueryload("ipis"))
-
-    if include.isni:
-        query = query.options(subqueryload("isnis"))
-
-    return query
+    return prepare_artist_query(db.query(Artist), include)
 
 
-def query_release(db, include):
-    query = db.query(Release).\
-        options(joinedload("status")).\
-        options(joinedload("packaging")).\
-        options(joinedload("language")).\
-        options(joinedload("script"))
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    if include.release_group:
-        query = query.\
-            options(joinedload("release_group.type")).\
-            options(subqueryload("release_group.secondary_types")).\
-            options(joinedload("release_group.secondary_types.secondary_type", innerjoin=True))
-
-        if include.release_group.artist or include.release_group.artists:
-            query = query.options(joinedload("release_group.artist_credit", innerjoin=True))
-        if include.release_group.artists:
-            query = query.\
-                options(subqueryload("release_group.artist_credit.artists")).\
-                options(joinedload("release_group.artist_credit.artists.artist", innerjoin=True))
-
-    if include.mediums:
-        query = query.options(subqueryload("mediums"))
-        query = query.options(joinedload("mediums.format"))
-
-        if include.mediums.tracks:
-            query = query.options(subqueryload("mediums.tracks"))
-
-            if include.mediums.tracks.artist or include.mediums.tracks.artists:
-                query = query.options(joinedload("mediums.tracks.artist_credit", innerjoin=True))
-            if include.mediums.tracks.artists:
-                query = query.\
-                    options(subqueryload("mediums.tracks.artist_credit.artists")).\
-                    options(joinedload("mediums.tracks.artist_credit.artists.artist", innerjoin=True))
-
-    return query
-
-
-def query_release_group(db, include):
-    query = db.query(ReleaseGroup).\
-        options(joinedload("type")).\
-        options(subqueryload("secondary_types")).\
-        options(joinedload("secondary_types.secondary_type", innerjoin=True))
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    return query
-
-
-def query_recording(db, include):
-    query = db.query(Recording)
-
-    if include.artist or include.artists:
-        query = query.options(joinedload("artist_credit", innerjoin=True))
-    if include.artists:
-        query = query.\
-            options(subqueryload("artist_credit.artists")).\
-            options(joinedload("artist_credit.artists.artist", innerjoin=True))
-
-    return query
+def query_label(db, include):
+    return prepare_label_query(db.query(Label), include)
 
 
 def query_place(db, include):
-    return db.query(Place).options(joinedload("type"))
+    return prepare_place_query(db.query(Place), include)
 
 
-def query_label(session, include):
-    query = session.query(Label).\
-        options(joinedload("type"))
+def query_recording(db, include):
+    return prepare_recording_query(db.query(Recording), include)
+
+
+def query_release(db, include):
+    return prepare_release_query(db.query(Release), include)
+
+
+def query_release_group(db, include):
+    return prepare_release_group_query(db.query(ReleaseGroup), include)
+
+
+def query_work(db, include):
+    return prepare_work_query(db.query(Work), include)
+
+
+def prepare_artist_query(query, include, prefix=""):
+    query = query.\
+        options(joinedload(prefix + "gender")).\
+        options(joinedload(prefix + "type"))
 
     if include.ipi:
-        query = query.options(subqueryload("ipis"))
+        query = query.options(subqueryload(prefix + "ipis"))
 
     if include.isni:
-        query = query.options(subqueryload("isnis"))
+        query = query.options(subqueryload(prefix + "isnis"))
 
     return query
 
 
-def query_work(db, include):
-    return db.query(Work).options(joinedload('type'))
+def prepare_label_query(query, include, prefix=""):
+    query = query.options(joinedload(prefix + "type"))
+
+    if include.ipi:
+        query = query.options(subqueryload(prefix + "ipis"))
+
+    if include.isni:
+        query = query.options(subqueryload(prefix + "isnis"))
+
+    return query
+
+
+def prepare_place_query(query, include, prefix=""):
+    return query.options(joinedload(prefix + "type"))
+
+
+def prepare_recording_query(query, include, prefix=""):
+    return prepare_artist_credits_subquery(query, include, prefix)
+
+
+def prepare_release_query(query, include, prefix=""):
+    query = query.\
+        options(joinedload(prefix + "status")).\
+        options(joinedload(prefix + "packaging")).\
+        options(joinedload(prefix + "language")).\
+        options(joinedload(prefix + "script"))
+
+    query = prepare_artist_credits_subquery(query, include, prefix)
+
+    if include.release_group:
+        query = prepare_release_group_query(query, include.release_group, prefix + "release_group.")
+
+    if include.mediums:
+        query = query.options(subqueryload(prefix + "mediums"))
+        query = prepare_medium_query(query, include.mediums, prefix + "mediums.")
+
+    return query
+
+
+def prepare_medium_query(query, include, prefix=""):
+    query = query.options(joinedload(prefix + "format"))
+
+    if include.tracks:
+        query = query.options(subqueryload(prefix + "tracks"))
+        query = prepare_track_query(query, include.tracks, prefix + "tracks.")
+
+    return query
+
+
+def prepare_track_query(query, include, prefix=""):
+    query = prepare_artist_credits_subquery(query, include, prefix)
+
+    if include.recording:
+        query = query.options(subqueryload(prefix + "recording"))
+        query = prepare_recording_query(query, include, prefix + "recording.")
+
+    return query
+
+
+def prepare_release_group_query(query, include, prefix=""):
+    query = query.\
+        options(joinedload(prefix + "type")).\
+        options(subqueryload(prefix + "secondary_types")).\
+        options(joinedload(prefix + "secondary_types.secondary_type", innerjoin=True))
+
+    query = prepare_artist_credits_subquery(query, include, prefix)
+
+    return query
+
+
+def prepare_artist_credits_subquery(query, include, prefix):
+    if include.artist or include.artists:
+        query = query.options(joinedload(prefix + "artist_credit", innerjoin=True))
+    if include.artists:
+        query = query.\
+            options(subqueryload(prefix + "artist_credit.artists")).\
+            options(joinedload(prefix + "artist_credit.artists.artist", innerjoin=True))
+
+    return query
+
+
+def prepare_url_query(query, include, prefix=""):
+    return query
+
+
+def prepare_work_query(query, include, prefix=""):
+    return query.options(joinedload(prefix + "type"))
 
 
 def load_links(db, all_objs, include):
     for type in ENTITY_TYPES:
-        if include.check(type):
-            load_links_by_target_type(db, all_objs, type)
+        type_include = include.check(type)
+        if type_include:
+            load_links_by_target_type(db, all_objs, type, type_include)
 
 
-def load_links_by_target_type(db, all_objs, target_type):
+ENTITY_TYPE_PREPARE_FUNCS = {
+    'artist': prepare_artist_query,
+    'label': prepare_label_query,
+    'place': prepare_place_query,
+    'recording': prepare_recording_query,
+    'release': prepare_release_query,
+    'release_group': prepare_release_group_query,
+    'url': prepare_url_query,
+    'work': prepare_work_query,
+}
+
+
+def load_links_by_target_type(db, all_objs, target_type, include):
     attr = '{0}_links'.format(target_type)
 
     grouped_objs = {}
@@ -258,48 +294,37 @@ def load_links_by_target_type(db, all_objs, target_type):
         model = inspect(obj).mapper.class_
         grouped_objs.setdefault(model, {})[obj.id] = obj
 
-    target_model = get_entity_type_model(target_type)
     for model, objs in grouped_objs.iteritems():
-        _load_links_by_types(db, objs, attr, model, target_model)
+        _load_links_by_types(db, objs, attr, model, target_type, include)
 
 
-def _load_links_by_types(db, objs, attr, source_model, target_model):
+def _load_links_by_types(db, objs, attr, source_model, target_type, include):
+    target_model = get_entity_type_model(target_type)
     model = get_link_model(source_model, target_model)
     query = db.query(model).\
-        options(joinedload("link")).\
-        options(joinedload("link.link_type"))
+        options(joinedload("link", innerjoin=True)).\
+        options(joinedload("link.link_type", innerjoin=True))
 
-    entity0_source = False
-    entity1_source = False
-
-    if source_model == model.entity0.property.mapper.class_:
-        entity0_source = True
-        query = query.filter(model.entity0_id.in_(objs))
+    if model.entity0.property.mapper.class_ == model.entity1.property.mapper.class_:
+        _load_links_by_types_one_side(model, query, objs, attr, include, "entity0", "entity1", target_type)
+        _load_links_by_types_one_side(model, query, objs, attr, include, "entity1", "entity0", target_type)
     else:
-        query = query.options(joinedload("entity0"))
+        source_attr = target_attr = None
+        if source_model == model.entity0.property.mapper.class_:
+            _load_links_by_types_one_side(model, query, objs, attr, include, "entity0", "entity1", target_type)
+        else:
+            _load_links_by_types_one_side(model, query, objs, attr, include, "entity1", "entity0", target_type)
 
-    if source_model ==  model.entity1.property.mapper.class_:
-        entity1_source = True
-        query = query.filter(model.entity1_id.in_(objs))
-    else:
-        query = query.options(joinedload("entity1"))
 
-    if entity0_source and entity1_source:
-        for link in query:
-            obj = objs.get(link.entity0_id)
-            if obj is not None:
-                getattr(obj, attr).append(link)
-            obj = objs.get(link.entity1_id)
-            if obj is not None:
-                getattr(obj, attr).append(link)
-    elif entity0_source:
-        for link in query:
-            obj = objs.get(link.entity0_id)
-            if obj is not None:
-                getattr(obj, attr).append(link)
-    else:
-        for link in query:
-            obj = objs.get(link.entity1_id)
-            if obj is not None:
-                getattr(obj, attr).append(link)
+def _load_links_by_types_one_side(model, query, objs, attr, include, source_attr, target_attr, target_type):
+    source_id_attr = source_attr + "_id"
+    query = query.filter(getattr(model, source_id_attr).in_(objs))
+
+    query = query.options(joinedload(target_attr, innerjoin=True))
+    query = ENTITY_TYPE_PREPARE_FUNCS[target_type](query, include, target_attr + ".")
+
+    for link in query:
+        obj = objs.get(getattr(link, source_id_attr))
+        if obj is not None:
+            getattr(obj, attr).append(link)
 
