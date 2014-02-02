@@ -24,7 +24,7 @@ class Annotation(Base):
     changelog = Column(String(255))
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class Application(Base):
@@ -38,7 +38,7 @@ class Application(Base):
     oauth_secret = Column(String, nullable=False)
     oauth_redirect_uri = Column(String)
 
-    owner = relationship('Editor', foreign_keys=[owner_id])
+    owner = relationship('Editor', foreign_keys=[owner_id], innerjoin=True)
 
 
 class AreaType(Base):
@@ -83,7 +83,7 @@ class AreaGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.area.id', name='area_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Area', foreign_keys=[redirect_id])
+    redirect = relationship('Area', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -123,7 +123,7 @@ class AreaAlias(Base):
     primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    area = relationship('Area', foreign_keys=[area_id])
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
     type = relationship('AreaAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
@@ -137,8 +137,8 @@ class AreaAnnotation(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='area_annotation_fk_area'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='area_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    area = relationship('Area', foreign_keys=[area_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class Artist(Base):
@@ -214,7 +214,7 @@ class ArtistAlias(Base):
     primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     type = relationship('ArtistAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
@@ -228,8 +228,8 @@ class ArtistAnnotation(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='artist_annotation_fk_artist'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='artist_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class ArtistIPI(Base):
@@ -241,7 +241,7 @@ class ArtistIPI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist = relationship('Artist', foreign_keys=[artist_id], backref=backref('ipis'))
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True, backref=backref('ipis'))
 
 
 class ArtistISNI(Base):
@@ -253,7 +253,7 @@ class ArtistISNI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist = relationship('Artist', foreign_keys=[artist_id], backref=backref('isnis'))
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True, backref=backref('isnis'))
 
 
 class ArtistMeta(Base):
@@ -264,7 +264,7 @@ class ArtistMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    artist = relationship('Artist', foreign_keys=[id], backref=backref('meta', uselist=False))
+    artist = relationship('Artist', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
 
 class ArtistTag(Base):
@@ -276,8 +276,8 @@ class ArtistTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ArtistRatingRaw(Base):
@@ -288,8 +288,8 @@ class ArtistRatingRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='artist_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class ArtistTagRaw(Base):
@@ -300,9 +300,9 @@ class ArtistTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='artist_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='artist_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ArtistCredit(Base):
@@ -326,8 +326,8 @@ class ArtistCreditName(Base):
     name = Column(String, nullable=False)
     join_phrase = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], backref=backref('artists', order_by="ArtistCreditName.position"))
-    artist = relationship('Artist', foreign_keys=[artist_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True, backref=backref('artists', order_by="ArtistCreditName.position"))
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
 
 
 class ArtistGIDRedirect(Base):
@@ -338,7 +338,7 @@ class ArtistGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.artist.id', name='artist_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Artist', foreign_keys=[redirect_id])
+    redirect = relationship('Artist', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -373,8 +373,8 @@ class AutoeditorElection(Base):
     open_time = Column(DateTime(timezone=True))
     close_time = Column(DateTime(timezone=True))
 
-    candidate = relationship('Editor', foreign_keys=[candidate_id])
-    proposer = relationship('Editor', foreign_keys=[proposer_id])
+    candidate = relationship('Editor', foreign_keys=[candidate_id], innerjoin=True)
+    proposer = relationship('Editor', foreign_keys=[proposer_id], innerjoin=True)
     seconder_1 = relationship('Editor', foreign_keys=[seconder_1_id])
     seconder_2 = relationship('Editor', foreign_keys=[seconder_2_id])
 
@@ -389,8 +389,8 @@ class AutoeditorElectionVote(Base):
     vote = Column(Integer, nullable=False)
     vote_time = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
-    autoeditor_election = relationship('AutoeditorElection', foreign_keys=[autoeditor_election_id])
-    voter = relationship('Editor', foreign_keys=[voter_id])
+    autoeditor_election = relationship('AutoeditorElection', foreign_keys=[autoeditor_election_id], innerjoin=True)
+    voter = relationship('Editor', foreign_keys=[voter_id], innerjoin=True)
 
 
 class CDTOC(Base):
@@ -418,7 +418,7 @@ class CDTOCRaw(Base):
     leadout_offset = Column(Integer, nullable=False)
     track_offset = Column(Integer, nullable=False)
 
-    release = relationship('ReleaseRaw', foreign_keys=[release_id])
+    release = relationship('ReleaseRaw', foreign_keys=[release_id], innerjoin=True)
 
 
 class CountryArea(Base):
@@ -448,7 +448,7 @@ class Edit(Base):
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id', name='edit_fk_language'))
     quality = Column(SMALLINT, default=1, server_default=sql.text('1'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     language = relationship('Language', foreign_keys=[language_id])
 
 
@@ -462,8 +462,8 @@ class EditNote(Base):
     text = Column(String, nullable=False)
     post_time = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    edit = relationship('Edit', foreign_keys=[edit_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
 
 
 class EditArea(Base):
@@ -473,8 +473,8 @@ class EditArea(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_area_fk_edit'), primary_key=True, nullable=False)
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='edit_area_fk_area', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    area = relationship('Area', foreign_keys=[area_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
 
 
 class EditArtist(Base):
@@ -485,8 +485,8 @@ class EditArtist(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='edit_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    artist = relationship('Artist', foreign_keys=[artist_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
 
 
 class EditLabel(Base):
@@ -497,8 +497,8 @@ class EditLabel(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', name='edit_label_fk_label', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    label = relationship('Label', foreign_keys=[label_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
 
 
 class EditPlace(Base):
@@ -508,8 +508,8 @@ class EditPlace(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_place_fk_edit'), primary_key=True, nullable=False)
     place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id', name='edit_place_fk_place', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    place = relationship('Place', foreign_keys=[place_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
 
 
 class EditRelease(Base):
@@ -519,8 +519,8 @@ class EditRelease(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_release_fk_edit'), primary_key=True, nullable=False)
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='edit_release_fk_release', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    release = relationship('Release', foreign_keys=[release_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
 
 
 class EditReleaseGroup(Base):
@@ -530,8 +530,8 @@ class EditReleaseGroup(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_release_group_fk_edit'), primary_key=True, nullable=False)
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='edit_release_group_fk_release_group', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
 
 
 class EditRecording(Base):
@@ -541,8 +541,8 @@ class EditRecording(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_recording_fk_edit'), primary_key=True, nullable=False)
     recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', name='edit_recording_fk_recording', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    recording = relationship('Recording', foreign_keys=[recording_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
 
 
 class EditWork(Base):
@@ -552,8 +552,8 @@ class EditWork(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_work_fk_edit'), primary_key=True, nullable=False)
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id', name='edit_work_fk_work', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    work = relationship('Work', foreign_keys=[work_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
 
 
 class EditURL(Base):
@@ -563,8 +563,8 @@ class EditURL(Base):
     edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_url_fk_edit'), primary_key=True, nullable=False)
     url_id = Column('url', Integer, ForeignKey('musicbrainz.url.id', name='edit_url_fk_url', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    edit = relationship('Edit', foreign_keys=[edit_id])
-    url = relationship('URL', foreign_keys=[url_id])
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    url = relationship('URL', foreign_keys=[url_id], innerjoin=True)
 
 
 class Editor(Base):
@@ -604,8 +604,8 @@ class EditorLanguage(Base):
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id', name='editor_language_fk_language'), primary_key=True, nullable=False)
     fluency = Column(Enum('basic', 'intermediate', 'advanced', 'native', name='FLUENCY'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    language = relationship('Language', foreign_keys=[language_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    language = relationship('Language', foreign_keys=[language_id], innerjoin=True)
 
 
 class EditorPreference(Base):
@@ -617,7 +617,7 @@ class EditorPreference(Base):
     name = Column(String(50), nullable=False)
     value = Column(String(100), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class EditorSubscribeArtist(Base):
@@ -629,9 +629,9 @@ class EditorSubscribeArtist(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='editor_subscribe_artist_fk_artist'), nullable=False)
     last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_artist_fk_last_edit_sent'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id], innerjoin=True)
 
 
 class EditorSubscribeArtistDeleted(Base):
@@ -642,8 +642,8 @@ class EditorSubscribeArtistDeleted(Base):
     gid = Column(UUID, ForeignKey('musicbrainz.artist_deletion.gid', name='editor_subscribe_artist_deleted_fk_gid'), primary_key=True, nullable=False)
     deleted_by_id = Column('deleted_by', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_artist_deleted_fk_deleted_by'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
 
 
 class EditorSubscribeCollection(Base):
@@ -657,7 +657,7 @@ class EditorSubscribeCollection(Base):
     available = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
     last_seen_name = Column(String(255))
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class EditorSubscribeLabel(Base):
@@ -669,9 +669,9 @@ class EditorSubscribeLabel(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', name='editor_subscribe_label_fk_label'), nullable=False)
     last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_label_fk_last_edit_sent'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    label = relationship('Label', foreign_keys=[label_id])
-    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id], innerjoin=True)
 
 
 class EditorSubscribeLabelDeleted(Base):
@@ -682,8 +682,8 @@ class EditorSubscribeLabelDeleted(Base):
     gid = Column(UUID, ForeignKey('musicbrainz.label_deletion.gid', name='editor_subscribe_label_deleted_fk_gid'), primary_key=True, nullable=False)
     deleted_by_id = Column('deleted_by', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_label_deleted_fk_deleted_by'), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
 
 
 class EditorSubscribeEditor(Base):
@@ -695,8 +695,8 @@ class EditorSubscribeEditor(Base):
     subscribed_editor_id = Column('subscribed_editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_subscribe_editor_fk_subscribed_editor'), nullable=False)
     last_edit_sent = Column(Integer, nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    subscribed_editor = relationship('Editor', foreign_keys=[subscribed_editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    subscribed_editor = relationship('Editor', foreign_keys=[subscribed_editor_id], innerjoin=True)
 
 
 class Gender(Base):
@@ -714,7 +714,7 @@ class ISO31661(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_1_fk_area'), nullable=False)
     code = Column(CHAR(2), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_1_codes'))
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_1_codes'))
 
 
 class ISO31662(Base):
@@ -724,7 +724,7 @@ class ISO31662(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_2_fk_area'), nullable=False)
     code = Column(String(10), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_2_codes'))
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_2_codes'))
 
 
 class ISO31663(Base):
@@ -734,7 +734,7 @@ class ISO31663(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='iso_3166_3_fk_area'), nullable=False)
     code = Column(CHAR(4), primary_key=True)
 
-    area = relationship('Area', foreign_keys=[area_id], backref=backref(u'iso_3166_3_codes'))
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_3_codes'))
 
 
 class ISRC(Base):
@@ -748,7 +748,7 @@ class ISRC(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    recording = relationship('Recording', foreign_keys=[recording_id], backref=backref('isrcs'))
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True, backref=backref('isrcs'))
 
 
 class ISWC(Base):
@@ -762,7 +762,7 @@ class ISWC(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id], backref=backref('iswcs'))
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True, backref=backref('iswcs'))
 
 
 class LinkAreaArea(Base):
@@ -776,9 +776,9 @@ class LinkAreaArea(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Area', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Area', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area0(self):
@@ -808,9 +808,9 @@ class LinkAreaArtist(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Artist', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Artist', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -840,9 +840,9 @@ class LinkAreaLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Label', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -872,9 +872,9 @@ class LinkAreaPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -904,9 +904,9 @@ class LinkAreaRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -936,9 +936,9 @@ class LinkAreaRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -968,9 +968,9 @@ class LinkAreaReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -1000,9 +1000,9 @@ class LinkAreaURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -1032,9 +1032,9 @@ class LinkAreaWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Area', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def area(self):
@@ -1064,9 +1064,9 @@ class LinkArtistArtist(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Artist', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Artist', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist0(self):
@@ -1096,9 +1096,9 @@ class LinkArtistLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Label', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1128,9 +1128,9 @@ class LinkArtistPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1160,9 +1160,9 @@ class LinkArtistRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1192,9 +1192,9 @@ class LinkArtistRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1224,9 +1224,9 @@ class LinkArtistReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1256,9 +1256,9 @@ class LinkArtistURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1288,9 +1288,9 @@ class LinkArtistWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Artist', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def artist(self):
@@ -1320,9 +1320,9 @@ class LinkLabelLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('Label', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Label', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label0(self):
@@ -1352,9 +1352,9 @@ class LinkLabelPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1384,9 +1384,9 @@ class LinkLabelRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1416,9 +1416,9 @@ class LinkLabelRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1448,9 +1448,9 @@ class LinkLabelReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1480,9 +1480,9 @@ class LinkLabelURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1512,9 +1512,9 @@ class LinkLabelWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Label', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def label(self):
@@ -1544,9 +1544,9 @@ class LinkPlacePlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('Place', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place0(self):
@@ -1576,9 +1576,9 @@ class LinkPlaceRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place(self):
@@ -1608,9 +1608,9 @@ class LinkPlaceRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place(self):
@@ -1640,9 +1640,9 @@ class LinkPlaceReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place(self):
@@ -1672,9 +1672,9 @@ class LinkPlaceURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place(self):
@@ -1704,9 +1704,9 @@ class LinkPlaceWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Place', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def place(self):
@@ -1736,9 +1736,9 @@ class LinkRecordingRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Recording', foreign_keys=[entity0_id])
-    entity1 = relationship('Recording', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def recording0(self):
@@ -1768,9 +1768,9 @@ class LinkRecordingRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Recording', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def recording(self):
@@ -1800,9 +1800,9 @@ class LinkRecordingReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Recording', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def recording(self):
@@ -1832,9 +1832,9 @@ class LinkRecordingURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Recording', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def recording(self):
@@ -1864,9 +1864,9 @@ class LinkRecordingWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Recording', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def recording(self):
@@ -1896,9 +1896,9 @@ class LinkReleaseRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Release', foreign_keys=[entity0_id])
-    entity1 = relationship('Release', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release0(self):
@@ -1928,9 +1928,9 @@ class LinkReleaseReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Release', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release(self):
@@ -1960,9 +1960,9 @@ class LinkReleaseURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Release', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release(self):
@@ -1992,9 +1992,9 @@ class LinkReleaseWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Release', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release(self):
@@ -2024,9 +2024,9 @@ class LinkReleaseGroupReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release_group0(self):
@@ -2056,9 +2056,9 @@ class LinkReleaseGroupURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release_group(self):
@@ -2088,9 +2088,9 @@ class LinkReleaseGroupWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def release_group(self):
@@ -2120,9 +2120,9 @@ class LinkURLURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('URL', foreign_keys=[entity0_id])
-    entity1 = relationship('URL', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def url0(self):
@@ -2152,9 +2152,9 @@ class LinkURLWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('URL', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def url(self):
@@ -2184,9 +2184,9 @@ class LinkWorkWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    entity0 = relationship('Work', foreign_keys=[entity0_id])
-    entity1 = relationship('Work', foreign_keys=[entity1_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Work', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
 
     @hybrid_property
     def work0(self):
@@ -2252,8 +2252,8 @@ class LabelRatingRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='label_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    label = relationship('Label', foreign_keys=[label_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class LabelTagRaw(Base):
@@ -2264,9 +2264,9 @@ class LabelTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='label_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='label_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    label = relationship('Label', foreign_keys=[label_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class LabelAliasType(Base):
@@ -2298,7 +2298,7 @@ class LabelAlias(Base):
     primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    label = relationship('Label', foreign_keys=[label_id])
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
     type = relationship('LabelAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
@@ -2312,8 +2312,8 @@ class LabelAnnotation(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', name='label_annotation_fk_label'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='label_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    label = relationship('Label', foreign_keys=[label_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class LabelIPI(Base):
@@ -2325,7 +2325,7 @@ class LabelIPI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    label = relationship('Label', foreign_keys=[label_id], backref=backref('ipis'))
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True, backref=backref('ipis'))
 
 
 class LabelISNI(Base):
@@ -2337,7 +2337,7 @@ class LabelISNI(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    label = relationship('Label', foreign_keys=[label_id], backref=backref('isnis'))
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True, backref=backref('isnis'))
 
 
 class LabelMeta(Base):
@@ -2348,7 +2348,7 @@ class LabelMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    label = relationship('Label', foreign_keys=[id], backref=backref('meta', uselist=False))
+    label = relationship('Label', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
 
 class LabelGIDRedirect(Base):
@@ -2359,7 +2359,7 @@ class LabelGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.label.id', name='label_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Label', foreign_keys=[redirect_id])
+    redirect = relationship('Label', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -2379,8 +2379,8 @@ class LabelTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    label = relationship('Label', foreign_keys=[label_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class LabelType(Base):
@@ -2420,7 +2420,7 @@ class Link(Base):
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    link_type = relationship('LinkType', foreign_keys=[link_type_id])
+    link_type = relationship('LinkType', foreign_keys=[link_type_id], innerjoin=True)
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
@@ -2434,8 +2434,8 @@ class LinkAttribute(Base):
     attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id', name='link_attribute_fk_attribute_type'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link = relationship('Link', foreign_keys=[link_id])
-    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
 
 
 class LinkAttributeType(Base):
@@ -2452,7 +2452,7 @@ class LinkAttributeType(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     parent = relationship('LinkAttributeType', foreign_keys=[parent_id])
-    root = relationship('LinkAttributeType', foreign_keys=[root_id])
+    root = relationship('LinkAttributeType', foreign_keys=[root_id], innerjoin=True)
 
 
 class LinkCreditableAttributeType(Base):
@@ -2461,7 +2461,7 @@ class LinkCreditableAttributeType(Base):
 
     attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id', name='link_creditable_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
 
 
 class LinkAttributeCredit(Base):
@@ -2472,7 +2472,7 @@ class LinkAttributeCredit(Base):
     attribute_type = Column(Integer, ForeignKey('musicbrainz.link_creditable_attribute_type.attribute_type', name='link_attribute_credit_fk_attribute_type'), primary_key=True, nullable=False)
     credited_as = Column(String, nullable=False)
 
-    link = relationship('Link', foreign_keys=[link_id])
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
 
 
 class LinkType(Base):
@@ -2507,8 +2507,8 @@ class LinkTypeAttributeType(Base):
     max = Column(SMALLINT)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    link_type = relationship('LinkType', foreign_keys=[link_type_id])
-    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id])
+    link_type = relationship('LinkType', foreign_keys=[link_type_id], innerjoin=True)
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
 
 
 class EditorCollection(Base):
@@ -2522,7 +2522,7 @@ class EditorCollection(Base):
     public = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     description = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class EditorCollectionRelease(Base):
@@ -2532,8 +2532,8 @@ class EditorCollectionRelease(Base):
     collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_release_fk_collection'), primary_key=True, nullable=False)
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='editor_collection_release_fk_release'), primary_key=True, nullable=False)
 
-    collection = relationship('EditorCollection', foreign_keys=[collection_id])
-    release = relationship('Release', foreign_keys=[release_id])
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
 
 
 class EditorOauthToken(Base):
@@ -2552,8 +2552,8 @@ class EditorOauthToken(Base):
     scope = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     granted = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    application = relationship('Application', foreign_keys=[application_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    application = relationship('Application', foreign_keys=[application_id], innerjoin=True)
 
 
 class EditorWatchPreferences(Base):
@@ -2565,7 +2565,7 @@ class EditorWatchPreferences(Base):
     notification_timeframe = Column(Interval, default='1 week', server_default=sql.text("'1 week'"), nullable=False)
     last_checked = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class EditorWatchArtist(Base):
@@ -2575,8 +2575,8 @@ class EditorWatchArtist(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='editor_watch_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_watch_artist_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
 
-    artist = relationship('Artist', foreign_keys=[artist_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class EditorWatchReleaseGroupType(Base):
@@ -2586,8 +2586,8 @@ class EditorWatchReleaseGroupType(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_watch_release_group_type_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_group_type_id = Column('release_group_type', Integer, ForeignKey('musicbrainz.release_group_primary_type.id', name='editor_watch_release_group_type_fk_release_group_type'), primary_key=True, nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    release_group_type = relationship('ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    release_group_type = relationship('ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id], innerjoin=True)
 
 
 class EditorWatchReleaseStatus(Base):
@@ -2597,8 +2597,8 @@ class EditorWatchReleaseStatus(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_watch_release_status_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_status_id = Column('release_status', Integer, ForeignKey('musicbrainz.release_status.id', name='editor_watch_release_status_fk_release_status'), primary_key=True, nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    release_status = relationship('ReleaseStatus', foreign_keys=[release_status_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    release_status = relationship('ReleaseStatus', foreign_keys=[release_status_id], innerjoin=True)
 
 
 class Medium(Base):
@@ -2614,7 +2614,7 @@ class Medium(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     track_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id], backref=backref('mediums', order_by="Medium.position"))
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True, backref=backref('mediums', order_by="Medium.position"))
     format = relationship('MediumFormat', foreign_keys=[format_id])
 
 
@@ -2628,8 +2628,8 @@ class MediumCDTOC(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    medium = relationship('Medium', foreign_keys=[medium_id])
-    cdtoc = relationship('CDTOC', foreign_keys=[cdtoc_id])
+    medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True)
+    cdtoc = relationship('CDTOC', foreign_keys=[cdtoc_id], innerjoin=True)
 
 
 class MediumFormat(Base):
@@ -2696,7 +2696,7 @@ class PlaceAlias(Base):
     primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    place = relationship('Place', foreign_keys=[place_id])
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
     type = relationship('PlaceAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
@@ -2718,8 +2718,8 @@ class PlaceAnnotation(Base):
     place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id', name='place_annotation_fk_place'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='place_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    place = relationship('Place', foreign_keys=[place_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class PlaceGIDRedirect(Base):
@@ -2730,7 +2730,7 @@ class PlaceGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.place.id', name='place_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Place', foreign_keys=[redirect_id])
+    redirect = relationship('Place', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -2750,8 +2750,8 @@ class PlaceTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    place = relationship('Place', foreign_keys=[place_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class PlaceTagRaw(Base):
@@ -2762,9 +2762,9 @@ class PlaceTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='place_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='place_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    place = relationship('Place', foreign_keys=[place_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class PlaceType(Base):
@@ -2799,7 +2799,7 @@ class Recording(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     video = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
 
 
 class RecordingRatingRaw(Base):
@@ -2810,8 +2810,8 @@ class RecordingRatingRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='recording_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class RecordingTagRaw(Base):
@@ -2822,9 +2822,9 @@ class RecordingTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='recording_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='recording_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class RecordingAnnotation(Base):
@@ -2834,8 +2834,8 @@ class RecordingAnnotation(Base):
     recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', name='recording_annotation_fk_recording'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='recording_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class RecordingMeta(Base):
@@ -2846,7 +2846,7 @@ class RecordingMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    recording = relationship('Recording', foreign_keys=[id], backref=backref('meta', uselist=False))
+    recording = relationship('Recording', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
 
 class RecordingGIDRedirect(Base):
@@ -2857,7 +2857,7 @@ class RecordingGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.recording.id', name='recording_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Recording', foreign_keys=[redirect_id])
+    redirect = relationship('Recording', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -2877,8 +2877,8 @@ class RecordingTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class Release(Base):
@@ -2900,8 +2900,8 @@ class Release(Base):
     quality = Column(SMALLINT, default=-1, server_default=sql.text('-1'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
     status = relationship('ReleaseStatus', foreign_keys=[status_id])
     packaging = relationship('ReleasePackaging', foreign_keys=[packaging_id])
     language = relationship('Language', foreign_keys=[language_id])
@@ -2918,8 +2918,8 @@ class ReleaseCountry(Base):
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship('Release', foreign_keys=[release_id], backref=backref('country_dates'))
-    country = relationship('CountryArea', foreign_keys=[country_id])
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True, backref=backref('country_dates'))
+    country = relationship('CountryArea', foreign_keys=[country_id], innerjoin=True)
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
@@ -2933,7 +2933,7 @@ class ReleaseUnknownCountry(Base):
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
 
-    release = relationship('Release', foreign_keys=[release_id], backref=backref('unknown_country_dates'))
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True, backref=backref('unknown_country_dates'))
 
     date = composite(PartialDate, date_year, date_month, date_day)
 
@@ -2962,9 +2962,9 @@ class ReleaseTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='release_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='release_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ReleaseAnnotation(Base):
@@ -2974,8 +2974,8 @@ class ReleaseAnnotation(Base):
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='release_annotation_fk_release'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='release_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class ReleaseGIDRedirect(Base):
@@ -2986,7 +2986,7 @@ class ReleaseGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release.id', name='release_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Release', foreign_keys=[redirect_id])
+    redirect = relationship('Release', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -3008,7 +3008,7 @@ class ReleaseMeta(Base):
     amazon_store = Column(String(20))
     cover_art_presence = Column(Enum('absent', 'present', 'darkened', name='COVER_ART_PRESENCE'), default='absent', server_default=sql.text("'absent'"), nullable=False)
 
-    release = relationship('Release', foreign_keys=[id], backref=backref('meta', uselist=False))
+    release = relationship('Release', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
 
 class ReleaseCoverArt(Base):
@@ -3019,7 +3019,7 @@ class ReleaseCoverArt(Base):
     last_updated = Column(DateTime(timezone=True))
     cover_art_url = Column(String(255))
 
-    release = relationship('Release', foreign_keys=[id])
+    release = relationship('Release', foreign_keys=[id], innerjoin=True)
 
 
 class ReleaseLabel(Base):
@@ -3032,7 +3032,7 @@ class ReleaseLabel(Base):
     catalog_number = Column(String(255))
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    release = relationship('Release', foreign_keys=[release_id], backref=backref('labels'))
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True, backref=backref('labels'))
     label = relationship('Label', foreign_keys=[label_id])
 
 
@@ -3061,8 +3061,8 @@ class ReleaseTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    release = relationship('Release', foreign_keys=[release_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ReleaseGroup(Base):
@@ -3078,7 +3078,7 @@ class ReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
     type = relationship('ReleaseGroupPrimaryType', foreign_keys=[type_id])
 
 
@@ -3090,8 +3090,8 @@ class ReleaseGroupRatingRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='release_group_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class ReleaseGroupTagRaw(Base):
@@ -3102,9 +3102,9 @@ class ReleaseGroupTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='release_group_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='release_group_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ReleaseGroupAnnotation(Base):
@@ -3114,8 +3114,8 @@ class ReleaseGroupAnnotation(Base):
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='release_group_annotation_fk_release_group'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='release_group_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class ReleaseGroupGIDRedirect(Base):
@@ -3126,7 +3126,7 @@ class ReleaseGroupGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.release_group.id', name='release_group_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('ReleaseGroup', foreign_keys=[redirect_id])
+    redirect = relationship('ReleaseGroup', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -3149,7 +3149,7 @@ class ReleaseGroupMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[id], backref=backref('meta', uselist=False))
+    release_group = relationship('ReleaseGroup', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
     first_release_date = composite(PartialDate, first_release_date_year, first_release_date_month, first_release_date_day)
 
@@ -3163,8 +3163,8 @@ class ReleaseGroupTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ReleaseGroupPrimaryType(Base):
@@ -3191,8 +3191,8 @@ class ReleaseGroupSecondaryTypeJoin(Base):
     secondary_type_id = Column('secondary_type', Integer, ForeignKey('musicbrainz.release_group_secondary_type.id', name='release_group_secondary_type_join_fk_secondary_type'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], backref=backref('secondary_types'))
-    secondary_type = relationship('ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True, backref=backref('secondary_types'))
+    secondary_type = relationship('ReleaseGroupSecondaryType', foreign_keys=[secondary_type_id], innerjoin=True)
 
 
 class Script(Base):
@@ -3215,8 +3215,8 @@ class ScriptLanguage(Base):
     language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id', name='script_language_fk_language'), nullable=False)
     frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
-    script = relationship('Script', foreign_keys=[script_id])
-    language = relationship('Language', foreign_keys=[language_id])
+    script = relationship('Script', foreign_keys=[script_id], innerjoin=True)
+    language = relationship('Language', foreign_keys=[language_id], innerjoin=True)
 
 
 class Tag(Base):
@@ -3237,8 +3237,8 @@ class TagRelation(Base):
     weight = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    tag1 = relationship('Tag', foreign_keys=[tag1_id])
-    tag2 = relationship('Tag', foreign_keys=[tag2_id])
+    tag1 = relationship('Tag', foreign_keys=[tag1_id], innerjoin=True)
+    tag2 = relationship('Tag', foreign_keys=[tag2_id], innerjoin=True)
 
 
 class Track(Base):
@@ -3257,9 +3257,9 @@ class Track(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    recording = relationship('Recording', foreign_keys=[recording_id])
-    medium = relationship('Medium', foreign_keys=[medium_id], backref=backref('tracks', order_by="Track.position"))
-    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True, backref=backref('tracks', order_by="Track.position"))
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
 
 
 class TrackGIDRedirect(Base):
@@ -3270,7 +3270,7 @@ class TrackGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.track.id', name='track_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Track', foreign_keys=[redirect_id])
+    redirect = relationship('Track', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -3291,7 +3291,7 @@ class TrackRaw(Base):
     artist = Column(String(255))
     sequence = Column(Integer, nullable=False)
 
-    release = relationship('ReleaseRaw', foreign_keys=[release_id])
+    release = relationship('ReleaseRaw', foreign_keys=[release_id], innerjoin=True)
 
 
 class MediumIndex(Base):
@@ -3323,7 +3323,7 @@ class URLGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.url.id', name='url_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('URL', foreign_keys=[redirect_id])
+    redirect = relationship('URL', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -3345,8 +3345,8 @@ class Vote(Base):
     vote_time = Column(DateTime(timezone=True), server_default=sql.func.now())
     superseded = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    edit = relationship('Edit', foreign_keys=[edit_id])
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
 
 
 class Work(Base):
@@ -3374,8 +3374,8 @@ class WorkRatingRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='work_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class WorkTagRaw(Base):
@@ -3386,9 +3386,9 @@ class WorkTagRaw(Base):
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='work_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='work_tag_raw_fk_tag'), primary_key=True, nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id])
-    editor = relationship('Editor', foreign_keys=[editor_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class WorkAliasType(Base):
@@ -3420,7 +3420,7 @@ class WorkAlias(Base):
     primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
     type = relationship('WorkAliasType', foreign_keys=[type_id])
 
     begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
@@ -3434,8 +3434,8 @@ class WorkAnnotation(Base):
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id', name='work_annotation_fk_work'), primary_key=True, nullable=False)
     annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='work_annotation_fk_annotation'), primary_key=True, nullable=False)
 
-    work = relationship('Work', foreign_keys=[work_id])
-    annotation = relationship('Annotation', foreign_keys=[annotation_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
 class WorkGIDRedirect(Base):
@@ -3446,7 +3446,7 @@ class WorkGIDRedirect(Base):
     redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.work.id', name='work_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    redirect = relationship('Work', foreign_keys=[redirect_id])
+    redirect = relationship('Work', foreign_keys=[redirect_id], innerjoin=True)
 
     @hybrid_property
     def new_id(self):
@@ -3465,7 +3465,7 @@ class WorkMeta(Base):
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
-    work = relationship('Work', foreign_keys=[id], backref=backref('meta', uselist=False))
+    work = relationship('Work', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
 
 class WorkTag(Base):
@@ -3477,8 +3477,8 @@ class WorkTag(Base):
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    work = relationship('Work', foreign_keys=[work_id])
-    tag = relationship('Tag', foreign_keys=[tag_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class WorkType(Base):
@@ -3507,7 +3507,7 @@ class WorkAttributeTypeAllowedValue(Base):
     work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('musicbrainz.work_attribute_type.id', name='work_attribute_type_allowed_value_fk_work_attribute_type'), nullable=False)
     value = Column(String)
 
-    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id])
+    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id], innerjoin=True)
 
 
 class WorkAttribute(Base):
@@ -3520,8 +3520,8 @@ class WorkAttribute(Base):
     work_attribute_type_allowed_value_id = Column('work_attribute_type_allowed_value', Integer, ForeignKey('musicbrainz.work_attribute_type_allowed_value.id', name='work_attribute_fk_work_attribute_type_allowed_value'))
     work_attribute_text = Column(String)
 
-    work = relationship('Work', foreign_keys=[work_id])
-    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id])
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id], innerjoin=True)
     work_attribute_type_allowed_value = relationship('WorkAttributeTypeAllowedValue', foreign_keys=[work_attribute_type_allowed_value_id])
 
 
@@ -3554,8 +3554,8 @@ class CoverArt(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     mime_type = Column(String, ForeignKey('cover_art_archive.image_type.mime_type', name='cover_art_fk_mime_type'), nullable=False)
 
-    release = relationship('Release', foreign_keys=[release_id])
-    edit = relationship('Edit', foreign_keys=[edit_id])
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
 
 
 class CoverArtType(Base):
@@ -3565,8 +3565,8 @@ class CoverArtType(Base):
     id = Column('id', BIGINT, ForeignKey('cover_art_archive.cover_art.id', name='cover_art_type_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer, ForeignKey('cover_art_archive.art_type.id', name='cover_art_type_fk_type_id'), primary_key=True, nullable=False)
 
-    cover_art = relationship('CoverArt', foreign_keys=[id])
-    type = relationship('ArtType', foreign_keys=[type_id])
+    cover_art = relationship('CoverArt', foreign_keys=[id], innerjoin=True)
+    type = relationship('ArtType', foreign_keys=[type_id], innerjoin=True)
 
 
 class ReleaseGroupCoverArt(Base):
@@ -3576,8 +3576,8 @@ class ReleaseGroupCoverArt(Base):
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='release_group_cover_art_fk_release_group'), primary_key=True, nullable=False)
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='release_group_cover_art_fk_release'), nullable=False)
 
-    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id])
-    release = relationship('Release', foreign_keys=[release_id])
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
 
 
 class WikidocsIndex(Base):
@@ -3596,7 +3596,7 @@ class LinkAreaAreaExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaArea', foreign_keys=[id])
+    link = relationship('LinkAreaArea', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaArtistExample(Base):
@@ -3607,7 +3607,7 @@ class LinkAreaArtistExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaArtist', foreign_keys=[id])
+    link = relationship('LinkAreaArtist', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaLabelExample(Base):
@@ -3618,7 +3618,7 @@ class LinkAreaLabelExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaLabel', foreign_keys=[id])
+    link = relationship('LinkAreaLabel', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaPlaceExample(Base):
@@ -3629,7 +3629,7 @@ class LinkAreaPlaceExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaPlace', foreign_keys=[id])
+    link = relationship('LinkAreaPlace', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaRecordingExample(Base):
@@ -3640,7 +3640,7 @@ class LinkAreaRecordingExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaRecording', foreign_keys=[id])
+    link = relationship('LinkAreaRecording', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaReleaseExample(Base):
@@ -3651,7 +3651,7 @@ class LinkAreaReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaRelease', foreign_keys=[id])
+    link = relationship('LinkAreaRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaReleaseGroupExample(Base):
@@ -3662,7 +3662,7 @@ class LinkAreaReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkAreaReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaURLExample(Base):
@@ -3673,7 +3673,7 @@ class LinkAreaURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaURL', foreign_keys=[id])
+    link = relationship('LinkAreaURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaWorkExample(Base):
@@ -3684,7 +3684,7 @@ class LinkAreaWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkAreaWork', foreign_keys=[id])
+    link = relationship('LinkAreaWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistArtistExample(Base):
@@ -3695,7 +3695,7 @@ class LinkArtistArtistExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistArtist', foreign_keys=[id])
+    link = relationship('LinkArtistArtist', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistLabelExample(Base):
@@ -3706,7 +3706,7 @@ class LinkArtistLabelExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistLabel', foreign_keys=[id])
+    link = relationship('LinkArtistLabel', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistPlaceExample(Base):
@@ -3717,7 +3717,7 @@ class LinkArtistPlaceExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistPlace', foreign_keys=[id])
+    link = relationship('LinkArtistPlace', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistRecordingExample(Base):
@@ -3728,7 +3728,7 @@ class LinkArtistRecordingExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistRecording', foreign_keys=[id])
+    link = relationship('LinkArtistRecording', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistReleaseExample(Base):
@@ -3739,7 +3739,7 @@ class LinkArtistReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistRelease', foreign_keys=[id])
+    link = relationship('LinkArtistRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistReleaseGroupExample(Base):
@@ -3750,7 +3750,7 @@ class LinkArtistReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkArtistReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistURLExample(Base):
@@ -3761,7 +3761,7 @@ class LinkArtistURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistURL', foreign_keys=[id])
+    link = relationship('LinkArtistURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkArtistWorkExample(Base):
@@ -3772,7 +3772,7 @@ class LinkArtistWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkArtistWork', foreign_keys=[id])
+    link = relationship('LinkArtistWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelLabelExample(Base):
@@ -3783,7 +3783,7 @@ class LinkLabelLabelExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelLabel', foreign_keys=[id])
+    link = relationship('LinkLabelLabel', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelPlaceExample(Base):
@@ -3794,7 +3794,7 @@ class LinkLabelPlaceExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelPlace', foreign_keys=[id])
+    link = relationship('LinkLabelPlace', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelRecordingExample(Base):
@@ -3805,7 +3805,7 @@ class LinkLabelRecordingExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelRecording', foreign_keys=[id])
+    link = relationship('LinkLabelRecording', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelReleaseExample(Base):
@@ -3816,7 +3816,7 @@ class LinkLabelReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelRelease', foreign_keys=[id])
+    link = relationship('LinkLabelRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelReleaseGroupExample(Base):
@@ -3827,7 +3827,7 @@ class LinkLabelReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkLabelReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelURLExample(Base):
@@ -3838,7 +3838,7 @@ class LinkLabelURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelURL', foreign_keys=[id])
+    link = relationship('LinkLabelURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelWorkExample(Base):
@@ -3849,7 +3849,7 @@ class LinkLabelWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkLabelWork', foreign_keys=[id])
+    link = relationship('LinkLabelWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlacePlaceExample(Base):
@@ -3860,7 +3860,7 @@ class LinkPlacePlaceExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlacePlace', foreign_keys=[id])
+    link = relationship('LinkPlacePlace', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlaceRecordingExample(Base):
@@ -3871,7 +3871,7 @@ class LinkPlaceRecordingExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlaceRecording', foreign_keys=[id])
+    link = relationship('LinkPlaceRecording', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlaceReleaseExample(Base):
@@ -3882,7 +3882,7 @@ class LinkPlaceReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlaceRelease', foreign_keys=[id])
+    link = relationship('LinkPlaceRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlaceReleaseGroupExample(Base):
@@ -3893,7 +3893,7 @@ class LinkPlaceReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlaceReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkPlaceReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlaceURLExample(Base):
@@ -3904,7 +3904,7 @@ class LinkPlaceURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlaceURL', foreign_keys=[id])
+    link = relationship('LinkPlaceURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkPlaceWorkExample(Base):
@@ -3915,7 +3915,7 @@ class LinkPlaceWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkPlaceWork', foreign_keys=[id])
+    link = relationship('LinkPlaceWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkRecordingRecordingExample(Base):
@@ -3926,7 +3926,7 @@ class LinkRecordingRecordingExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkRecordingRecording', foreign_keys=[id])
+    link = relationship('LinkRecordingRecording', foreign_keys=[id], innerjoin=True)
 
 
 class LinkRecordingReleaseExample(Base):
@@ -3937,7 +3937,7 @@ class LinkRecordingReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkRecordingRelease', foreign_keys=[id])
+    link = relationship('LinkRecordingRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkRecordingReleaseGroupExample(Base):
@@ -3948,7 +3948,7 @@ class LinkRecordingReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkRecordingReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkRecordingReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkRecordingURLExample(Base):
@@ -3959,7 +3959,7 @@ class LinkRecordingURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkRecordingURL', foreign_keys=[id])
+    link = relationship('LinkRecordingURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkRecordingWorkExample(Base):
@@ -3970,7 +3970,7 @@ class LinkRecordingWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkRecordingWork', foreign_keys=[id])
+    link = relationship('LinkRecordingWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseReleaseExample(Base):
@@ -3981,7 +3981,7 @@ class LinkReleaseReleaseExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseRelease', foreign_keys=[id])
+    link = relationship('LinkReleaseRelease', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseReleaseGroupExample(Base):
@@ -3992,7 +3992,7 @@ class LinkReleaseReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkReleaseReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseURLExample(Base):
@@ -4003,7 +4003,7 @@ class LinkReleaseURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseURL', foreign_keys=[id])
+    link = relationship('LinkReleaseURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseWorkExample(Base):
@@ -4014,7 +4014,7 @@ class LinkReleaseWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseWork', foreign_keys=[id])
+    link = relationship('LinkReleaseWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseGroupReleaseGroupExample(Base):
@@ -4025,7 +4025,7 @@ class LinkReleaseGroupReleaseGroupExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseGroupReleaseGroup', foreign_keys=[id])
+    link = relationship('LinkReleaseGroupReleaseGroup', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseGroupURLExample(Base):
@@ -4036,7 +4036,7 @@ class LinkReleaseGroupURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseGroupURL', foreign_keys=[id])
+    link = relationship('LinkReleaseGroupURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkReleaseGroupWorkExample(Base):
@@ -4047,7 +4047,7 @@ class LinkReleaseGroupWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkReleaseGroupWork', foreign_keys=[id])
+    link = relationship('LinkReleaseGroupWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkURLURLExample(Base):
@@ -4058,7 +4058,7 @@ class LinkURLURLExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkURLURL', foreign_keys=[id])
+    link = relationship('LinkURLURL', foreign_keys=[id], innerjoin=True)
 
 
 class LinkURLWorkExample(Base):
@@ -4069,7 +4069,7 @@ class LinkURLWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkURLWork', foreign_keys=[id])
+    link = relationship('LinkURLWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkWorkWorkExample(Base):
@@ -4080,7 +4080,7 @@ class LinkWorkWorkExample(Base):
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
-    link = relationship('LinkWorkWork', foreign_keys=[id])
+    link = relationship('LinkWorkWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkTypeDocumentation(Base):
@@ -4091,7 +4091,7 @@ class LinkTypeDocumentation(Base):
     documentation = Column(String, nullable=False)
     examples_deleted = Column(SMALLINT, default=0, server_default=sql.text('0'), nullable=False)
 
-    link_type = relationship('LinkType', foreign_keys=[id])
+    link_type = relationship('LinkType', foreign_keys=[id], innerjoin=True)
 
 
 class LogStatistic(Base):

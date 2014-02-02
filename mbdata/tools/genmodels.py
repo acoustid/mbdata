@@ -355,7 +355,7 @@ def generate_models_from_sql(sql):
                         relationship_name = attribute_name
                         attribute_name += '_id'
                     params.insert(0, repr(str(column.name)))
-                    foreign_keys.append((attribute_name, relationship_name, foreign_key, backref))
+                    foreign_keys.append((attribute_name, relationship_name, foreign_key, backref, column.nullable))
                     if table.name.startswith('l_') and column.name in ('entity0', 'entity1'):
                         if table.name == 'l_{0}_{0}'.format(foreign_key.table, foreign_key.table):
                             aliases.append((column.name, foreign_key.table + column.name[-1]))
@@ -410,12 +410,14 @@ def generate_models_from_sql(sql):
 
         if foreign_keys:
             yield ''
-            for attribute_name, relationship_name, foreign_key, backref in foreign_keys:
+            for attribute_name, relationship_name, foreign_key, backref, nullable in foreign_keys:
                 foreign_model_name = format_model_name(foreign_key.table)
                 relationship_params = [
                     repr(foreign_model_name),
                     'foreign_keys=[{0}]'.format(attribute_name)
                 ]
+                if not nullable:
+                    relationship_params.append('innerjoin=True')
                 if backref:
                     if isinstance(backref, basestring):
                         relationship_params.append('backref=backref({0!r})'.format(backref))
