@@ -148,7 +148,7 @@ schema = Schema([
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('type', 'type.name'),
-        Field('artist', 'artist_links.artist.name'),
+        Field('artist', 'artist_links.entity0.name'),
         Field('alias', 'aliases.name'),
     ]),
 ])
@@ -237,6 +237,41 @@ def export_docs(stream):
         yield E.doc(*[E.field(unicode(value), name=name) for (name, value) in data])
 
 
+def generate_trigger_func(kind, table, op, select):
+    ddl = []
+    ddl.append("CREATE FUNCTION mbdata.tr_search_{kind}_{op}_{table}() RETURNS trigger AS $$")
+    ddl.append("BEGIN")
+    if ' ' not in select:
+        ddl.append("    INSERT INTO mbdata.search_queue (kind, id) VALUES ('{kind}', {select});")
+    else:
+        ddl.append("    INSERT INTO mbdata.search_queue (kind, id) SELECT '{kind}', * FROM {select} AS tmp;")
+    ddl.append("    RETURN {{var}};")
+    ddl.append("END;")
+    ddl.append("$$ LANGUAGE plpgsql;")
+
+    var = 'OLD' if op == 'del' else 'NEW'
+    return "\n".join(ddl).format(kind=kind, table=table, op=op, select=select).format(var=var)
+
+
+def generate_trigger(kind, schema, table, op, when=None):
+    ddl = []
+    ddl.append("CREATE TRIGGER mbdata_tr_search_{kind}_{op}_{table}")
+    if op == 'ins':
+        ddl.append("    AFTER INSERT ON {schema}.{table} FOR EACH ROW")
+    elif op == 'upd':
+        ddl.append("    AFTER UPDATE ON {schema}.{table} FOR EACH ROW")
+    elif op == 'del':
+        ddl.append("    BEFORE DELETE ON {schema}.{table} FOR EACH ROW")
+    if when:
+        ddl.append("    WHEN ({cond})")
+        cond = ' OR\n          '.join(when)
+    else:
+        cond = None
+    ddl.append("    EXECUTE PROCEDURE mbdata.tr_search_{kind}_{op}_{table}();")
+
+    return "\n".join(ddl).format(schema=schema, kind=kind, table=table, op=op, cond=cond)
+
+
 def export_update_triggers(db):
     for entity in schema.entities:
         columns = {}
@@ -244,84 +279,58 @@ def export_update_triggers(db):
         collections = {}
 
         for field in entity.fields:
-            model = field.entity.model
-            selects[model.__mapper__] = '{id}'
-            collections[model.__mapper__] = True
+            path = (field.entity.model.__mapper__,)
+            selects[path] = '{id}'
+            collections[path] = True
             for attr in field.key.split('.'):
-                prop = getattr(model, attr).property
+                prop = path[-1].get_property(attr)
                 if isinstance(prop, RelationshipProperty):
+                    new_path = path + (prop.mapper,)
                     if prop.direction == ONETOMANY:
-                        collections[prop.mapper] = True
+                        collections[new_path] = True
                         for column in prop.remote_side:
-                            select = '(SELECT {column} FROM {schema}.{table} WHERE id IN {{id}})'.format(schema=column.table.schema, table=column.table.name, column=column.name)
-                            selects[prop.mapper] = selects[model.__mapper__].format(id=select)
+                            select = '(SELECT {column} FROM {schema}.{table} WHERE {primary_key} IN {{id}})'.format(
+                                schema=column.table.schema,
+                                table=column.table.name,
+                                column=column.name,
+                                primary_key=prop.mapper.primary_key[0].name)
+                            selects[new_path] = selects[path].replace('{id}', select)
                     elif prop.direction == MANYTOONE:
                         for column in prop.local_columns:
-                            select = '(SELECT id FROM {schema}.{table} WHERE {column} IN {{id}})'.format(schema=model.__table__.schema, table=model.__table__.name, column=column.name)
-                            selects[prop.mapper] = selects[model.__mapper__].format(id=select)
-                            columns.setdefault(model.__mapper__, {})[column] = True
-                    model = prop.mapper.class_
+                            select = '(SELECT {primary_key} FROM {schema}.{table} WHERE {column} IN {{id}})'.format(
+                                schema=column.table.schema,
+                                table=column.table.name,
+                                column=column.name,
+                                primary_key=path[-1].primary_key[0].name)
+                            selects[new_path] = selects[path].replace('{id}', select)
+                            columns.setdefault(path, {})[column] = True
+                    path = new_path
                 elif isinstance(prop, ColumnProperty):
                     for column in prop.columns:
-                        columns.setdefault(model.__mapper__, {})[column] = True
+                        columns.setdefault(path, {})[column] = True
 
-        for mapper, select in selects.items():
-            select = select.format(id='NEW.id')
-            select = re.sub(r'\(SELECT (\S+) FROM \S+ WHERE id IN NEW\.id\)', r'(VALUES (NEW.\1))', select)
-            select = re.sub(r'^(NEW\.id)$', r'(VALUES (\1))', select)
-            select = re.sub(r' IN (NEW\.id)\b', r' = \1', select)
-            selects[mapper] = select
+        for path, select in selects.items():
+            pk = path[-1].primary_key[0].name
+            select = re.sub(r'\(SELECT (?P<col>\S+) FROM \S+ WHERE (?P<pk>{pk}) IN {{id}}\)'.format(pk=pk), r'{var}.\1', select)
+            select = re.sub(r'\(SELECT (?P<col>\S+) FROM \S+ WHERE (?P=col) IN ', r'(', select)
+            select = re.sub(r'\({id}\)', r'{id}', select)
+            select = re.sub(r' IN {id}', r' = {id}', select)
+            select = re.sub(r' IN {var}', r' = {var}', select)
+            select = select.replace('{id}', '{{var}}.{0}'.format(pk))
+            selects[path] = select
 
-        for mapper in collections:
-            trigger_func_ddl = \
-                "CREATE FUNCTION mbdata.tr_search_{kind}_ins_{table}() RETURNS trigger AS $$\n" \
-                "BEGIN\n" \
-                "    INSERT INTO mbdata.search_queue (kind, id) SELECT '{kind}', * FROM {select} AS tmp;\n" \
-                "    RETURN NEW;\n" \
-                "END;\n" \
-                "$$ LANGUAGE plpgsql;\n"
-            yield trigger_func_ddl.format(kind=entity.name, table=mapper.mapped_table.name, select=selects[mapper])
+        for path in collections:
+            table = path[-1].mapped_table
+            yield generate_trigger_func(entity.name, table.name, 'ins', selects[path])
+            yield generate_trigger(entity.name, table.schema, table.name, 'ins')
+            yield generate_trigger_func(entity.name, table.name, 'del', selects[path])
+            yield generate_trigger(entity.name, table.schema, table.name, 'del')
 
-            trigger_ddl = \
-                "CREATE TRIGGER mbdata_tr_search_{kind}_ins_{table}\n" \
-                "    AFTER INSERT ON {schema}.{table} FOR EACH ROW\n" \
-                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_ins_{table}();\n"
-            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name)
-
-        for mapper, cols in columns.iteritems():
-            trigger_func_ddl = \
-                "CREATE FUNCTION mbdata.tr_search_{kind}_upd_{table}() RETURNS trigger AS $$\n" \
-                "BEGIN\n" \
-                "    INSERT INTO mbdata.search_queue (kind, id) SELECT '{kind}', * FROM {select} AS tmp;\n" \
-                "    RETURN NEW;\n" \
-                "END;\n" \
-                "$$ LANGUAGE plpgsql;\n".format(kind=entity.name, table=mapper.mapped_table.name, select=selects[mapper])
-            yield trigger_func_ddl
-
+        for path, cols in columns.iteritems():
             cols_conds = ['NEW.{col} IS DISTINCT FROM OLD.{col}'.format(col=col.name) for col in cols]
-            cols_cond = ' OR\n          '.join(cols_conds)
-            trigger_ddl = \
-                "CREATE TRIGGER mbdata_tr_search_{kind}_upd_{table}\n" \
-                "    AFTER UPDATE ON {schema}.{table} FOR EACH ROW\n" \
-                "    WHEN ({cond})\n" \
-                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_upd_{table}();\n"
-            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name, cond=cols_cond)
-
-        for mapper in collections:
-            trigger_func_ddl = \
-                "CREATE FUNCTION mbdata.tr_search_{kind}_del_{table}() RETURNS trigger AS $$\n" \
-                "BEGIN\n" \
-                "    INSERT INTO mbdata.search_queue (kind, id) SELECT '{kind}', * FROM {select} AS tmp;\n" \
-                "    RETURN OLD;\n" \
-                "END;\n" \
-                "$$ LANGUAGE plpgsql;\n".format(kind=entity.name, table=mapper.mapped_table.name, select=selects[mapper].replace('NEW.', 'OLD.'))
-            yield trigger_func_ddl
-
-            trigger_ddl = \
-                "CREATE TRIGGER mbdata_tr_search_{kind}_del_{table}\n" \
-                "    BEFORE DELETE ON {schema}.{table} FOR EACH ROW\n" \
-                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_del_{table}();\n"
-            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name)
+            table = path[-1].mapped_table
+            yield generate_trigger_func(entity.name, table.name, 'upd', selects[path])
+            yield generate_trigger(entity.name, table.schema, table.name, 'upd', cols_conds)
 
 
 if __name__ == '__main__':
@@ -348,6 +357,7 @@ if __name__ == '__main__':
 
     for s in export_update_triggers(db):
         print s
+        print
 
     print 'COMMIT;'
 
