@@ -7,7 +7,7 @@ from sqlalchemy.orm import Load, relationship
 from sqlalchemy.orm.properties import RelationshipProperty, ColumnProperty
 from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE
 
-from mbdata.models import Artist, Label, Recording, Release, ReleaseGroup, Work
+from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
 
 BATCH_SIZE = 100
@@ -45,6 +45,16 @@ class Field(object):
         self.entity = entity
 
 
+class CustomArea(Area):
+    redirect_gids = relationship("AreaGIDRedirect")
+    aliases = relationship("AreaAlias")
+
+
+class CustomPlace(Place):
+    redirect_gids = relationship("PlaceGIDRedirect")
+    aliases = relationship("PlaceAlias")
+
+
 class CustomArtist(Artist):
     redirect_gids = relationship("ArtistGIDRedirect")
     aliases = relationship("ArtistAlias")
@@ -76,6 +86,26 @@ class CustomWork(Work):
 
 
 schema = Schema([
+    Entity('area', CustomArea, [
+        Field('mbid', 'gid'),
+        Field('mbid', 'redirect_gids.gid'),
+        Field('comment', 'comment'),
+        Field('name', 'name'),
+        Field('sort_name', 'sort_name'),
+        Field('type', 'type.name'),
+        Field('code', 'iso_3166_1_codes.code'),
+        Field('code', 'iso_3166_2_codes.code'),
+        Field('code', 'iso_3166_3_codes.code'),
+        Field('alias', 'aliases.name'),
+    ]),
+    Entity('place', CustomPlace, [
+        Field('mbid', 'gid'),
+        Field('mbid', 'redirect_gids.gid'),
+        Field('comment', 'comment'),
+        Field('name', 'name'),
+        Field('type', 'type.name'),
+        Field('alias', 'aliases.name'),
+    ]),
     Entity('artist', CustomArtist, [
         Field('mbid', 'gid'),
         Field('mbid', 'redirect_gids.gid'),
@@ -112,6 +142,7 @@ schema = Schema([
         Field('artist_mbid', 'artist_credit.artists.artist.gid'),
         Field('length', 'length'),
         Field('video', 'video'),
+        Field('isrc', 'isrcs.isrc'),
         Field('alias', 'tracks.name'),
     ]),
     Entity('release', CustomRelease, [
@@ -129,6 +160,7 @@ schema = Schema([
         Field('catno', 'labels.catalog_number'),
         Field('label', 'labels.label.name'),
         Field('alias', 'release_group.name'),
+        Field('country', 'country_dates.country.area.name'),
     ]),
     Entity('release_group', CustomReleaseGroup, [
         Field('mbid', 'gid'),
@@ -150,6 +182,7 @@ schema = Schema([
         Field('type', 'type.name'),
         Field('artist', 'artist_links.entity0.name'),
         Field('alias', 'aliases.name'),
+        Field('iswc', 'iswcs.iswc'),
     ]),
 ])
 
@@ -239,7 +272,7 @@ def export_docs(stream):
 
 def generate_trigger_func(kind, table, op, select):
     ddl = []
-    ddl.append("CREATE FUNCTION mbdata.tr_search_{kind}_{op}_{table}() RETURNS trigger AS $$")
+    ddl.append("CREATE OR REPLACE FUNCTION mbdata.tr_search_{kind}_{op}_{table}() RETURNS trigger AS $$")
     ddl.append("BEGIN")
     if ' ' not in select:
         ddl.append("    INSERT INTO mbdata.search_queue (kind, id) VALUES ('{kind}', {select});")
@@ -333,20 +366,11 @@ def export_update_triggers(db):
             yield generate_trigger(entity.name, table.schema, table.name, 'upd', cols_conds)
 
 
-if __name__ == '__main__':
-    from settings import DATABASE_URI
-
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-
-    engine = create_engine(DATABASE_URI, echo=True)
-    Session = sessionmaker(bind=engine)
-    db = Session()
-
-    print '\\set ON_ERROR_STOP'
+def export_triggers(db):
+#    print '\\set ON_ERROR_STOP'
     print
 
-    print 'BEGIN;'
+    #print 'BEGIN;'
     print
 
     print 'CREATE SCHEMA mbdata;'
@@ -359,9 +383,21 @@ if __name__ == '__main__':
         print s
         print
 
-    print 'COMMIT;'
+    #print 'COMMIT;'
 
-#    stream = iter_data_all(db, sample=True)
-#    for doc in export_docs(stream):
-#        print etree.tostring(doc, pretty_print=True)
+
+if __name__ == '__main__':
+    from settings import DATABASE_URI
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    engine = create_engine(DATABASE_URI, echo=True)
+    Session = sessionmaker(bind=engine)
+    db = Session()
+
+    export_triggers(db)
+    #stream = iter_data_all(db, sample=True)
+    #for doc in export_docs(stream):
+    #    print etree.tostring(doc, pretty_print=True)
 
