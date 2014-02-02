@@ -1,9 +1,10 @@
+import re
 import itertools
 from lxml import etree
 from lxml.builder import E
 from sqlalchemy import sql
 from sqlalchemy.orm import Load, relationship
-from sqlalchemy.orm.properties import RelationshipProperty
+from sqlalchemy.orm.properties import RelationshipProperty, ColumnProperty
 from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE
 
 from mbdata.models import Artist, Label, Recording, Release, ReleaseGroup, Work
@@ -236,6 +237,92 @@ def export_docs(stream):
         yield E.doc(*[E.field(unicode(value), name=name) for (name, value) in data])
 
 
+def export_update_triggers(db):
+    for entity in schema.entities:
+        columns = {}
+        selects = {}
+        collections = {}
+
+        for field in entity.fields:
+            model = field.entity.model
+            selects[model.__mapper__] = '{id}'
+            collections[model.__mapper__] = True
+            for attr in field.key.split('.'):
+                prop = getattr(model, attr).property
+                if isinstance(prop, RelationshipProperty):
+                    if prop.direction == ONETOMANY:
+                        collections[prop.mapper] = True
+                        for column in prop.remote_side:
+                            select = '(SELECT {column} FROM {schema}.{table} WHERE id = {{id}})'.format(schema=column.table.schema, table=column.table.name, column=column.name)
+                            selects[prop.mapper] = selects[model.__mapper__].format(id=select)
+                    elif prop.direction == MANYTOONE:
+                        for column in prop.local_columns:
+                            select = '(SELECT id FROM {schema}.{table} WHERE {column} = {{id}})'.format(schema=model.__table__.schema, table=model.__table__.name, column=column.name)
+                            selects[prop.mapper] = selects[model.__mapper__].format(id=select)
+                            columns.setdefault(model.__mapper__, {})[column] = True
+                    model = prop.mapper.class_
+                elif isinstance(prop, ColumnProperty):
+                    for column in prop.columns:
+                        columns.setdefault(model.__mapper__, {})[column] = True
+
+        for mapper, select in selects.items():
+            select = select.format(id='NEW.id')
+            select = re.sub(r'\(SELECT (\S+) FROM \S+ WHERE id = NEW\.id\)', r'NEW.\1', select)
+            selects[mapper] = select
+
+        for mapper in collections:
+            trigger_func_ddl = \
+                "CREATE FUNCTION mbdata.tr_search_{kind}_ins_{table}() RETURNS trigger AS $$\n" \
+                "BEGIN\n" \
+                "    INSERT INTO mbdata.search_queue (kind, id) VALUES ('{kind}', {select});\n" \
+                "    RETURN NEW;\n" \
+                "END;\n" \
+                "$$ LANGUAGE plpgsql;\n"
+            yield trigger_func_ddl.format(kind=entity.name, table=mapper.mapped_table.name, select=selects[mapper])
+
+            trigger_ddl = \
+                "CREATE TRIGGER mbdata_tr_search_{kind}_ins_{table}\n" \
+                "    AFTER INSERT ON {schema}.{table} FOR EACH ROW\n" \
+                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_ins_{table}();\n"
+            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name)
+
+        for mapper, cols in columns.iteritems():
+            cols_conds = ['NEW.{col} IS DISTINCT FROM OLD.{col}'.format(col=col.name) for col in cols]
+            cols_cond = ' OR\n       '.join(cols_conds)
+            trigger_func_ddl = \
+                "CREATE FUNCTION mbdata.tr_search_{kind}_upd_{table}() RETURNS trigger AS $$\n" \
+                "BEGIN\n" \
+                "    IF {cond} THEN\n" \
+                "        INSERT INTO mbdata.search_queue (kind, id) VALUES ('{kind}', {select});\n" \
+                "    END IF;\n" \
+                "    RETURN NEW;\n" \
+                "END;\n" \
+                "$$ LANGUAGE plpgsql;\n".format(kind=entity.name, table=mapper.mapped_table.name, cond=cols_cond, select=selects[mapper])
+            yield trigger_func_ddl
+
+            trigger_ddl = \
+                "CREATE TRIGGER mbdata_tr_search_{kind}_upd_{table}\n" \
+                "    AFTER UPDATE ON {schema}.{table} FOR EACH ROW\n" \
+                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_upd_{table}();\n"
+            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name)
+
+        for mapper in collections:
+            trigger_func_ddl = \
+                "CREATE FUNCTION mbdata.tr_search_{kind}_del_{table}() RETURNS trigger AS $$\n" \
+                "BEGIN\n" \
+                "    INSERT INTO mbdata.search_queue (kind, id) VALUES ('{kind}', {select});\n" \
+                "    RETURN OLD;\n" \
+                "END;\n" \
+                "$$ LANGUAGE plpgsql;\n".format(kind=entity.name, table=mapper.mapped_table.name, select=selects[mapper].replace('NEW.', 'OLD.'))
+            yield trigger_func_ddl
+
+            trigger_ddl = \
+                "CREATE TRIGGER mbdata_tr_search_{kind}_del_{table}\n" \
+                "    BEFORE DELETE ON {schema}.{table} FOR EACH ROW\n" \
+                "    EXECUTE PROCEDURE mbdata.tr_search_{kind}_del_{table}();\n"
+            yield trigger_ddl.format(kind=entity.name, schema=mapper.mapped_table.schema, table=mapper.mapped_table.name)
+
+
 if __name__ == '__main__':
     from settings import DATABASE_URI
 
@@ -246,7 +333,21 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     db = Session()
 
-    stream = iter_data_all(db, sample=True)
-    for doc in export_docs(stream):
-        print etree.tostring(doc, pretty_print=True)
+    print '\\set ON_ERROR_STOP'
+    print
+
+    print 'BEGIN;'
+    print
+
+    print 'CREATE SCHEMA mbdata;'
+    print
+
+    for s in export_update_triggers(db):
+        print s
+
+    print 'COMMIT;'
+
+#    stream = iter_data_all(db, sample=True)
+#    for doc in export_docs(stream):
+#        print etree.tostring(doc, pretty_print=True)
 
