@@ -1,17 +1,33 @@
+import os
 import re
 import itertools
-from lxml import etree
+from cStringIO import StringIO
+from lxml import etree as ET
 from lxml.builder import E
-from sqlalchemy import sql
+from solr import Solr
+from sqlalchemy import sql, Column, Integer, String, MetaData
 from sqlalchemy.orm import Load, relationship
 from sqlalchemy.orm.properties import RelationshipProperty, ColumnProperty
 from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE
+from sqlalchemy.ext.declarative import declarative_base
 
 from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
 
 BATCH_SIZE = 100
+UPDATE_BATCH_SIZE = 1000
 SAMPLE_SIZE = 2
+
+
+metadata = MetaData(schema='mbdata')
+Base = declarative_base(metadata=metadata)
+
+
+class SearchQueue(Base):
+    __tablename__ = 'search_queue'
+    seq = Column(Integer, primary_key=True)
+    kind = Column(String, nullable=False)
+    id = Column(Integer, nullable=False)
 
 
 class Schema(object):
@@ -36,10 +52,10 @@ class Entity(object):
 
 class Field(object):
 
-    def __init__(self, name, key, model=None):
+    def __init__(self, name, key, type='text'):
         self.name = name
         self.key = key
-        self.model = model
+        self.type = type
 
     def bind(self, entity):
         self.entity = entity
@@ -87,8 +103,8 @@ class CustomWork(Work):
 
 schema = Schema([
     Entity('area', CustomArea, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('sort_name', 'sort_name'),
@@ -99,16 +115,16 @@ schema = Schema([
         Field('alias', 'aliases.name'),
     ]),
     Entity('place', CustomPlace, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('type', 'type.name'),
         Field('alias', 'aliases.name'),
     ]),
     Entity('artist', CustomArtist, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('sort_name', 'sort_name'),
@@ -120,8 +136,8 @@ schema = Schema([
         Field('alias', 'aliases.name'),
     ]),
     Entity('label', CustomLabel, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('sort_name', 'sort_name'),
@@ -133,21 +149,21 @@ schema = Schema([
         Field('alias', 'aliases.name'),
     ]),
     Entity('recording', CustomRecording, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('artist', 'artist_credit.name'),
         Field('artist', 'artist_credit.artists.artist.name'),
-        Field('artist_mbid', 'artist_credit.artists.artist.gid'),
+        Field('artist_mbid', 'artist_credit.artists.artist.gid', type='string'),
         Field('length', 'length'),
         Field('video', 'video'),
         Field('isrc', 'isrcs.isrc'),
         Field('alias', 'tracks.name'),
     ]),
     Entity('release', CustomRelease, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('type', 'release_group.type.name'),
@@ -155,7 +171,7 @@ schema = Schema([
         Field('packaging', 'packaging.name'),
         Field('artist', 'artist_credit.name'),
         Field('artist', 'artist_credit.artists.artist.name'),
-        Field('artist_mbid', 'artist_credit.artists.artist.gid'),
+        Field('artist_mbid', 'artist_credit.artists.artist.gid', type='string'),
         Field('barcode', 'barcode'),
         Field('catno', 'labels.catalog_number'),
         Field('label', 'labels.label.name'),
@@ -163,20 +179,20 @@ schema = Schema([
         Field('country', 'country_dates.country.area.name'),
     ]),
     Entity('release_group', CustomReleaseGroup, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('type', 'type.name'),
         Field('type', 'secondary_types.secondary_type.name'),
         Field('artist', 'artist_credit.name'),
         Field('artist', 'artist_credit.artists.artist.name'),
-        Field('artist_mbid', 'artist_credit.artists.artist.gid'),
+        Field('artist_mbid', 'artist_credit.artists.artist.gid', type='string'),
         Field('alias', 'releases.name'),
     ]),
     Entity('work', CustomWork, [
-        Field('mbid', 'gid'),
-        Field('mbid', 'redirect_gids.gid'),
+        Field('mbid', 'gid', type='string'),
+        Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
         Field('type', 'type.name'),
@@ -185,6 +201,28 @@ schema = Schema([
         Field('iswc', 'iswcs.iswc'),
     ]),
 ])
+
+
+def _is_field_multi(model, selector):
+    if '.' in selector:
+        attr, sub_selector = selector.split('.', 1)
+    else:
+        attr, sub_selector = selector, None
+
+    prop = getattr(model, attr).property
+    if isinstance(prop, RelationshipProperty):
+        assert sub_selector is not None
+        if prop.direction == ONETOMANY:
+            return True
+        if prop.direction == MANYTOONE:
+            return _is_field_multi(prop.mapper.class_, sub_selector)
+    else:
+        assert sub_selector is None
+        return False
+
+
+def is_field_multi(field):
+    return _is_field_multi(field.entity.model, field.key)
 
 
 def get_field_value(obj, selector):
@@ -217,7 +255,7 @@ def to_set(value):
     return set([value])
 
 
-def iter_data_entity(db, entity, condition=None):
+def iter_data_entity(db, entity, condition=None, batches=True):
     query = db.query(entity.model)
     if condition is not None:
         query = query.filter(condition)
@@ -237,14 +275,19 @@ def iter_data_entity(db, entity, condition=None):
                 model = prop.mapper.class_
         query = query.options(load)
 
-    min_id = query.with_entities(sql.func.min(entity.model.id)).scalar()
-    max_id = query.with_entities(sql.func.max(entity.model.id)).scalar()
-
     query = query.order_by(entity.model.id)
 
-    for i in xrange(min_id, max_id + 1, BATCH_SIZE):
-        sliced_query = query.filter(entity.model.id.between(i, i + BATCH_SIZE - 1))
-        for item in sliced_query:
+    queries = []
+    if batches:
+        min_id = query.with_entities(sql.func.min(entity.model.id)).scalar()
+        max_id = query.with_entities(sql.func.max(entity.model.id)).scalar()
+        for i in xrange(min_id, max_id + 1, BATCH_SIZE):
+            queries.append(query.filter(entity.model.id.between(i, i + BATCH_SIZE - 1)))
+    else:
+        queries.append(query)
+
+    for query in queries:
+        for item in query:
             data = set([
                 ('id', '{0}:{1}'.format(entity.name, item.id)),
                 ('kind', entity.name),
@@ -253,7 +296,7 @@ def iter_data_entity(db, entity, condition=None):
                 for value in get_field_value(item, field.key):
                     if value is not None and value != '':
                         data.add((field.name, value))
-            yield data
+            yield item.id, data
 
 
 def iter_data_all(db, sample=False):
@@ -261,13 +304,13 @@ def iter_data_all(db, sample=False):
         stream = iter_data_entity(db, entity)
         if sample:
             stream = itertools.islice(stream, SAMPLE_SIZE)
-        for data in stream:
-            yield data
+        for id, data in stream:
+            yield id, data
 
 
 def export_docs(stream):
-    for data in stream:
-        yield E.doc(*[E.field(unicode(value), name=name) for (name, value) in data])
+    for id, data in stream:
+        yield id, E.doc(*[E.field(unicode(value), name=name) for (name, value) in data])
 
 
 def generate_trigger_func(kind, table, op, select):
@@ -386,6 +429,137 @@ def export_triggers(db):
     #print 'COMMIT;'
 
 
+def iter_updates(db, kind, ids):
+    entity = schema[kind]
+    condition = entity.model.id.in_(ids)
+    missing_ids = set(ids)
+    stream = iter_data_entity(db, entity, condition, batches=False)
+    for id, doc in export_docs(stream):
+        missing_ids.remove(id)
+        yield E.add(doc)
+    if missing_ids:
+        yield E.delete(*map(E.id, ['%s:%s' % (kind, id) for id in missing_ids]))
+
+
+def update_index(db, solr):
+    with db.begin_nested():
+        items = {}
+        for item in db.query(SearchQueue).limit(UPDATE_BATCH_SIZE):
+            items.setdefault(item.kind, set()).add(item.id)
+#            db.delete(item)
+
+        xml = StringIO()
+        xml.write('<update>\n')
+        for kind, ids in items.iteritems():
+            for elem in iter_updates(db, kind, ids):
+                xml.write(ET.tostring(elem))
+                xml.write('\n')
+        xml.write('</update>\n')
+
+        print xml.getvalue()
+
+
+def build_solrconfig_xml():
+    return E.config(
+        E.luceneMatchVersion('4.6'),
+        E.dataDir('${solr.data.dir:}'),
+        E.directoryFactory({
+            'name': 'DirectoryFactory',
+            'class': '${solr.directoryFactory:solr.NRTCachingDirectoryFactory}'}),
+        E.requestDispatcher(
+            E.requestParsers(
+                enableRemoteStreaming='true',
+                multipartUploadLimitInKB='2048'),
+            handleSelect='false'),
+        E.requestHandler({'name': '/select', 'class': 'solr.SearchHandler'}),
+        E.requestHandler({'name': '/update', 'class': 'solr.UpdateRequestHandler'}),
+    )
+
+
+def build_schema_xml():
+    field_types = {}
+    field_multi = {}
+    for entity in schema.entities:
+        field_names = set()
+        for field in entity.fields:
+            if field.type not in ('string', 'text'):
+                raise ValueError('unknown type {0}'.format(field.type))
+            if field.name in field_types and field_types[field.name] != field.type:
+                raise ValueError('inconsistent field types for {0}: {1} vs {2}'.format(field.name, field_types[field.name], field.type))
+            field_types[field.name] = field.type
+            if field.name in field_names or is_field_multi(field):
+                field_multi[field.name] = True
+
+    field_elems = [
+        E.field(name='id', type='string', indexed='true', stored='true', required='true'),
+        E.field(name='kind', type='string', indexed='true', stored='true', required='true'),
+    ]
+    for name, type in field_types.iteritems():
+        elem = E.field(name=name, type=type, indexed='true', stored='false')
+        if field_multi.get(name):
+            elem.attrib['multiValued'] = 'true'
+        field_elems.append(elem)
+
+    return E.schema(
+        {'name': 'musicbrainz', 'version': '1.1'},
+        E.types(
+            E.fieldType({
+                'name': 'string', 'class': 'solr.StrField',
+                'sortMissingLast': 'true', 'omitNorms': 'true'}),
+            E.fieldType({
+                'name': 'text', 'class': 'solr.TextField',
+                'positionIncrementGap': '100'},
+                E.analyzer({'type': 'index'},
+                    E.tokenizer({'class': 'solr.StandardTokenizerFactory'}),
+                    E.filter({'class': 'solr.LowerCaseFilterFactory'}),
+                    E.filter({'class': 'solr.ASCIIFoldingFilterFactory'})),
+                E.analyzer({'type': 'query'},
+                    E.tokenizer({'class': 'solr.StandardTokenizerFactory'}),
+                    E.filter({'class': 'solr.LowerCaseFilterFactory'}),
+                    E.filter({'class': 'solr.ASCIIFoldingFilterFactory'})),
+            ),
+        ),
+        E.fields(*field_elems),
+        E.uniqueKey('id'),
+        E.defaultSearchField('name'),
+        E.solrQueryParser(defaultOperator='OR'),
+    )
+
+
+def build_solr_xml():
+    return E.solr(
+        E.cores(
+            {'defaultCoreName': 'musicbrainz'},
+            E.core({'name': 'musicbrainz', 'instanceDir': 'musicbrainz'}),
+        )
+    )
+
+
+def xml_to_file(path, doc):
+    with open(path, 'w') as file:
+        file.write(ET.tostring(doc, pretty_print=True, encoding='UTF-8', xml_declaration=True))
+
+
+def create_solr_core(dir):
+    conf_dir = os.path.join(dir, 'conf')
+    data_dir = os.path.join(dir, 'data')
+    os.makedirs(conf_dir)
+    os.makedirs(data_dir)
+    xml_to_file(os.path.join(conf_dir, 'schema.xml'), build_schema_xml())
+    xml_to_file(os.path.join(conf_dir, 'solrconfig.xml'), build_solrconfig_xml())
+
+
+def create_solr_home(dir):
+    os.makedirs(dir)
+    xml_to_file(os.path.join(dir, 'solr.xml'), build_solr_xml())
+    with open(os.path.join(dir, 'README.txt'), 'w') as file:
+        print >>file, 'Start the Solr instance:'
+        print >>file, ''
+        print >>file, ' $ cd /path/to/solr-4.6.1/example/'
+        print >>file, ' $ java -Dsolr.solr.home=%s -jar start.jar' % dir
+    create_solr_core(os.path.join(dir, 'musicbrainz'))
+
+
 if __name__ == '__main__':
     from settings import DATABASE_URI
 
@@ -396,8 +570,9 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     db = Session()
 
-    export_triggers(db)
+    #export_triggers(db)
+    update_index(db, None)
     #stream = iter_data_all(db, sample=True)
     #for doc in export_docs(stream):
-    #    print etree.tostring(doc, pretty_print=True)
+    #    print ET.tostring(doc, pretty_print=True)
 

@@ -64,6 +64,20 @@ For production use, you should use server software like
 [uWSGI](http://projects.unbit.it/uwsgi/) and
 [nginx](http://nginx.org/) to run the service.
 
+Solr Index
+----------
+
+Create a minimal Solr configuration:
+
+    #!sh
+    ./bin/create_solr_home.py -d /tmp/mbdata_solr
+
+Start Solr:
+
+    #!sh
+    cd /path/to/solr-4.6.1/example
+    java -Dsolr.solr.home=/tmp/mbdata_solr -jar start.jar
+
 Development
 -----------
 
