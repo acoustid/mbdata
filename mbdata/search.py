@@ -1,6 +1,9 @@
 import os
 import re
+import sys
 import itertools
+import urllib2
+import tempfile
 from cStringIO import StringIO
 from lxml import etree as ET
 from lxml.builder import E
@@ -14,7 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
 
-BATCH_SIZE = 100
+BATCH_SIZE = 100000
 UPDATE_BATCH_SIZE = 1000
 SAMPLE_SIZE = 2
 
@@ -275,8 +278,6 @@ def iter_data_entity(db, entity, condition=None, batches=True):
                 model = prop.mapper.class_
         query = query.options(load)
 
-    query = query.order_by(entity.model.id)
-
     queries = []
     if batches:
         min_id = query.with_entities(sql.func.min(entity.model.id)).scalar()
@@ -287,7 +288,7 @@ def iter_data_entity(db, entity, condition=None, batches=True):
         queries.append(query)
 
     for query in queries:
-        for item in query:
+        for item in query.order_by(entity.model.id):
             data = set([
                 ('id', '{0}:{1}'.format(entity.name, item.id)),
                 ('kind', entity.name),
@@ -441,6 +442,11 @@ def iter_updates(db, kind, ids):
         yield E.delete(*map(E.id, ['%s:%s' % (kind, id) for id in missing_ids]))
 
 
+def iter_all(db, sample=False):
+    for id, doc in export_docs(iter_data_all(db, sample=sample)):
+        yield E.add(doc)
+
+
 def update_index(db, solr):
     with db.begin_nested():
         items = {}
@@ -457,6 +463,35 @@ def update_index(db, solr):
         xml.write('</update>\n')
 
         print xml.getvalue()
+
+
+def save_update_xml(xml, stream):
+    num_docs = 0
+    xml.write('<update>')
+    has_more = False
+    for elem in stream:
+        xml.write(ET.tostring(elem))
+        num_docs += 1
+    xml.write('</update>')
+    xml.flush()
+    return num_docs
+
+
+def create_index(db, solr, sample=False):
+    stream = iter_all(db, sample=sample)
+    total_num_docs = 0
+    while True:
+        xml = StringIO()
+        num_docs = save_update_xml(xml, itertools.islice(stream, UPDATE_BATCH_SIZE))
+        if not num_docs:
+            break
+        total_num_docs += num_docs
+        print solr._update(xml.getvalue())
+#        req = urllib2.Request(solr_url + '/update?commit=true', xml.getvalue())
+#        res = urllib2.urlopen(req)
+        print 'Indexed {0} documents'.format(total_num_docs)
+        sys.stdout.flush()
+    solr.commit()
 
 
 def build_solrconfig_xml():
