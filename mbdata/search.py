@@ -17,7 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
 
-BATCH_SIZE = 100000
+BATCH_SIZE = 50000
 UPDATE_BATCH_SIZE = 1000
 SAMPLE_SIZE = 2
 
@@ -311,7 +311,11 @@ def iter_data_all(db, sample=False):
 
 def export_docs(stream):
     for id, data in stream:
-        yield id, E.doc(*[E.field(unicode(value), name=name) for (name, value) in data])
+        try:
+            yield id, E.doc(*[E.field(re.sub('[\x00-\x08\x0b\x0c\x0e-\x1f]', '', unicode(value)), name=name) for (name, value) in data])
+        except ValueError:
+            print id, data
+            raise
 
 
 def generate_trigger_func(kind, table, op, select):
@@ -467,14 +471,21 @@ def update_index(db, solr):
 
 def save_update_xml(xml, stream):
     num_docs = 0
-    xml.write('<update>')
+    xml.write('<update>\n')
     has_more = False
     for elem in stream:
         xml.write(ET.tostring(elem))
+        xml.write('\n')
         num_docs += 1
-    xml.write('</update>')
+    xml.write('</update>\n')
     xml.flush()
     return num_docs
+
+
+def create_index_xml(db, path, sample=False):
+    stream = iter_all(db, sample=sample)
+    with open(path, 'w') as xml:
+        save_update_xml(xml, stream)
 
 
 def create_index(db, solr, sample=False):
@@ -486,7 +497,7 @@ def create_index(db, solr, sample=False):
         if not num_docs:
             break
         total_num_docs += num_docs
-        print solr._update(xml.getvalue())
+        solr._update(xml.getvalue())
 #        req = urllib2.Request(solr_url + '/update?commit=true', xml.getvalue())
 #        res = urllib2.urlopen(req)
         print 'Indexed {0} documents'.format(total_num_docs)
