@@ -17,7 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
 
-BATCH_SIZE = 50000
+BATCH_SIZE = 10000
 UPDATE_BATCH_SIZE = 1000
 SAMPLE_SIZE = 2
 
@@ -415,10 +415,10 @@ def export_update_triggers(db):
 
 
 def export_triggers(db):
-#    print '\\set ON_ERROR_STOP'
+    print '\\set ON_ERROR_STOP'
     print
 
-    #print 'BEGIN;'
+    print 'BEGIN;'
     print
 
     print 'CREATE SCHEMA mbdata;'
@@ -431,7 +431,7 @@ def export_triggers(db):
         print s
         print
 
-    #print 'COMMIT;'
+    print 'COMMIT;'
 
 
 def iter_updates(db, kind, ids):
@@ -451,24 +451,6 @@ def iter_all(db, sample=False):
         yield E.add(doc)
 
 
-def update_index(db, solr):
-    with db.begin_nested():
-        items = {}
-        for item in db.query(SearchQueue).limit(UPDATE_BATCH_SIZE):
-            items.setdefault(item.kind, set()).add(item.id)
-#            db.delete(item)
-
-        xml = StringIO()
-        xml.write('<update>\n')
-        for kind, ids in items.iteritems():
-            for elem in iter_updates(db, kind, ids):
-                xml.write(ET.tostring(elem))
-                xml.write('\n')
-        xml.write('</update>\n')
-
-        print xml.getvalue()
-
-
 def save_update_xml(xml, stream):
     num_docs = 0
     xml.write('<update>\n')
@@ -480,6 +462,23 @@ def save_update_xml(xml, stream):
     xml.write('</update>\n')
     xml.flush()
     return num_docs
+
+
+def update_index(db, solr):
+    with db.begin_nested():
+        items = {}
+        for item in db.query(SearchQueue).limit(UPDATE_BATCH_SIZE):
+            items.setdefault(item.kind, set()).add(item.id)
+            db.delete(item)
+        xml = StringIO()
+        streams = []
+        for kind, ids in items.iteritems():
+            streams.append(iter_updates(db, kind, ids))
+        num_docs = save_update_xml(xml, itertools.chain.from_iterable(streams))
+        if num_docs:
+            solr._update(xml.getvalue())
+            print 'Updated {0} documents'.format(num_docs)
+    	solr.commit()
 
 
 def create_index_xml(db, path, sample=False):
@@ -498,8 +497,6 @@ def create_index(db, solr, sample=False):
             break
         total_num_docs += num_docs
         solr._update(xml.getvalue())
-#        req = urllib2.Request(solr_url + '/update?commit=true', xml.getvalue())
-#        res = urllib2.urlopen(req)
         print 'Indexed {0} documents'.format(total_num_docs)
         sys.stdout.flush()
     solr.commit()
