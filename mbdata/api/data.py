@@ -11,6 +11,7 @@ from mbdata.models import (
     LinkType,
     Place,
     Release,
+    Recording,
     ReleaseGroup,
 )
 
