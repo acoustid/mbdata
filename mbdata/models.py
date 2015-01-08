@@ -4,7 +4,7 @@
 # pylint: disable=C0302
 # pylint: disable=W0232
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, CheckConstraint, sql
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql
 from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -47,6 +47,11 @@ class AreaType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.area_type.id', name='area_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('AreaType', foreign_keys=[parent_id])
 
 
 class Area(Base):
@@ -56,7 +61,6 @@ class Area(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    sort_name = Column(String, nullable=False)
     type_id = Column('type', Integer, ForeignKey('musicbrainz.area_type.id', name='area_fk_type'))
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -100,6 +104,11 @@ class AreaAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.area_alias_type.id', name='area_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('AreaAliasType', foreign_keys=[parent_id])
 
 
 class AreaAlias(Base):
@@ -139,6 +148,32 @@ class AreaAnnotation(Base):
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class AreaTag(Base):
+    __tablename__ = 'area_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='area_tag_fk_area'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='area_tag_fk_tag'), primary_key=True, nullable=False)
+    count = Column(Integer, nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
+
+
+class AreaTagRaw(Base):
+    __tablename__ = 'area_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='area_tag_raw_fk_area'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='area_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='area_tag_raw_fk_tag'), primary_key=True, nullable=False)
+
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class Artist(Base):
@@ -191,6 +226,11 @@ class ArtistAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.artist_alias_type.id', name='artist_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ArtistAliasType', foreign_keys=[parent_id])
 
 
 class ArtistAlias(Base):
@@ -355,6 +395,11 @@ class ArtistType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.artist_type.id', name='artist_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ArtistType', foreign_keys=[parent_id])
 
 
 class AutoeditorElection(Base):
@@ -489,6 +534,28 @@ class EditArtist(Base):
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
 
 
+class EditEvent(Base):
+    __tablename__ = 'edit_event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_event_fk_edit'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='edit_event_fk_event', ondelete='CASCADE'), primary_key=True, nullable=False)
+
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+
+
+class EditInstrument(Base):
+    __tablename__ = 'edit_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_instrument_fk_edit'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='edit_instrument_fk_instrument', ondelete='CASCADE'), primary_key=True, nullable=False)
+
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+
+
 class EditLabel(Base):
     __tablename__ = 'edit_label'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -543,6 +610,17 @@ class EditRecording(Base):
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+
+
+class EditSeries(Base):
+    __tablename__ = 'edit_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    edit_id = Column('edit', Integer, ForeignKey('musicbrainz.edit.id', name='edit_series_fk_edit'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='edit_series_fk_series', ondelete='CASCADE'), primary_key=True, nullable=False)
+
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
 
 
 class EditWork(Base):
@@ -699,12 +777,330 @@ class EditorSubscribeEditor(Base):
     subscribed_editor = relationship('Editor', foreign_keys=[subscribed_editor_id], innerjoin=True)
 
 
+class EditorSubscribeSeries(Base):
+    __tablename__ = 'editor_subscribe_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_subscribe_series_fk_editor'), nullable=False)
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='editor_subscribe_series_fk_series'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_series_fk_last_edit_sent'), nullable=False)
+
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    last_edit_sent = relationship('Edit', foreign_keys=[last_edit_sent_id], innerjoin=True)
+
+
+class EditorSubscribeSeriesDeleted(Base):
+    __tablename__ = 'editor_subscribe_series_deleted'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='editor_subscribe_series_deleted_fk_editor'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey('musicbrainz.series_deletion.gid', name='editor_subscribe_series_deleted_fk_gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey('musicbrainz.edit.id', name='editor_subscribe_series_deleted_fk_deleted_by'), nullable=False)
+
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
+
+
+class Event(Base):
+    __tablename__ = 'event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    gid = Column(UUID, nullable=False)
+    name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    time = Column(Time(timezone=False))
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.event_type.id', name='event_fk_type'))
+    cancelled = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    setlist = Column(String)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    type = relationship('EventType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
+class EventMeta(Base):
+    __tablename__ = 'event_meta'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.event.id', name='event_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    rating = Column(SMALLINT)
+    rating_count = Column(Integer)
+
+    event = relationship('Event', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
+
+
+class EventRatingRaw(Base):
+    __tablename__ = 'event_rating_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_rating_raw_fk_event'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='event_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    rating = Column(SMALLINT, nullable=False)
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+
+
+class EventTagRaw(Base):
+    __tablename__ = 'event_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_tag_raw_fk_event'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='event_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='event_tag_raw_fk_tag'), primary_key=True, nullable=False)
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
+
+
+class EventAliasType(Base):
+    __tablename__ = 'event_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.event_alias_type.id', name='event_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('EventAliasType', foreign_keys=[parent_id])
+
+
+class EventAlias(Base):
+    __tablename__ = 'event_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_alias_fk_event'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.event_alias_type.id', name='event_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    type = relationship('EventAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
+class EventAnnotation(Base):
+    __tablename__ = 'event_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_annotation_fk_event'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='event_annotation_fk_annotation'), primary_key=True, nullable=False)
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class EventGIDRedirect(Base):
+    __tablename__ = 'event_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    gid = Column(UUID, primary_key=True, nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.event.id', name='event_gid_redirect_fk_new_id'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    redirect = relationship('Event', foreign_keys=[redirect_id], innerjoin=True)
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def event(self):
+        return self.redirect
+
+
+class EventTag(Base):
+    __tablename__ = 'event_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_tag_fk_event'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='event_tag_fk_tag'), primary_key=True, nullable=False)
+    count = Column(Integer, nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
+
+
+class EventType(Base):
+    __tablename__ = 'event_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.event_type.id', name='event_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('EventType', foreign_keys=[parent_id])
+
+
 class Gender(Base):
     __tablename__ = 'gender'
     __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.gender.id', name='gender_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('Gender', foreign_keys=[parent_id])
+
+
+class InstrumentType(Base):
+    __tablename__ = 'instrument_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.instrument_type.id', name='instrument_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('InstrumentType', foreign_keys=[parent_id])
+
+
+class Instrument(Base):
+    __tablename__ = 'instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    gid = Column(UUID, nullable=False)
+    name = Column(String, nullable=False)
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.instrument_type.id', name='instrument_fk_type'))
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    description = Column(String, default='', server_default=sql.text("''"), nullable=False)
+
+    type = relationship('InstrumentType', foreign_keys=[type_id])
+
+
+class InstrumentGIDRedirect(Base):
+    __tablename__ = 'instrument_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    gid = Column(UUID, primary_key=True, nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_gid_redirect_fk_new_id'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    redirect = relationship('Instrument', foreign_keys=[redirect_id], innerjoin=True)
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def instrument(self):
+        return self.redirect
+
+
+class InstrumentAliasType(Base):
+    __tablename__ = 'instrument_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.instrument_alias_type.id', name='instrument_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('InstrumentAliasType', foreign_keys=[parent_id])
+
+
+class InstrumentAlias(Base):
+    __tablename__ = 'instrument_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_alias_fk_instrument'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.instrument_alias_type.id', name='instrument_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+    type = relationship('InstrumentAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
+class InstrumentAnnotation(Base):
+    __tablename__ = 'instrument_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_annotation_fk_instrument'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='instrument_annotation_fk_annotation'), primary_key=True, nullable=False)
+
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class InstrumentTag(Base):
+    __tablename__ = 'instrument_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_tag_fk_instrument'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='instrument_tag_fk_tag'), primary_key=True, nullable=False)
+    count = Column(Integer, nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
+
+
+class InstrumentTagRaw(Base):
+    __tablename__ = 'instrument_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_tag_raw_fk_instrument'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='instrument_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='instrument_tag_raw_fk_tag'), primary_key=True, nullable=False)
+
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class ISO31661(Base):
@@ -775,6 +1171,7 @@ class LinkAreaArea(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.area.id', name='l_area_area_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -807,6 +1204,7 @@ class LinkAreaArtist(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id', name='l_area_artist_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -829,6 +1227,72 @@ class LinkAreaArtist(Base):
         return self.entity1_id
 
 
+class LinkAreaEvent(Base):
+    __tablename__ = 'l_area_event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_area_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id', name='l_area_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.event.id', name='l_area_event_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Event', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def event(self):
+        return self.entity1
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity1_id
+
+
+class LinkAreaInstrument(Base):
+    __tablename__ = 'l_area_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_area_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id', name='l_area_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.instrument.id', name='l_area_instrument_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Instrument', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity1
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity1_id
+
+
 class LinkAreaLabel(Base):
     __tablename__ = 'l_area_label'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -839,6 +1303,7 @@ class LinkAreaLabel(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id', name='l_area_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -871,6 +1336,7 @@ class LinkAreaPlace(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_area_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -903,6 +1369,7 @@ class LinkAreaRecording(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_area_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -935,6 +1402,7 @@ class LinkAreaRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_area_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -967,6 +1435,7 @@ class LinkAreaReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_area_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -989,6 +1458,39 @@ class LinkAreaReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkAreaSeries(Base):
+    __tablename__ = 'l_area_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_area_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.area.id', name='l_area_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_area_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def area(self):
+        return self.entity0
+
+    @hybrid_property
+    def area_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkAreaURL(Base):
     __tablename__ = 'l_area_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -999,6 +1501,7 @@ class LinkAreaURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_area_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1031,6 +1534,7 @@ class LinkAreaWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_area_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1063,6 +1567,7 @@ class LinkArtistArtist(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.artist.id', name='l_artist_artist_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1085,6 +1590,72 @@ class LinkArtistArtist(Base):
         return self.entity1_id
 
 
+class LinkArtistEvent(Base):
+    __tablename__ = 'l_artist_event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_artist_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id', name='l_artist_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.event.id', name='l_artist_event_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Event', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def event(self):
+        return self.entity1
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity1_id
+
+
+class LinkArtistInstrument(Base):
+    __tablename__ = 'l_artist_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_artist_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id', name='l_artist_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.instrument.id', name='l_artist_instrument_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Instrument', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity1
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity1_id
+
+
 class LinkArtistLabel(Base):
     __tablename__ = 'l_artist_label'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1095,6 +1666,7 @@ class LinkArtistLabel(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id', name='l_artist_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1127,6 +1699,7 @@ class LinkArtistPlace(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_artist_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1159,6 +1732,7 @@ class LinkArtistRecording(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_artist_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1191,6 +1765,7 @@ class LinkArtistRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_artist_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1223,6 +1798,7 @@ class LinkArtistReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_artist_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1245,6 +1821,39 @@ class LinkArtistReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkArtistSeries(Base):
+    __tablename__ = 'l_artist_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_artist_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.artist.id', name='l_artist_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_artist_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def artist(self):
+        return self.entity0
+
+    @hybrid_property
+    def artist_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkArtistURL(Base):
     __tablename__ = 'l_artist_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1255,6 +1864,7 @@ class LinkArtistURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_artist_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1287,6 +1897,7 @@ class LinkArtistWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_artist_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1309,6 +1920,336 @@ class LinkArtistWork(Base):
         return self.entity1_id
 
 
+class LinkEventEvent(Base):
+    __tablename__ = 'l_event_event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.event.id', name='l_event_event_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Event', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event0(self):
+        return self.entity0
+
+    @hybrid_property
+    def event0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def event1(self):
+        return self.entity1
+
+    @hybrid_property
+    def event1_id(self):
+        return self.entity1_id
+
+
+class LinkEventInstrument(Base):
+    __tablename__ = 'l_event_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.instrument.id', name='l_event_instrument_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Instrument', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity1
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity1_id
+
+
+class LinkEventLabel(Base):
+    __tablename__ = 'l_event_label'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id', name='l_event_label_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Label', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def label(self):
+        return self.entity1
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity1_id
+
+
+class LinkEventPlace(Base):
+    __tablename__ = 'l_event_place'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_event_place_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place(self):
+        return self.entity1
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity1_id
+
+
+class LinkEventRecording(Base):
+    __tablename__ = 'l_event_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_event_recording_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
+
+
+class LinkEventRelease(Base):
+    __tablename__ = 'l_event_release'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_event_release_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
+
+
+class LinkEventReleaseGroup(Base):
+    __tablename__ = 'l_event_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_event_release_group_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
+
+class LinkEventSeries(Base):
+    __tablename__ = 'l_event_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_event_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
+class LinkEventURL(Base):
+    __tablename__ = 'l_event_url'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_event_url_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
+
+class LinkEventWork(Base):
+    __tablename__ = 'l_event_work'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_event_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.event.id', name='l_event_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_event_work_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def event(self):
+        return self.entity0
+
+    @hybrid_property
+    def event_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
+
 class LinkLabelLabel(Base):
     __tablename__ = 'l_label_label'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1319,6 +2260,7 @@ class LinkLabelLabel(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id', name='l_label_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1341,6 +2283,303 @@ class LinkLabelLabel(Base):
         return self.entity1_id
 
 
+class LinkInstrumentInstrument(Base):
+    __tablename__ = 'l_instrument_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_instrument_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Instrument', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument0(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def instrument1(self):
+        return self.entity1
+
+    @hybrid_property
+    def instrument1_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentLabel(Base):
+    __tablename__ = 'l_instrument_label'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.label.id', name='l_instrument_label_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Label', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def label(self):
+        return self.entity1
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentPlace(Base):
+    __tablename__ = 'l_instrument_place'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_instrument_place_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Place', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def place(self):
+        return self.entity1
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentRecording(Base):
+    __tablename__ = 'l_instrument_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_instrument_recording_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Recording', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def recording(self):
+        return self.entity1
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentRelease(Base):
+    __tablename__ = 'l_instrument_release'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_instrument_release_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Release', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentReleaseGroup(Base):
+    __tablename__ = 'l_instrument_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_instrument_release_group_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('ReleaseGroup', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity1
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentSeries(Base):
+    __tablename__ = 'l_instrument_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_instrument_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentURL(Base):
+    __tablename__ = 'l_instrument_url'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_instrument_url_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
+
+class LinkInstrumentWork(Base):
+    __tablename__ = 'l_instrument_work'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_instrument_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.instrument.id', name='l_instrument_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_instrument_work_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def instrument(self):
+        return self.entity0
+
+    @hybrid_property
+    def instrument_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
+
 class LinkLabelPlace(Base):
     __tablename__ = 'l_label_place'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1351,6 +2590,7 @@ class LinkLabelPlace(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_label_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1383,6 +2623,7 @@ class LinkLabelRecording(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_label_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1415,6 +2656,7 @@ class LinkLabelRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_label_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1447,6 +2689,7 @@ class LinkLabelReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_label_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1469,6 +2712,39 @@ class LinkLabelReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkLabelSeries(Base):
+    __tablename__ = 'l_label_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_label_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.label.id', name='l_label_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_label_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def label(self):
+        return self.entity0
+
+    @hybrid_property
+    def label_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkLabelURL(Base):
     __tablename__ = 'l_label_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1479,6 +2755,7 @@ class LinkLabelURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_label_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1511,6 +2788,7 @@ class LinkLabelWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_label_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -1543,6 +2821,7 @@ class LinkPlacePlace(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.place.id', name='l_place_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1575,6 +2854,7 @@ class LinkPlaceRecording(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_place_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1607,6 +2887,7 @@ class LinkPlaceRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_place_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1639,6 +2920,7 @@ class LinkPlaceReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_place_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1661,6 +2943,39 @@ class LinkPlaceReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkPlaceSeries(Base):
+    __tablename__ = 'l_place_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_place_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.place.id', name='l_place_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_place_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def place(self):
+        return self.entity0
+
+    @hybrid_property
+    def place_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkPlaceURL(Base):
     __tablename__ = 'l_place_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1671,6 +2986,7 @@ class LinkPlaceURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_place_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1703,6 +3019,7 @@ class LinkPlaceWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_place_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -1735,6 +3052,7 @@ class LinkRecordingRecording(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.recording.id', name='l_recording_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -1767,6 +3085,7 @@ class LinkRecordingRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_recording_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -1799,6 +3118,7 @@ class LinkRecordingReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_recording_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -1821,6 +3141,39 @@ class LinkRecordingReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkRecordingSeries(Base):
+    __tablename__ = 'l_recording_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_recording_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.recording.id', name='l_recording_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_recording_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def recording(self):
+        return self.entity0
+
+    @hybrid_property
+    def recording_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkRecordingURL(Base):
     __tablename__ = 'l_recording_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1831,6 +3184,7 @@ class LinkRecordingURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_recording_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -1863,6 +3217,7 @@ class LinkRecordingWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_recording_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -1895,6 +3250,7 @@ class LinkReleaseRelease(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release.id', name='l_release_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -1927,6 +3283,7 @@ class LinkReleaseReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_release_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -1949,6 +3306,39 @@ class LinkReleaseReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkReleaseSeries(Base):
+    __tablename__ = 'l_release_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_release_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release.id', name='l_release_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_release_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def release(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkReleaseURL(Base):
     __tablename__ = 'l_release_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -1959,6 +3349,7 @@ class LinkReleaseURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_release_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -1991,6 +3382,7 @@ class LinkReleaseWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_release_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -2023,6 +3415,7 @@ class LinkReleaseGroupReleaseGroup(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.release_group.id', name='l_release_group_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -2045,6 +3438,39 @@ class LinkReleaseGroupReleaseGroup(Base):
         return self.entity1_id
 
 
+class LinkReleaseGroupSeries(Base):
+    __tablename__ = 'l_release_group_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_release_group_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.release_group.id', name='l_release_group_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_release_group_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def release_group(self):
+        return self.entity0
+
+    @hybrid_property
+    def release_group_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series(self):
+        return self.entity1
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity1_id
+
+
 class LinkReleaseGroupURL(Base):
     __tablename__ = 'l_release_group_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -2055,6 +3481,7 @@ class LinkReleaseGroupURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_release_group_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -2087,6 +3514,7 @@ class LinkReleaseGroupWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_release_group_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -2109,6 +3537,105 @@ class LinkReleaseGroupWork(Base):
         return self.entity1_id
 
 
+class LinkSeriesSeries(Base):
+    __tablename__ = 'l_series_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_series_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.series.id', name='l_series_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.series.id', name='l_series_series_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Series', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def series0(self):
+        return self.entity0
+
+    @hybrid_property
+    def series0_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def series1(self):
+        return self.entity1
+
+    @hybrid_property
+    def series1_id(self):
+        return self.entity1_id
+
+
+class LinkSeriesURL(Base):
+    __tablename__ = 'l_series_url'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_series_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.series.id', name='l_series_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_series_url_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('URL', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def series(self):
+        return self.entity0
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def url(self):
+        return self.entity1
+
+    @hybrid_property
+    def url_id(self):
+        return self.entity1_id
+
+
+class LinkSeriesWork(Base):
+    __tablename__ = 'l_series_work'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='l_series_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey('musicbrainz.series.id', name='l_series_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_series_work_fk_entity1'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+    entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
+    entity1 = relationship('Work', foreign_keys=[entity1_id], innerjoin=True)
+
+    @hybrid_property
+    def series(self):
+        return self.entity0
+
+    @hybrid_property
+    def series_id(self):
+        return self.entity0_id
+
+    @hybrid_property
+    def work(self):
+        return self.entity1
+
+    @hybrid_property
+    def work_id(self):
+        return self.entity1_id
+
+
 class LinkURLURL(Base):
     __tablename__ = 'l_url_url'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -2119,6 +3646,7 @@ class LinkURLURL(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.url.id', name='l_url_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
@@ -2151,6 +3679,7 @@ class LinkURLWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_url_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
@@ -2183,6 +3712,7 @@ class LinkWorkWork(Base):
     entity1_id = Column('entity1', Integer, ForeignKey('musicbrainz.work.id', name='l_work_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Work', foreign_keys=[entity0_id], innerjoin=True)
@@ -2212,7 +3742,6 @@ class Label(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
     begin_date_day = Column(SMALLINT)
@@ -2275,6 +3804,11 @@ class LabelAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.label_alias_type.id', name='label_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('LabelAliasType', foreign_keys=[parent_id])
 
 
 class LabelAlias(Base):
@@ -2389,6 +3923,11 @@ class LabelType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.label_type.id', name='label_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('LabelType', foreign_keys=[parent_id])
 
 
 class Language(Base):
@@ -2475,6 +4014,26 @@ class LinkAttributeCredit(Base):
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
 
 
+class LinkTextAttributeType(Base):
+    __tablename__ = 'link_text_attribute_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey('musicbrainz.link_attribute_type.id', name='link_text_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
+
+    attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
+
+
+class LinkAttributeTextValue(Base):
+    __tablename__ = 'link_attribute_text_value'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    link_id = Column('link', Integer, ForeignKey('musicbrainz.link.id', name='link_attribute_text_value_fk_link'), primary_key=True, nullable=False)
+    attribute_type = Column(Integer, ForeignKey('musicbrainz.link_text_attribute_type.attribute_type', name='link_attribute_text_value_fk_attribute_type'), primary_key=True, nullable=False)
+    text_value = Column(String, nullable=False)
+
+    link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
+
+
 class LinkType(Base):
     __tablename__ = 'link_type'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -2493,6 +4052,9 @@ class LinkType(Base):
     priority = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     is_deprecated = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    has_dates = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
+    entity0_cardinality = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity1_cardinality = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
     parent = relationship('LinkType', foreign_keys=[parent_id])
 
@@ -2521,8 +4083,35 @@ class EditorCollection(Base):
     name = Column(String, nullable=False)
     public = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     description = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.editor_collection_type.id', name='editor_collection_fk_type'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    type = relationship('EditorCollectionType', foreign_keys=[type_id], innerjoin=True)
+
+
+class EditorCollectionType(Base):
+    __tablename__ = 'editor_collection_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    entity_type = Column(String(50), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.editor_collection_type.id', name='editor_collection_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('EditorCollectionType', foreign_keys=[parent_id])
+
+
+class EditorCollectionEvent(Base):
+    __tablename__ = 'editor_collection_event'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_event_fk_collection'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='editor_collection_event_fk_event'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
 
 
 class EditorCollectionRelease(Base):
@@ -2546,8 +4135,6 @@ class EditorOauthToken(Base):
     authorization_code = Column(String)
     refresh_token = Column(String)
     access_token = Column(String)
-    mac_key = Column(String)
-    mac_time_diff = Column(Integer)
     expire_time = Column(DateTime(timezone=True), nullable=False)
     scope = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     granted = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
@@ -2642,8 +4229,19 @@ class MediumFormat(Base):
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     year = Column(SMALLINT)
     has_discids = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    description = Column(String)
 
     parent = relationship('MediumFormat', foreign_keys=[parent_id])
+
+
+class OrderableLinkType(Base):
+    __tablename__ = 'orderable_link_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    link_type_id = Column('link_type', Integer, ForeignKey('musicbrainz.link_type.id', name='orderable_link_type_fk_link_type'), primary_key=True, nullable=False)
+    direction = Column(SMALLINT, default=1, server_default=sql.text('1'), nullable=False)
+
+    link_type = relationship('LinkType', foreign_keys=[link_type_id], innerjoin=True)
 
 
 class Place(Base):
@@ -2709,6 +4307,11 @@ class PlaceAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.place_alias_type.id', name='place_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('PlaceAliasType', foreign_keys=[parent_id])
 
 
 class PlaceAnnotation(Base):
@@ -2773,6 +4376,11 @@ class PlaceType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.place_type.id', name='place_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('PlaceType', foreign_keys=[parent_id])
 
 
 class ReplicationControl(Base):
@@ -3042,6 +4650,11 @@ class ReleasePackaging(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_packaging.id', name='release_packaging_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleasePackaging', foreign_keys=[parent_id])
 
 
 class ReleaseStatus(Base):
@@ -3050,6 +4663,11 @@ class ReleaseStatus(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_status.id', name='release_status_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleaseStatus', foreign_keys=[parent_id])
 
 
 class ReleaseTag(Base):
@@ -3173,6 +4791,11 @@ class ReleaseGroupPrimaryType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_group_primary_type.id', name='release_group_primary_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleaseGroupPrimaryType', foreign_keys=[parent_id])
 
 
 class ReleaseGroupSecondaryType(Base):
@@ -3181,6 +4804,11 @@ class ReleaseGroupSecondaryType(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_group_secondary_type.id', name='release_group_secondary_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleaseGroupSecondaryType', foreign_keys=[parent_id])
 
 
 class ReleaseGroupSecondaryTypeJoin(Base):
@@ -3206,17 +4834,156 @@ class Script(Base):
     frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
 
-class ScriptLanguage(Base):
-    __tablename__ = 'script_language'
+class Series(Base):
+    __tablename__ = 'series'
     __table_args__ = {'schema': 'musicbrainz'}
 
     id = Column(Integer, primary_key=True)
-    script_id = Column('script', Integer, ForeignKey('musicbrainz.script.id', name='script_language_fk_script'), nullable=False)
-    language_id = Column('language', Integer, ForeignKey('musicbrainz.language.id', name='script_language_fk_language'), nullable=False)
-    frequency = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    gid = Column(UUID, nullable=False)
+    name = Column(String, nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.series_type.id', name='series_fk_type'), nullable=False)
+    ordering_attribute = Column(Integer, ForeignKey('musicbrainz.link_text_attribute_type.attribute_type', name='series_fk_ordering_attribute'), nullable=False)
+    ordering_type_id = Column('ordering_type', Integer, ForeignKey('musicbrainz.series_ordering_type.id', name='series_fk_ordering_type'), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
-    script = relationship('Script', foreign_keys=[script_id], innerjoin=True)
-    language = relationship('Language', foreign_keys=[language_id], innerjoin=True)
+    type = relationship('SeriesType', foreign_keys=[type_id], innerjoin=True)
+    ordering_type = relationship('SeriesOrderingType', foreign_keys=[ordering_type_id], innerjoin=True)
+
+
+class SeriesType(Base):
+    __tablename__ = 'series_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    entity_type = Column(String(50), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.series_type.id', name='series_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('SeriesType', foreign_keys=[parent_id])
+
+
+class SeriesOrderingType(Base):
+    __tablename__ = 'series_ordering_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.series_ordering_type.id', name='series_ordering_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('SeriesOrderingType', foreign_keys=[parent_id])
+
+
+class SeriesDeletion(Base):
+    __tablename__ = 'series_deletion'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    gid = Column(UUID, primary_key=True, nullable=False)
+    last_known_name = Column(String, nullable=False)
+    last_known_comment = Column(String, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
+
+
+class SeriesGIDRedirect(Base):
+    __tablename__ = 'series_gid_redirect'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    gid = Column(UUID, primary_key=True, nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey('musicbrainz.series.id', name='series_gid_redirect_fk_new_id'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    redirect = relationship('Series', foreign_keys=[redirect_id], innerjoin=True)
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def series(self):
+        return self.redirect
+
+
+class SeriesAliasType(Base):
+    __tablename__ = 'series_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.series_alias_type.id', name='series_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('SeriesAliasType', foreign_keys=[parent_id])
+
+
+class SeriesAlias(Base):
+    __tablename__ = 'series_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='series_alias_fk_series'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.series_alias_type.id', name='series_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    type = relationship('SeriesAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
+class SeriesAnnotation(Base):
+    __tablename__ = 'series_annotation'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='series_annotation_fk_series'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey('musicbrainz.annotation.id', name='series_annotation_fk_annotation'), primary_key=True, nullable=False)
+
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class SeriesTag(Base):
+    __tablename__ = 'series_tag'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='series_tag_fk_series'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='series_tag_fk_tag'), primary_key=True, nullable=False)
+    count = Column(Integer, nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
+
+
+class SeriesTagRaw(Base):
+    __tablename__ = 'series_tag_raw'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='series_tag_raw_fk_series'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='series_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='series_tag_raw_fk_tag'), primary_key=True, nullable=False)
+
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+    tag = relationship('Tag', foreign_keys=[tag_id], innerjoin=True)
 
 
 class Tag(Base):
@@ -3256,6 +5023,7 @@ class Track(Base):
     length = Column(Integer)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    is_data_track = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
     medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True, backref=backref('tracks', order_by="Track.position"))
@@ -3397,6 +5165,11 @@ class WorkAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.work_alias_type.id', name='work_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('WorkAliasType', foreign_keys=[parent_id])
 
 
 class WorkAlias(Base):
@@ -3487,6 +5260,11 @@ class WorkType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.work_type.id', name='work_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('WorkType', foreign_keys=[parent_id])
 
 
 class WorkAttributeType(Base):
@@ -3497,6 +5275,11 @@ class WorkAttributeType(Base):
     name = Column(String(255), nullable=False)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.work_attribute_type.id', name='work_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('WorkAttributeType', foreign_keys=[parent_id])
 
 
 class WorkAttributeTypeAllowedValue(Base):
@@ -3506,8 +5289,12 @@ class WorkAttributeTypeAllowedValue(Base):
     id = Column(Integer, primary_key=True)
     work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('musicbrainz.work_attribute_type.id', name='work_attribute_type_allowed_value_fk_work_attribute_type'), nullable=False)
     value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.work_attribute_type_allowed_value.id', name='work_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
 
     work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id], innerjoin=True)
+    parent = relationship('WorkAttributeTypeAllowedValue', foreign_keys=[parent_id])
 
 
 class WorkAttribute(Base):
@@ -3531,6 +5318,11 @@ class ArtType(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('cover_art_archive.art_type.id', name='art_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ArtType', foreign_keys=[parent_id])
 
 
 class ImageType(Base):
@@ -3608,6 +5400,28 @@ class LinkAreaArtistExample(Base):
     name = Column(String, nullable=False)
 
     link = relationship('LinkAreaArtist', foreign_keys=[id], innerjoin=True)
+
+
+class LinkAreaEventExample(Base):
+    __tablename__ = 'l_area_event_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_event.id', name='l_area_event_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaEvent', foreign_keys=[id], innerjoin=True)
+
+
+class LinkAreaInstrumentExample(Base):
+    __tablename__ = 'l_area_instrument_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_instrument.id', name='l_area_instrument_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaInstrument', foreign_keys=[id], innerjoin=True)
 
 
 class LinkAreaLabelExample(Base):
@@ -3698,6 +5512,28 @@ class LinkArtistArtistExample(Base):
     link = relationship('LinkArtistArtist', foreign_keys=[id], innerjoin=True)
 
 
+class LinkArtistEventExample(Base):
+    __tablename__ = 'l_artist_event_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_event.id', name='l_artist_event_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistEvent', foreign_keys=[id], innerjoin=True)
+
+
+class LinkArtistInstrumentExample(Base):
+    __tablename__ = 'l_artist_instrument_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_instrument.id', name='l_artist_instrument_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistInstrument', foreign_keys=[id], innerjoin=True)
+
+
 class LinkArtistLabelExample(Base):
     __tablename__ = 'l_artist_label_example'
     __table_args__ = {'schema': 'documentation'}
@@ -3773,6 +5609,215 @@ class LinkArtistWorkExample(Base):
     name = Column(String, nullable=False)
 
     link = relationship('LinkArtistWork', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventEventExample(Base):
+    __tablename__ = 'l_event_event_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_event.id', name='l_event_event_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventEvent', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventInstrumentExample(Base):
+    __tablename__ = 'l_event_instrument_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_instrument.id', name='l_event_instrument_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventInstrument', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventLabelExample(Base):
+    __tablename__ = 'l_event_label_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_label.id', name='l_event_label_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventLabel', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventPlaceExample(Base):
+    __tablename__ = 'l_event_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_place.id', name='l_event_place_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventPlace', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventRecordingExample(Base):
+    __tablename__ = 'l_event_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_recording.id', name='l_event_recording_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventRecording', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventReleaseExample(Base):
+    __tablename__ = 'l_event_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_release.id', name='l_event_release_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventRelease', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventReleaseGroupExample(Base):
+    __tablename__ = 'l_event_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_release_group.id', name='l_event_release_group_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventReleaseGroup', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventSeriesExample(Base):
+    __tablename__ = 'l_event_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_series.id', name='l_event_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventURLExample(Base):
+    __tablename__ = 'l_event_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_url.id', name='l_event_url_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventURL', foreign_keys=[id], innerjoin=True)
+
+
+class LinkEventWorkExample(Base):
+    __tablename__ = 'l_event_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_event_work.id', name='l_event_work_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkEventWork', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentInstrumentExample(Base):
+    __tablename__ = 'l_instrument_instrument_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_instrument.id', name='l_instrument_instrument_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentInstrument', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentLabelExample(Base):
+    __tablename__ = 'l_instrument_label_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_label.id', name='l_instrument_label_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentLabel', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentPlaceExample(Base):
+    __tablename__ = 'l_instrument_place_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_place.id', name='l_instrument_place_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentPlace', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentRecordingExample(Base):
+    __tablename__ = 'l_instrument_recording_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_recording.id', name='l_instrument_recording_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentRecording', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentReleaseExample(Base):
+    __tablename__ = 'l_instrument_release_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_release.id', name='l_instrument_release_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentRelease', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentReleaseGroupExample(Base):
+    __tablename__ = 'l_instrument_release_group_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_release_group.id', name='l_instrument_release_group_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentReleaseGroup', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentSeriesExample(Base):
+    __tablename__ = 'l_instrument_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_series.id', name='l_instrument_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentURLExample(Base):
+    __tablename__ = 'l_instrument_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_url.id', name='l_instrument_url_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentURL', foreign_keys=[id], innerjoin=True)
+
+
+class LinkInstrumentWorkExample(Base):
+    __tablename__ = 'l_instrument_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_instrument_work.id', name='l_instrument_work_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkInstrumentWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkLabelLabelExample(Base):
@@ -4048,6 +6093,116 @@ class LinkReleaseGroupWorkExample(Base):
     name = Column(String, nullable=False)
 
     link = relationship('LinkReleaseGroupWork', foreign_keys=[id], innerjoin=True)
+
+
+class LinkAreaSeriesExample(Base):
+    __tablename__ = 'l_area_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_area_series.id', name='l_area_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkAreaSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkArtistSeriesExample(Base):
+    __tablename__ = 'l_artist_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_artist_series.id', name='l_artist_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkArtistSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkLabelSeriesExample(Base):
+    __tablename__ = 'l_label_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_label_series.id', name='l_label_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkLabelSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkPlaceSeriesExample(Base):
+    __tablename__ = 'l_place_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_place_series.id', name='l_place_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkPlaceSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkRecordingSeriesExample(Base):
+    __tablename__ = 'l_recording_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_recording_series.id', name='l_recording_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkRecordingSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkReleaseSeriesExample(Base):
+    __tablename__ = 'l_release_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_series.id', name='l_release_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkReleaseGroupSeriesExample(Base):
+    __tablename__ = 'l_release_group_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_release_group_series.id', name='l_release_group_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkReleaseGroupSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkSeriesSeriesExample(Base):
+    __tablename__ = 'l_series_series_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_series_series.id', name='l_series_series_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkSeriesSeries', foreign_keys=[id], innerjoin=True)
+
+
+class LinkSeriesURLExample(Base):
+    __tablename__ = 'l_series_url_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_series_url.id', name='l_series_url_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkSeriesURL', foreign_keys=[id], innerjoin=True)
+
+
+class LinkSeriesWorkExample(Base):
+    __tablename__ = 'l_series_work_example'
+    __table_args__ = {'schema': 'documentation'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.l_series_work.id', name='l_series_work_example_fk_id'), primary_key=True, nullable=False)
+    published = Column(Boolean, nullable=False)
+    name = Column(String, nullable=False)
+
+    link = relationship('LinkSeriesWork', foreign_keys=[id], innerjoin=True)
 
 
 class LinkURLURLExample(Base):

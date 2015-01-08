@@ -22,6 +22,7 @@ TYPE_MAPPING = {
     'TIMESTAMP': 'DateTime',
     'TIMESTAMPTZ': 'DateTime(timezone=True)',
     'TIMESTAMP WITH TIME ZONE': 'DateTime(timezone=True)',
+    'TIME WITHOUT TIME ZONE': 'Time(timezone=False)',
     'DATE': 'Date',
     'UUID': 'UUID',
     'SMALLINT': 'SMALLINT',
@@ -168,7 +169,7 @@ def generate_models_header():
     yield '# pylint: disable=C0302'
     yield '# pylint: disable=W0232'
     yield ''
-    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Date, Enum, Interval, CHAR, CheckConstraint, sql'
+    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql'
     yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
