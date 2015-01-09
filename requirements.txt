@@ -2,4 +2,3 @@ SQLAlchemy==0.9.8
 Flask==0.10.1
 solrpy==0.9.5
 lxml
-
