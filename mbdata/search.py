@@ -143,7 +143,6 @@ schema = Schema([
         Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
-        Field('sort_name', 'sort_name'),
         Field('code', 'label_code'),
         Field('type', 'type.name'),
         Field('area', 'area.name'),

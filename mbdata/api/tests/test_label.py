@@ -31,7 +31,6 @@ def test_label_get(client):
                 u"isnis": [
                     u"000000011781560X"
                 ],
-                u"sort_name": u"Studio Ghibli",
                 u"type": u"Production",
                 u"id": u"ecc049d0-88a6-4806-a5b7-0f1367a7d6e1"
             }

@@ -10,7 +10,7 @@ def data_to_dict(results):
     results = list(results)
     assert_equal(len(results), 1)
     data = {}
-    for name, value in results[0]:
+    for name, value in results[0][1]:
         data.setdefault(name, []).append(value)
     return data
 
@@ -47,7 +47,6 @@ def test_export_label(db):
         'isni': [u'000000011781560X'],
         'mbid': [u'ecc049d0-88a6-4806-a5b7-0f1367a7d6e1'],
         'name': [u'\u30b9\u30bf\u30b8\u30aa\u30b8\u30d6\u30ea'],
-        'sort_name': [u'Studio Ghibli'],
         'type': [u'Production'],
     })
 

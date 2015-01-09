@@ -279,7 +279,6 @@ def serialize_label(label, include):
     data = {
         'id': label.gid,
         'name': label.name,
-        'sort_name': label.sort_name,
     }
 
     if label.comment:
