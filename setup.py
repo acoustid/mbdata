@@ -8,8 +8,12 @@ setup(name='mbdata',
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
       url='https://bitbucket.org/lalinsky/mbdata',
+      license='MIT',
+      platforms='ALL',
+
       include_package_data=True,
       zip_safe=False,
+
       packages=[
           'mbdata',
           'mbdata.api',
@@ -20,4 +24,9 @@ setup(name='mbdata',
           'mbdata.utils',
       ],
       namespace_packages=['mbdata'],
-     )
+
+      classifiers=[
+          'Intended Audience :: Developers',
+          'Programming Language :: Python :: 2',
+      ],
+)
