@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='mbdata',
-      version='2015.01.10',
+      version='2015.06.20',
       description='MusicBrainz Database Tools',
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
