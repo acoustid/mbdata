@@ -27,6 +27,21 @@ Example:
     >>> artist = session.query(Artist).filter_by(gid='b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d').first()
     >>> print artist.name
 
+If you use the models from your own application and want to define foreign keys to
+the MusicBrainz schema, you will need to let mbdata know which metadata object to
+add the MusicBrainz tables to:
+
+    #!python
+    from sqlalchemy.ext.declarative import declarative_base
+    Base = declarative_base()
+
+    # this should be the first place where you import anything from mbdata
+    import mbdata.config
+    mbdata.config.Base = Base
+
+    # now you can import and use the mbdata models
+    import mbdata.models
+
 HTTP API
 --------
 

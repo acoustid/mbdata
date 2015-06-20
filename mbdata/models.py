@@ -11,7 +11,14 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
 from mbdata.types import PartialDate, Point, Cube, regexp
 
-Base = declarative_base()
+import mbdata.config
+
+if mbdata.config.Base is not None:
+    Base = mbdata.config.Base
+elif mbdata.config.metadata is not None:
+    Base = declarative_base(metadata=mbdata.config.metadata)
+else:
+    Base = declarative_base()
 
 
 class Annotation(Base):
