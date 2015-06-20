@@ -177,6 +177,7 @@ class AreaTagRaw(Base):
     area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='area_tag_raw_fk_area'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='area_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='area_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -346,6 +347,7 @@ class ArtistTagRaw(Base):
     artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='artist_tag_raw_fk_artist'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='artist_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='artist_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -868,6 +870,7 @@ class EventTagRaw(Base):
     event_id = Column('event', Integer, ForeignKey('musicbrainz.event.id', name='event_tag_raw_fk_event'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='event_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='event_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -1104,6 +1107,7 @@ class InstrumentTagRaw(Base):
     instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='instrument_tag_raw_fk_instrument'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='instrument_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='instrument_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -1179,6 +1183,8 @@ class LinkAreaArea(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1212,6 +1218,8 @@ class LinkAreaArtist(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1245,6 +1253,8 @@ class LinkAreaEvent(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1278,6 +1288,8 @@ class LinkAreaInstrument(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1311,6 +1323,8 @@ class LinkAreaLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1344,6 +1358,8 @@ class LinkAreaPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1377,6 +1393,8 @@ class LinkAreaRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1410,6 +1428,8 @@ class LinkAreaRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1443,6 +1463,8 @@ class LinkAreaReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1476,6 +1498,8 @@ class LinkAreaSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1509,6 +1533,8 @@ class LinkAreaURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1542,6 +1568,8 @@ class LinkAreaWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Area', foreign_keys=[entity0_id], innerjoin=True)
@@ -1575,6 +1603,8 @@ class LinkArtistArtist(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1608,6 +1638,8 @@ class LinkArtistEvent(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1641,6 +1673,8 @@ class LinkArtistInstrument(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1674,6 +1708,8 @@ class LinkArtistLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1707,6 +1743,8 @@ class LinkArtistPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1740,6 +1778,8 @@ class LinkArtistRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1773,6 +1813,8 @@ class LinkArtistRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1806,6 +1848,8 @@ class LinkArtistReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1839,6 +1883,8 @@ class LinkArtistSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1872,6 +1918,8 @@ class LinkArtistURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1905,6 +1953,8 @@ class LinkArtistWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Artist', foreign_keys=[entity0_id], innerjoin=True)
@@ -1938,6 +1988,8 @@ class LinkEventEvent(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -1971,6 +2023,8 @@ class LinkEventInstrument(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2004,6 +2058,8 @@ class LinkEventLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2037,6 +2093,8 @@ class LinkEventPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2070,6 +2128,8 @@ class LinkEventRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2103,6 +2163,8 @@ class LinkEventRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2136,6 +2198,8 @@ class LinkEventReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2169,6 +2233,8 @@ class LinkEventSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2202,6 +2268,8 @@ class LinkEventURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2235,6 +2303,8 @@ class LinkEventWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Event', foreign_keys=[entity0_id], innerjoin=True)
@@ -2268,6 +2338,8 @@ class LinkLabelLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2301,6 +2373,8 @@ class LinkInstrumentInstrument(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2334,6 +2408,8 @@ class LinkInstrumentLabel(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2367,6 +2443,8 @@ class LinkInstrumentPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2400,6 +2478,8 @@ class LinkInstrumentRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2433,6 +2513,8 @@ class LinkInstrumentRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2466,6 +2548,8 @@ class LinkInstrumentReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2499,6 +2583,8 @@ class LinkInstrumentSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2532,6 +2618,8 @@ class LinkInstrumentURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2565,6 +2653,8 @@ class LinkInstrumentWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Instrument', foreign_keys=[entity0_id], innerjoin=True)
@@ -2598,6 +2688,8 @@ class LinkLabelPlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2631,6 +2723,8 @@ class LinkLabelRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2664,6 +2758,8 @@ class LinkLabelRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2697,6 +2793,8 @@ class LinkLabelReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2730,6 +2828,8 @@ class LinkLabelSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2763,6 +2863,8 @@ class LinkLabelURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2796,6 +2898,8 @@ class LinkLabelWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Label', foreign_keys=[entity0_id], innerjoin=True)
@@ -2829,6 +2933,8 @@ class LinkPlacePlace(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -2862,6 +2968,8 @@ class LinkPlaceRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -2895,6 +3003,8 @@ class LinkPlaceRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -2928,6 +3038,8 @@ class LinkPlaceReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -2961,6 +3073,8 @@ class LinkPlaceSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -2994,6 +3108,8 @@ class LinkPlaceURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -3027,6 +3143,8 @@ class LinkPlaceWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Place', foreign_keys=[entity0_id], innerjoin=True)
@@ -3060,6 +3178,8 @@ class LinkRecordingRecording(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3093,6 +3213,8 @@ class LinkRecordingRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3126,6 +3248,8 @@ class LinkRecordingReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3159,6 +3283,8 @@ class LinkRecordingSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3192,6 +3318,8 @@ class LinkRecordingURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3225,6 +3353,8 @@ class LinkRecordingWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Recording', foreign_keys=[entity0_id], innerjoin=True)
@@ -3258,6 +3388,8 @@ class LinkReleaseRelease(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -3291,6 +3423,8 @@ class LinkReleaseReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -3324,6 +3458,8 @@ class LinkReleaseSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -3357,6 +3493,8 @@ class LinkReleaseURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -3390,6 +3528,8 @@ class LinkReleaseWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Release', foreign_keys=[entity0_id], innerjoin=True)
@@ -3423,6 +3563,8 @@ class LinkReleaseGroupReleaseGroup(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -3456,6 +3598,8 @@ class LinkReleaseGroupSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -3489,6 +3633,8 @@ class LinkReleaseGroupURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -3522,6 +3668,8 @@ class LinkReleaseGroupWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('ReleaseGroup', foreign_keys=[entity0_id], innerjoin=True)
@@ -3555,6 +3703,8 @@ class LinkSeriesSeries(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
@@ -3588,6 +3738,8 @@ class LinkSeriesURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
@@ -3621,6 +3773,8 @@ class LinkSeriesWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Series', foreign_keys=[entity0_id], innerjoin=True)
@@ -3654,6 +3808,8 @@ class LinkURLURL(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
@@ -3687,6 +3843,8 @@ class LinkURLWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('URL', foreign_keys=[entity0_id], innerjoin=True)
@@ -3720,6 +3878,8 @@ class LinkWorkWork(Base):
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    entity0_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
+    entity1_credit = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
     entity0 = relationship('Work', foreign_keys=[entity0_id], innerjoin=True)
@@ -3799,6 +3959,7 @@ class LabelTagRaw(Base):
     label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', name='label_tag_raw_fk_label'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='label_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='label_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4110,6 +4271,28 @@ class EditorCollectionType(Base):
     parent = relationship('EditorCollectionType', foreign_keys=[parent_id])
 
 
+class EditorCollectionArea(Base):
+    __tablename__ = 'editor_collection_area'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_area_fk_collection'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey('musicbrainz.area.id', name='editor_collection_area_fk_area'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
+
+
+class EditorCollectionArtist(Base):
+    __tablename__ = 'editor_collection_artist'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_artist_fk_collection'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey('musicbrainz.artist.id', name='editor_collection_artist_fk_artist'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+
+
 class EditorCollectionEvent(Base):
     __tablename__ = 'editor_collection_event'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -4121,6 +4304,50 @@ class EditorCollectionEvent(Base):
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
 
 
+class EditorCollectionInstrument(Base):
+    __tablename__ = 'editor_collection_instrument'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_instrument_fk_collection'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey('musicbrainz.instrument.id', name='editor_collection_instrument_fk_instrument'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+
+
+class EditorCollectionLabel(Base):
+    __tablename__ = 'editor_collection_label'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_label_fk_collection'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey('musicbrainz.label.id', name='editor_collection_label_fk_label'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+
+
+class EditorCollectionPlace(Base):
+    __tablename__ = 'editor_collection_place'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_place_fk_collection'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id', name='editor_collection_place_fk_place'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+
+
+class EditorCollectionRecording(Base):
+    __tablename__ = 'editor_collection_recording'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_recording_fk_collection'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', name='editor_collection_recording_fk_recording'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+
+
 class EditorCollectionRelease(Base):
     __tablename__ = 'editor_collection_release'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -4130,6 +4357,39 @@ class EditorCollectionRelease(Base):
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+
+
+class EditorCollectionReleaseGroup(Base):
+    __tablename__ = 'editor_collection_release_group'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_release_group_fk_collection'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='editor_collection_release_group_fk_release_group'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+
+
+class EditorCollectionSeries(Base):
+    __tablename__ = 'editor_collection_series'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_series_fk_collection'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='editor_collection_series_fk_series'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+
+
+class EditorCollectionWork(Base):
+    __tablename__ = 'editor_collection_work'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    collection_id = Column('collection', Integer, ForeignKey('musicbrainz.editor_collection.id', name='editor_collection_work_fk_collection'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id', name='editor_collection_work_fk_work'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
 
 
 class EditorOauthToken(Base):
@@ -4203,7 +4463,7 @@ class Medium(Base):
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='medium_fk_release'), nullable=False)
     position = Column(Integer, nullable=False)
     format_id = Column('format', Integer, ForeignKey('musicbrainz.medium_format.id', name='medium_fk_format'))
-    name = Column(String(255))
+    name = Column(String, default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     track_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -4371,6 +4631,7 @@ class PlaceTagRaw(Base):
     place_id = Column('place', Integer, ForeignKey('musicbrainz.place.id', name='place_tag_raw_fk_place'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='place_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='place_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4417,6 +4678,47 @@ class Recording(Base):
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
 
 
+class RecordingAliasType(Base):
+    __tablename__ = 'recording_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.recording_alias_type.id', name='recording_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('RecordingAliasType', foreign_keys=[parent_id])
+
+
+class RecordingAlias(Base):
+    __tablename__ = 'recording_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', name='recording_alias_fk_recording'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.recording_alias_type.id', name='recording_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    type = relationship('RecordingAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
 class RecordingRatingRaw(Base):
     __tablename__ = 'recording_rating_raw'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -4436,6 +4738,7 @@ class RecordingTagRaw(Base):
     recording_id = Column('recording', Integer, ForeignKey('musicbrainz.recording.id', name='recording_tag_raw_fk_recording'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='recording_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='recording_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4523,6 +4826,47 @@ class Release(Base):
     script = relationship('Script', foreign_keys=[script_id])
 
 
+class ReleaseAliasType(Base):
+    __tablename__ = 'release_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_alias_type.id', name='release_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleaseAliasType', foreign_keys=[parent_id])
+
+
+class ReleaseAlias(Base):
+    __tablename__ = 'release_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='release_alias_fk_release'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.release_alias_type.id', name='release_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    type = relationship('ReleaseAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
 class ReleaseCountry(Base):
     __tablename__ = 'release_country'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -4576,6 +4920,7 @@ class ReleaseTagRaw(Base):
     release_id = Column('release', Integer, ForeignKey('musicbrainz.release.id', name='release_tag_raw_fk_release'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='release_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='release_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4707,6 +5052,47 @@ class ReleaseGroup(Base):
     type = relationship('ReleaseGroupPrimaryType', foreign_keys=[type_id])
 
 
+class ReleaseGroupAliasType(Base):
+    __tablename__ = 'release_group_alias_type'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey('musicbrainz.release_group_alias_type.id', name='release_group_alias_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+
+    parent = relationship('ReleaseGroupAliasType', foreign_keys=[parent_id])
+
+
+class ReleaseGroupAlias(Base):
+    __tablename__ = 'release_group_alias'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column(Integer, primary_key=True)
+    release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='release_group_alias_fk_release_group'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    type_id = Column('type', Integer, ForeignKey('musicbrainz.release_group_alias_type.id', name='release_group_alias_fk_type'))
+    sort_name = Column(String, nullable=False)
+    begin_date_year = Column(SMALLINT)
+    begin_date_month = Column(SMALLINT)
+    begin_date_day = Column(SMALLINT)
+    end_date_year = Column(SMALLINT)
+    end_date_month = Column(SMALLINT)
+    end_date_day = Column(SMALLINT)
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+    ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    type = relationship('ReleaseGroupAliasType', foreign_keys=[type_id])
+
+    begin_date = composite(PartialDate, begin_date_year, begin_date_month, begin_date_day)
+    end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
+
+
 class ReleaseGroupRatingRaw(Base):
     __tablename__ = 'release_group_rating_raw'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -4726,6 +5112,7 @@ class ReleaseGroupTagRaw(Base):
     release_group_id = Column('release_group', Integer, ForeignKey('musicbrainz.release_group.id', name='release_group_tag_raw_fk_release_group'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='release_group_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='release_group_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4987,6 +5374,7 @@ class SeriesTagRaw(Base):
     series_id = Column('series', Integer, ForeignKey('musicbrainz.series.id', name='series_tag_raw_fk_series'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='series_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='series_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -5141,6 +5529,16 @@ class Work(Base):
     language = relationship('Language', foreign_keys=[language_id])
 
 
+class WorkLastmod(Base):
+    __tablename__ = 'work_lastmod'
+    __table_args__ = {'schema': 'musicbrainz'}
+
+    id = Column('id', Integer, ForeignKey('musicbrainz.work.id', name='work_lastmod_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    last_modified = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    work = relationship('Work', foreign_keys=[id], innerjoin=True)
+
+
 class WorkRatingRaw(Base):
     __tablename__ = 'work_rating_raw'
     __table_args__ = {'schema': 'musicbrainz'}
@@ -5160,6 +5558,7 @@ class WorkTagRaw(Base):
     work_id = Column('work', Integer, ForeignKey('musicbrainz.work.id', name='work_tag_raw_fk_work'), primary_key=True, nullable=False)
     editor_id = Column('editor', Integer, ForeignKey('musicbrainz.editor.id', name='work_tag_raw_fk_editor'), primary_key=True, nullable=False)
     tag_id = Column('tag', Integer, ForeignKey('musicbrainz.tag.id', name='work_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
