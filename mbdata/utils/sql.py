@@ -24,6 +24,15 @@ def group_parentheses(tokens):
 
 class Set(Statement):
 
+    def get_name(self):
+        set_token = self.token_next_match(0, T.Keyword, 'SET')
+        if set_token is None:
+            raise ValueError('unknown format - missing SET')
+        token = self.token_next(set_token)
+        if token is None:
+            raise ValueError('unknown format - missing SET name')
+        return token.value
+
     def _find_value(self):
         comparison = self.token_next_match(0, T.Comparison, '=')
         if comparison is None:
@@ -46,7 +55,7 @@ class Set(Statement):
 class CreateTable(Statement):
 
     def __init__(self, tokens):
-        TokenList.__init__(self, tokens)
+        Statement.__init__(self, tokens)
         self._group_columns()
 
     def _group_columns(self):
