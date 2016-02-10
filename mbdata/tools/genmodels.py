@@ -191,7 +191,7 @@ def generate_models_header():
 def make_type_mapper(types):
     mapping = dict(TYPE_MAPPING)
     for type in types:
-        mapping[type.name.upper()] = 'Enum({0}, name={1!r}, schema={2!r})'.format(', '.join(('{0!r}'.format(str(l)) for l in type.labels)), str(type.name.upper()), type.schema)
+        mapping[type.name.upper()] = 'Enum({0}, name={1!r}, schema=mbdata.config.schemas.get({2!r}, {2!r}))'.format(', '.join(('{0!r}'.format(str(l)) for l in type.labels)), str(type.name.upper()), type.schema)
 
     def inner(type):
         new_type = mapping.get(type.upper())
@@ -291,7 +291,7 @@ def generate_models_from_sql(sql):
         model_name = format_model_name(table.name)
         yield 'class {0}(Base):'.format(model_name)
         yield '    __tablename__ = {0!r}'.format(str(table.name))
-        yield '    __table_args__ = {0!r}'.format({'schema': str(table.schema)})
+        yield '    __table_args__ = {{\'schema\': mbdata.config.schemas.get({0!r}, {0!r})}}'.format(str(table.schema))
         yield ''
 
         composites = []
@@ -376,7 +376,7 @@ def generate_models_from_sql(sql):
                         aliases.append((relationship_name, foreign_key.table))
 
                 foreign_key_params = [
-                    repr(join_foreign_key(foreign_key.schema, foreign_key.table, foreign_key.column)),
+                    "{0!r}.format(mbdata.config.schemas.get({1!r}, {1!r}))".format(join_foreign_key('{}', foreign_key.table, foreign_key.column), foreign_key.schema),
                     "name='{0}_fk_{1}'".format(table.name, column.name),
                 ]
                 if foreign_key.cascade:

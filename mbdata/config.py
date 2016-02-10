@@ -3,3 +3,6 @@ Base = None
 
 # Override this if you want mbdata to create its own base class, but linked to your metadata object
 metadata = None
+
+# Override this if you want customize the schema names that mbdata uses
+schemas = {}
