@@ -191,7 +191,7 @@ def generate_models_header():
 def make_type_mapper(types):
     mapping = dict(TYPE_MAPPING)
     for type in types:
-        mapping[type.name.upper()] = 'Enum({0}, name={1!r})'.format(', '.join(('{0!r}'.format(str(l)) for l in type.labels)), str(type.name.upper()))
+        mapping[type.name.upper()] = 'Enum({0}, name={1!r}, schema={2!r})'.format(', '.join(('{0!r}'.format(str(l)) for l in type.labels)), str(type.name.upper()), type.schema)
 
     def inner(type):
         new_type = mapping.get(type.upper())
