@@ -25,7 +25,7 @@ Example usage of the models:
 >>> engine = create_engine('postgresql://musicbrainz:musicbrainz@127.0.0.1/musicbrainz', echo=True)
 >>> Session = sessionmaker(bind=engine)
 >>> session = Session()
->>> artist = session.query(Artist).filter_by(gid='b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d').first()
+>>> artist = session.query(Artist).filter_by(gid='8970d868-0723-483b-a75b-51088913d3d4').first()
 >>> print artist.name
 ```
 
@@ -51,6 +51,13 @@ database doesn't follow the original structure:
 ```python
 import mbdata.config
 mbdata.config.configure(schema='my_own_mb_schema')
+```
+
+If you need sample MusicBrainz data for your tests, you can use `mbdata.sample_data`:
+
+```python
+from mbdata.sample_data import create_sample_data
+create_sample_data(session)
 ```
 
 HTTP API
