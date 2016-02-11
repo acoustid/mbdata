@@ -18,28 +18,32 @@ kind of [eager loading](http://docs.sqlalchemy.org/en/latest/orm/loading_relatio
 
 Example usage of the models:
 
-    >>> from sqlalchemy import create_engine
-    >>> from sqlalchemy.orm import sessionmaker
-    >>> from mbdata.models import Artist
-    >>> engine = create_engine('postgresql://musicbrainz:musicbrainz@127.0.0.1/musicbrainz', echo=True)
-    >>> Session = sessionmaker(bind=engine)
-    >>> session = Session()
-    >>> artist = session.query(Artist).filter_by(gid='b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d').first()
-    >>> print artist.name
+```python
+>>> from sqlalchemy import create_engine
+>>> from sqlalchemy.orm import sessionmaker
+>>> from mbdata.models import Artist
+>>> engine = create_engine('postgresql://musicbrainz:musicbrainz@127.0.0.1/musicbrainz', echo=True)
+>>> Session = sessionmaker(bind=engine)
+>>> session = Session()
+>>> artist = session.query(Artist).filter_by(gid='b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d').first()
+>>> print artist.name
+```
 
 If you use the models in your own application and want to define foreign keys from your own models
 to the MusicBrainz schema, you will need to let `mbdata` know which metadata object to
 add the MusicBrainz tables to:
 
-    from sqlalchemy.ext.declarative import declarative_base
-    Base = declarative_base()
+```python
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
-    # this should be the first place where you import anything from mbdata
-    import mbdata.config
-    mbdata.config.Base = Base
+# this should be the first place where you import anything from mbdata
+import mbdata.config
+mbdata.config.Base = Base
 
-    # now you can import and use the mbdata models
-    import mbdata.models
+# now you can import and use the mbdata models
+import mbdata.models
+```
 
 HTTP API
 --------
@@ -52,23 +56,31 @@ MusicBrainz PostgreSQL database.
 
 Installation:
 
-    virtualenv --system-site-packages e
-    . e/bin/activate
-    pip install -r requirements.txt
-    python setup.py develop
+```sh
+virtualenv --system-site-packages e
+. e/bin/activate
+pip install -r requirements.txt
+python setup.py develop
+```
 
 Configuration:
 
-	cp settings.py.sample settings.py
-	vim settings.py
+```sh
+cp settings.py.sample settings.py
+vim settings.py
+```
 
 Start the development server:
 
-    MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.api.app
+```sh
+MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.api.app
+```
 
 Query the API:
 
-    curl 'http://127.0.0.1:5000/v1/artist/get?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
+```sh
+curl 'http://127.0.0.1:5000/v1/artist/get?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
+```
 
 For production use, you should use server software like
 [uWSGI](http://projects.unbit.it/uwsgi/) and
@@ -79,12 +91,16 @@ Solr Index
 
 Create a minimal Solr configuration:
 
-    ./bin/create_solr_home.py -d /tmp/mbdata_solr
+```sh
+./bin/create_solr_home.py -d /tmp/mbdata_solr
+```
 
 Start Solr:
 
-    cd /path/to/solr-4.6.1/example
-    java -Dsolr.solr.home=/tmp/mbdata_solr -jar start.jar
+```sh
+cd /path/to/solr-4.6.1/example
+java -Dsolr.solr.home=/tmp/mbdata_solr -jar start.jar
+```
 
 Development
 -----------
