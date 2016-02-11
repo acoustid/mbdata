@@ -39,10 +39,18 @@ Base = declarative_base()
 
 # this should be the first place where you import anything from mbdata
 import mbdata.config
-mbdata.config.Base = Base
+mbdata.config.configure(base_class=Base)
 
 # now you can import and use the mbdata models
 import mbdata.models
+```
+
+You can also use `mbdata.config` to re-map the MusicBrainz schema names, if your
+database doesn't follow the original structure:
+
+```python
+import mbdata.config
+mbdata.config.configure(schema='my_own_mb_schema')
 ```
 
 HTTP API

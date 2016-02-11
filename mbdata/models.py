@@ -12,6 +12,7 @@ from sqlalchemy.orm import relationship, composite, backref
 from mbdata.types import PartialDate, Point, Cube, regexp
 
 import mbdata.config
+mbdata.config.freeze()
 
 if mbdata.config.Base is not None:
     Base = mbdata.config.Base
