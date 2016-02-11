@@ -16,11 +16,11 @@ os.environ['MBDATA_API_SETTINGS'] = os.path.join(os.path.dirname(__file__), 'set
 from mbdata.api import app
 from mbdata.models import Base
 from mbdata.utils import patch_model_schemas, NO_SCHEMAS
-from mbdata.api.tests.sample_data import create_sample_data
+from mbdata.sample_data import create_sample_data
 
 
-use_file_db = True
-#use_file_db = False
+#use_file_db = True
+use_file_db = False
 
 db_fd = db_name = None
 

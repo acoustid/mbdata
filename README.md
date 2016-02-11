@@ -4,8 +4,9 @@ MusicBrainz Database Tools
 SQLAlchemy Models
 -----------------
 
-If you are developing a Python application that needs access to the MusicBrainz
-data, you can use the `mbdata.models` module to get [SQLAlchemy](http://www.sqlalchemy.org/)
+If you are developing a Python application that needs access to the [MusicBrainz](https://musicbrainz.org/)
+[data](https://musicbrainz.org/doc/MusicBrainz_Database),
+you can use the `mbdata.models` module to get [SQLAlchemy](http://www.sqlalchemy.org/)
 models mapped to the MusicBrainz database tables.
 
 All tables from the MusicBrainz database are mapped, all foreign keys have one-way
@@ -13,11 +14,10 @@ relationships set up and some models, where it's essential to access their
 related models, have two-way relationships (collections) set up.
 
 In order to work with the relationships efficiently, you should use the appropriate
-kind of [eager loading](http://docs.sqlalchemy.org/en/rel_0_8/orm/loading.html).
+kind of [eager loading](http://docs.sqlalchemy.org/en/latest/orm/loading_relationships.html).
 
-Example:
+Example usage of the models:
 
-    #!python
     >>> from sqlalchemy import create_engine
     >>> from sqlalchemy.orm import sessionmaker
     >>> from mbdata.models import Artist
@@ -27,11 +27,10 @@ Example:
     >>> artist = session.query(Artist).filter_by(gid='b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d').first()
     >>> print artist.name
 
-If you use the models from your own application and want to define foreign keys to
-the MusicBrainz schema, you will need to let mbdata know which metadata object to
+If you use the models in your own application and want to define foreign keys from your own models
+to the MusicBrainz schema, you will need to let `mbdata` know which metadata object to
 add the MusicBrainz tables to:
 
-    #!python
     from sqlalchemy.ext.declarative import declarative_base
     Base = declarative_base()
 
@@ -53,7 +52,6 @@ MusicBrainz PostgreSQL database.
 
 Installation:
 
-    #!sh
     virtualenv --system-site-packages e
     . e/bin/activate
     pip install -r requirements.txt
@@ -61,18 +59,15 @@ Installation:
 
 Configuration:
 
-    #!sh
 	cp settings.py.sample settings.py
 	vim settings.py
 
 Start the development server:
 
-    #!sh
     MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.api.app
 
 Query the API:
 
-    #!sh
     curl 'http://127.0.0.1:5000/v1/artist/get?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
 
 For production use, you should use server software like
@@ -84,12 +79,10 @@ Solr Index
 
 Create a minimal Solr configuration:
 
-    #!sh
     ./bin/create_solr_home.py -d /tmp/mbdata_solr
 
 Start Solr:
 
-    #!sh
     cd /path/to/solr-4.6.1/example
     java -Dsolr.solr.home=/tmp/mbdata_solr -jar start.jar
 
@@ -100,22 +93,18 @@ Normally you should work against a regular PostgreSQL database with MusicBrainz
 data, but for testing purposes, you can use a SQLite database with small data
 sub-set used in unit tests. You can create the database using:
 
-    #!sh
 	./bin/create_sample_db.py sample.db
 
 Then you can change your configuration:
 
-    #!python
     DATABASE_URI = 'sqlite:///sample.db'
 
 Running tests:
 
-    #!sh
     nosetests -v
 
 If you want to see the SQL queries from a failed test, you can use the following:
 
-    #!sh
     MBDATA_DATABASE_ECHO=1 nosetests -v
 
 Jenkins task that automatically runs the tests after each commit is [here](http://build.oxygene.sk/job/mbdata/).

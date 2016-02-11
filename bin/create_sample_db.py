@@ -4,7 +4,7 @@ import argparse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from mbdata.api.tests.sample_data import create_sample_data
+from mbdata.sample_data import create_sample_data
 from mbdata.models import ArtistCredit, Base
 from mbdata.utils import patch_model_schemas, NO_SCHEMAS
 
