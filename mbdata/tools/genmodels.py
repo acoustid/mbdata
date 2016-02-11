@@ -177,6 +177,7 @@ def generate_models_header():
     yield 'from mbdata.types import PartialDate, Point, Cube, regexp'
     yield ''
     yield 'import mbdata.config'
+    yield 'mbdata.config.freeze()'
     yield ''
     yield 'if mbdata.config.Base is not None:'
     yield '    Base = mbdata.config.Base'
@@ -184,6 +185,9 @@ def generate_models_header():
     yield '    Base = declarative_base(metadata=mbdata.config.metadata)'
     yield 'else:'
     yield '    Base = declarative_base()'
+    yield ''
+    yield 'if not mbdata.config.use_cube:'
+    yield '    Cube = Text'
     yield ''
     yield ''
 

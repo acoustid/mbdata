@@ -9,11 +9,13 @@ metadata = None
 # Override this if you want customize the schema names that mbdata uses
 schemas = {}
 
+use_cube = True
+
 _is_frozen = False
 _unset = object()
 
 
-def configure(base_class=_unset, metadata=_unset, schema=_unset, schemas=_unset):
+def configure(base_class=_unset, metadata=_unset, schema=_unset, schemas=_unset, use_cube=_unset):
     if _is_frozen:
         raise RuntimeError("mbdata.models was already imported, you can't configure it anymore")
     if base_class is not _unset:
@@ -30,6 +32,8 @@ def configure(base_class=_unset, metadata=_unset, schema=_unset, schemas=_unset)
             'statistics': schema,
             'documentation': schema,
         }
+    if use_cube is not _unset:
+        sys.modules[__name__].use_cube = use_cube
 
 
 def freeze():

@@ -21,6 +21,9 @@ elif mbdata.config.metadata is not None:
 else:
     Base = declarative_base()
 
+if not mbdata.config.use_cube:
+    Cube = Text
+
 
 class Annotation(Base):
     __tablename__ = 'annotation'
