@@ -4,6 +4,6 @@ pipelines:
   default:
     - step:
         script:
-          - apt -y update
-          - apt -y install python-all-dev tox
+          - DEBIAN_FRONTEND=noninteractive apt -y update
+          - DEBIAN_FRONTEND=noninteractive apt -y install python-all-dev tox gcc libxml2-dev libxslt1-dev
           - tox
