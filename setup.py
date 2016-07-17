@@ -14,6 +14,10 @@ setup(name='mbdata',
       include_package_data=True,
       zip_safe=False,
 
+      install_requires=[
+          'six',
+      ],
+
       packages=[
           'mbdata',
           'mbdata.api',
