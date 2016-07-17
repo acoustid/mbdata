@@ -5,7 +5,7 @@
 # pylint: disable=W0232
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql
-from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT
+from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
@@ -25,12 +25,92 @@ if not mbdata.config.use_cube:
     Cube = Text
 
 
+def apply_schema(name, schema):
+    schema = mbdata.config.schemas.get(schema, schema)
+    if schema:
+        name = "{}.{}".format(schema, name)
+    return name
+
+
+class AlternativeRelease(Base):
+    __tablename__ = 'alternative_release'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    id = Column(Integer, primary_key=True)
+    gid = Column(UUID, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='alternative_release_fk_release'), nullable=False)
+    name = Column(String)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='alternative_release_fk_artist_credit'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('alternative_release_type.id', 'musicbrainz'), name='alternative_release_fk_type'), nullable=False)
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='alternative_release_fk_language'), nullable=False)
+    script_id = Column('script', Integer, ForeignKey(apply_schema('script.id', 'musicbrainz'), name='alternative_release_fk_script'), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+    type = relationship('AlternativeReleaseType', foreign_keys=[type_id], innerjoin=True)
+    language = relationship('Language', foreign_keys=[language_id], innerjoin=True)
+    script = relationship('Script', foreign_keys=[script_id], innerjoin=True)
+
+
+class AlternativeReleaseType(Base):
+    __tablename__ = 'alternative_release_type'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('alternative_release_type.id', 'musicbrainz'), name='alternative_release_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('AlternativeReleaseType', foreign_keys=[parent_id])
+
+
+class AlternativeMedium(Base):
+    __tablename__ = 'alternative_medium'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    id = Column(Integer, primary_key=True)
+    medium_id = Column('medium', Integer, ForeignKey(apply_schema('medium.id', 'musicbrainz'), name='alternative_medium_fk_medium'), nullable=False)
+    alternative_release_id = Column('alternative_release', Integer, ForeignKey(apply_schema('alternative_release.id', 'musicbrainz'), name='alternative_medium_fk_alternative_release'), nullable=False)
+    name = Column(String)
+
+    medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True)
+    alternative_release = relationship('AlternativeRelease', foreign_keys=[alternative_release_id], innerjoin=True)
+
+
+class AlternativeTrack(Base):
+    __tablename__ = 'alternative_track'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='alternative_track_fk_artist_credit'))
+    ref_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+
+    artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id])
+
+
+class AlternativeMediumTrack(Base):
+    __tablename__ = 'alternative_medium_track'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    alternative_medium_id = Column('alternative_medium', Integer, ForeignKey(apply_schema('alternative_medium.id', 'musicbrainz'), name='alternative_medium_track_fk_alternative_medium'), primary_key=True, nullable=False)
+    track_id = Column('track', Integer, ForeignKey(apply_schema('track.id', 'musicbrainz'), name='alternative_medium_track_fk_track'), primary_key=True, nullable=False)
+    alternative_track_id = Column('alternative_track', Integer, ForeignKey(apply_schema('alternative_track.id', 'musicbrainz'), name='alternative_medium_track_fk_alternative_track'), nullable=False)
+
+    alternative_medium = relationship('AlternativeMedium', foreign_keys=[alternative_medium_id], innerjoin=True)
+    track = relationship('Track', foreign_keys=[track_id], innerjoin=True)
+    alternative_track = relationship('AlternativeTrack', foreign_keys=[alternative_track_id], innerjoin=True)
+
+
 class Annotation(Base):
     __tablename__ = 'annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='annotation_fk_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='annotation_fk_editor'), nullable=False)
     text = Column(String)
     changelog = Column(String(255))
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -43,7 +123,7 @@ class Application(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    owner_id = Column('owner', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='application_fk_owner'), nullable=False)
+    owner_id = Column('owner', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='application_fk_owner'), nullable=False)
     name = Column(String, nullable=False)
     oauth_id = Column(String, nullable=False)
     oauth_secret = Column(String, nullable=False)
@@ -58,9 +138,10 @@ class AreaType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.area_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('area_type.id', 'musicbrainz'), name='area_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('AreaType', foreign_keys=[parent_id])
 
@@ -72,7 +153,7 @@ class Area(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.area_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('area_type.id', 'musicbrainz'), name='area_fk_type'))
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     begin_date_year = Column(SMALLINT)
@@ -95,7 +176,7 @@ class AreaGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Area', foreign_keys=[redirect_id], innerjoin=True)
@@ -115,9 +196,10 @@ class AreaAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.area_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('area_alias_type.id', 'musicbrainz'), name='area_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('AreaAliasType', foreign_keys=[parent_id])
 
@@ -127,12 +209,12 @@ class AreaAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_alias_fk_area'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_alias_fk_area'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.area_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('area_alias_type.id', 'musicbrainz'), name='area_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -154,8 +236,8 @@ class AreaAnnotation(Base):
     __tablename__ = 'area_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_annotation_fk_area'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_annotation_fk_annotation'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_annotation_fk_area'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='area_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -165,8 +247,8 @@ class AreaTag(Base):
     __tablename__ = 'area_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_tag_fk_area'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_tag_fk_tag'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_tag_fk_area'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='area_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -178,9 +260,9 @@ class AreaTagRaw(Base):
     __tablename__ = 'area_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_tag_raw_fk_area'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='area_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_tag_raw_fk_area'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='area_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='area_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
@@ -202,15 +284,15 @@ class Artist(Base):
     end_date_year = Column(SMALLINT)
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
-    type_id = Column('type', Integer, ForeignKey('{}.artist_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_fk_type'))
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_fk_area'))
-    gender_id = Column('gender', Integer, ForeignKey('{}.gender.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_fk_gender'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('artist_type.id', 'musicbrainz'), name='artist_fk_type'))
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='artist_fk_area'))
+    gender_id = Column('gender', Integer, ForeignKey(apply_schema('gender.id', 'musicbrainz'), name='artist_fk_gender'))
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     ended = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
-    begin_area_id = Column('begin_area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_fk_begin_area'))
-    end_area_id = Column('end_area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_fk_end_area'))
+    begin_area_id = Column('begin_area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='artist_fk_begin_area'))
+    end_area_id = Column('end_area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='artist_fk_end_area'))
 
     type = relationship('ArtistType', foreign_keys=[type_id])
     area = relationship('Area', foreign_keys=[area_id])
@@ -222,25 +304,16 @@ class Artist(Base):
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
-class ArtistDeletion(Base):
-    __tablename__ = 'artist_deletion'
-    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-
-    gid = Column(UUID, primary_key=True, nullable=False)
-    last_known_name = Column(String, nullable=False)
-    last_known_comment = Column(String, nullable=False)
-    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
-
-
 class ArtistAliasType(Base):
     __tablename__ = 'artist_alias_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.artist_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('artist_alias_type.id', 'musicbrainz'), name='artist_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ArtistAliasType', foreign_keys=[parent_id])
 
@@ -250,12 +323,12 @@ class ArtistAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_alias_fk_artist'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_alias_fk_artist'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.artist_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('artist_alias_type.id', 'musicbrainz'), name='artist_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -277,8 +350,8 @@ class ArtistAnnotation(Base):
     __tablename__ = 'artist_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_annotation_fk_artist'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_annotation_fk_annotation'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_annotation_fk_artist'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='artist_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -288,7 +361,7 @@ class ArtistIPI(Base):
     __tablename__ = 'artist_ipi'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_ipi_fk_artist'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_ipi_fk_artist'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -300,7 +373,7 @@ class ArtistISNI(Base):
     __tablename__ = 'artist_isni'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_isni_fk_artist'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_isni_fk_artist'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -312,7 +385,7 @@ class ArtistMeta(Base):
     __tablename__ = 'artist_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -323,8 +396,8 @@ class ArtistTag(Base):
     __tablename__ = 'artist_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_tag_fk_artist'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_tag_fk_tag'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_tag_fk_artist'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='artist_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -336,8 +409,8 @@ class ArtistRatingRaw(Base):
     __tablename__ = 'artist_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_rating_raw_fk_artist'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_rating_raw_fk_artist'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='artist_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
@@ -348,9 +421,9 @@ class ArtistTagRaw(Base):
     __tablename__ = 'artist_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_tag_raw_fk_artist'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_tag_raw_fk_artist'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='artist_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='artist_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
@@ -373,9 +446,9 @@ class ArtistCreditName(Base):
     __tablename__ = 'artist_credit_name'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('{}.artist_credit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_credit_name_fk_artist_credit', ondelete='CASCADE'), primary_key=True, nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='artist_credit_name_fk_artist_credit', ondelete='CASCADE'), primary_key=True, nullable=False)
     position = Column(SMALLINT, primary_key=True, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_credit_name_fk_artist', ondelete='CASCADE'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_credit_name_fk_artist', ondelete='CASCADE'), nullable=False)
     name = Column(String, nullable=False)
     join_phrase = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
@@ -388,7 +461,7 @@ class ArtistGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Artist', foreign_keys=[redirect_id], innerjoin=True)
@@ -408,9 +481,10 @@ class ArtistType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.artist_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='artist_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('artist_type.id', 'musicbrainz'), name='artist_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ArtistType', foreign_keys=[parent_id])
 
@@ -420,10 +494,10 @@ class AutoeditorElection(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    candidate_id = Column('candidate', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_fk_candidate'), nullable=False)
-    proposer_id = Column('proposer', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_fk_proposer'), nullable=False)
-    seconder_1_id = Column('seconder_1', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_fk_seconder_1'))
-    seconder_2_id = Column('seconder_2', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_fk_seconder_2'))
+    candidate_id = Column('candidate', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='autoeditor_election_fk_candidate'), nullable=False)
+    proposer_id = Column('proposer', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='autoeditor_election_fk_proposer'), nullable=False)
+    seconder_1_id = Column('seconder_1', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='autoeditor_election_fk_seconder_1'))
+    seconder_2_id = Column('seconder_2', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='autoeditor_election_fk_seconder_2'))
     status = Column(Integer, default=1, server_default=sql.text('1'), nullable=False)
     yes_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     no_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -442,8 +516,8 @@ class AutoeditorElectionVote(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    autoeditor_election_id = Column('autoeditor_election', Integer, ForeignKey('{}.autoeditor_election.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_vote_fk_autoeditor_election'), nullable=False)
-    voter_id = Column('voter', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='autoeditor_election_vote_fk_voter'), nullable=False)
+    autoeditor_election_id = Column('autoeditor_election', Integer, ForeignKey(apply_schema('autoeditor_election.id', 'musicbrainz'), name='autoeditor_election_vote_fk_autoeditor_election'), nullable=False)
+    voter_id = Column('voter', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='autoeditor_election_vote_fk_voter'), nullable=False)
     vote = Column(Integer, nullable=False)
     vote_time = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
@@ -470,7 +544,7 @@ class CDTOCRaw(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column('release', Integer, ForeignKey('{}.release_raw.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='cdtoc_raw_fk_release'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release_raw.id', 'musicbrainz'), name='cdtoc_raw_fk_release'), nullable=False)
     discid = Column(CHAR(28), nullable=False)
     track_count = Column(Integer, nullable=False)
     leadout_offset = Column(Integer, nullable=False)
@@ -483,9 +557,18 @@ class CountryArea(Base):
     __tablename__ = 'country_area'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='country_area_fk_area'), primary_key=True)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='country_area_fk_area'), primary_key=True)
 
     area = relationship('Area', foreign_keys=[area_id])
+
+
+class DeletedEntity(Base):
+    __tablename__ = 'deleted_entity'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    gid = Column(UUID, primary_key=True, nullable=False)
+    data = Column(JSONB, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
 
 class Edit(Base):
@@ -493,21 +576,28 @@ class Edit(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_fk_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='edit_fk_editor'), nullable=False)
     type = Column(SMALLINT, nullable=False)
     status = Column(SMALLINT, nullable=False)
-    data = Column(String, nullable=False)
-    yes_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
-    no_votes = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     autoedit = Column(SMALLINT, default=0, server_default=sql.text('0'), nullable=False)
     open_time = Column(DateTime(timezone=True), server_default=sql.func.now())
     close_time = Column(DateTime(timezone=True))
     expire_time = Column(DateTime(timezone=True), nullable=False)
-    language_id = Column('language', Integer, ForeignKey('{}.language.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_fk_language'))
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='edit_fk_language'))
     quality = Column(SMALLINT, default=1, server_default=sql.text('1'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     language = relationship('Language', foreign_keys=[language_id])
+
+
+class EditData(Base):
+    __tablename__ = 'edit_data'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_data_fk_edit'), primary_key=True, nullable=False)
+    data = Column(JSONB, nullable=False)
+
+    edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
 
 
 class EditNote(Base):
@@ -515,8 +605,8 @@ class EditNote(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_note_fk_editor'), nullable=False)
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_note_fk_edit'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='edit_note_fk_editor'), nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_note_fk_edit'), nullable=False)
     text = Column(String, nullable=False)
     post_time = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -524,12 +614,23 @@ class EditNote(Base):
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
 
 
+class EditNoteRecipient(Base):
+    __tablename__ = 'edit_note_recipient'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    recipient_id = Column('recipient', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='edit_note_recipient_fk_recipient'), primary_key=True, nullable=False)
+    edit_note_id = Column('edit_note', Integer, ForeignKey(apply_schema('edit_note.id', 'musicbrainz'), name='edit_note_recipient_fk_edit_note'), primary_key=True, nullable=False)
+
+    recipient = relationship('Editor', foreign_keys=[recipient_id], innerjoin=True)
+    edit_note = relationship('EditNote', foreign_keys=[edit_note_id], innerjoin=True)
+
+
 class EditArea(Base):
     __tablename__ = 'edit_area'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_area_fk_edit'), primary_key=True, nullable=False)
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_area_fk_area', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_area_fk_edit'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='edit_area_fk_area', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
@@ -539,8 +640,8 @@ class EditArtist(Base):
     __tablename__ = 'edit_artist'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_artist_fk_edit'), primary_key=True, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_artist_fk_edit'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='edit_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
@@ -551,8 +652,8 @@ class EditEvent(Base):
     __tablename__ = 'edit_event'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_event_fk_edit'), primary_key=True, nullable=False)
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_event_fk_event', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_event_fk_edit'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='edit_event_fk_event', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
@@ -562,8 +663,8 @@ class EditInstrument(Base):
     __tablename__ = 'edit_instrument'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_instrument_fk_edit'), primary_key=True, nullable=False)
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_instrument_fk_instrument', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_instrument_fk_edit'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='edit_instrument_fk_instrument', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
@@ -573,8 +674,8 @@ class EditLabel(Base):
     __tablename__ = 'edit_label'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_label_fk_edit'), primary_key=True, nullable=False)
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_label_fk_label', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_label_fk_edit'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='edit_label_fk_label', ondelete='CASCADE'), primary_key=True, nullable=False)
     status = Column(SMALLINT, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
@@ -585,8 +686,8 @@ class EditPlace(Base):
     __tablename__ = 'edit_place'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_place_fk_edit'), primary_key=True, nullable=False)
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_place_fk_place', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_place_fk_edit'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='edit_place_fk_place', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
@@ -596,8 +697,8 @@ class EditRelease(Base):
     __tablename__ = 'edit_release'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_release_fk_edit'), primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_release_fk_release', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_release_fk_edit'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='edit_release_fk_release', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -607,8 +708,8 @@ class EditReleaseGroup(Base):
     __tablename__ = 'edit_release_group'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_release_group_fk_edit'), primary_key=True, nullable=False)
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_release_group_fk_release_group', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_release_group_fk_edit'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='edit_release_group_fk_release_group', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
@@ -618,8 +719,8 @@ class EditRecording(Base):
     __tablename__ = 'edit_recording'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_recording_fk_edit'), primary_key=True, nullable=False)
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_recording_fk_recording', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_recording_fk_edit'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='edit_recording_fk_recording', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
@@ -629,8 +730,8 @@ class EditSeries(Base):
     __tablename__ = 'edit_series'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_series_fk_edit'), primary_key=True, nullable=False)
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_series_fk_series', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_series_fk_edit'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='edit_series_fk_series', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
@@ -640,8 +741,8 @@ class EditWork(Base):
     __tablename__ = 'edit_work'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_work_fk_edit'), primary_key=True, nullable=False)
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_work_fk_work', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_work_fk_edit'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='edit_work_fk_work', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
@@ -651,8 +752,8 @@ class EditURL(Base):
     __tablename__ = 'edit_url'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_url_fk_edit'), primary_key=True, nullable=False)
-    url_id = Column('url', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='edit_url_fk_url', ondelete='CASCADE'), primary_key=True, nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='edit_url_fk_edit'), primary_key=True, nullable=False)
+    url_id = Column('url', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='edit_url_fk_url', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
     url = relationship('URL', foreign_keys=[url_id], innerjoin=True)
@@ -671,14 +772,10 @@ class Editor(Base):
     member_since = Column(DateTime(timezone=True), server_default=sql.func.now())
     email_confirm_date = Column(DateTime(timezone=True))
     last_login_date = Column(DateTime(timezone=True), server_default=sql.func.now())
-    edits_accepted = Column(Integer, default=0, server_default=sql.text('0'))
-    edits_rejected = Column(Integer, default=0, server_default=sql.text('0'))
-    auto_edits_accepted = Column(Integer, default=0, server_default=sql.text('0'))
-    edits_failed = Column(Integer, default=0, server_default=sql.text('0'))
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     birth_date = Column(Date)
-    gender_id = Column('gender', Integer, ForeignKey('{}.gender.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_fk_gender'))
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_fk_area'))
+    gender_id = Column('gender', Integer, ForeignKey(apply_schema('gender.id', 'musicbrainz'), name='editor_fk_gender'))
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='editor_fk_area'))
     password = Column(String(128), nullable=False)
     ha1 = Column(CHAR(32), nullable=False)
     deleted = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
@@ -691,8 +788,8 @@ class EditorLanguage(Base):
     __tablename__ = 'editor_language'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_language_fk_editor'), primary_key=True, nullable=False)
-    language_id = Column('language', Integer, ForeignKey('{}.language.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_language_fk_language'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_language_fk_editor'), primary_key=True, nullable=False)
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='editor_language_fk_language'), primary_key=True, nullable=False)
     fluency = Column(Enum('basic', 'intermediate', 'advanced', 'native', name='FLUENCY', schema=mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -704,7 +801,7 @@ class EditorPreference(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_preference_fk_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_preference_fk_editor'), nullable=False)
     name = Column(String(50), nullable=False)
     value = Column(String(100), nullable=False)
 
@@ -716,9 +813,9 @@ class EditorSubscribeArtist(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_fk_editor'), nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_fk_artist'), nullable=False)
-    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_fk_last_edit_sent'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_artist_fk_editor'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='editor_subscribe_artist_fk_artist'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_artist_fk_last_edit_sent'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
@@ -729,9 +826,9 @@ class EditorSubscribeArtistDeleted(Base):
     __tablename__ = 'editor_subscribe_artist_deleted'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_deleted_fk_editor'), primary_key=True, nullable=False)
-    gid = Column(UUID, ForeignKey('{}.artist_deletion.gid'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_deleted_fk_gid'), primary_key=True, nullable=False)
-    deleted_by_id = Column('deleted_by', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_artist_deleted_fk_deleted_by'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_artist_deleted_fk_editor'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey(apply_schema('deleted_entity.gid', 'musicbrainz'), name='editor_subscribe_artist_deleted_fk_gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_artist_deleted_fk_deleted_by'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
@@ -742,7 +839,7 @@ class EditorSubscribeCollection(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_collection_fk_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_collection_fk_editor'), nullable=False)
     collection = Column(Integer, nullable=False)
     last_edit_sent = Column(Integer, nullable=False)
     available = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
@@ -756,9 +853,9 @@ class EditorSubscribeLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_fk_editor'), nullable=False)
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_fk_label'), nullable=False)
-    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_fk_last_edit_sent'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_label_fk_editor'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='editor_subscribe_label_fk_label'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_label_fk_last_edit_sent'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
@@ -769,9 +866,9 @@ class EditorSubscribeLabelDeleted(Base):
     __tablename__ = 'editor_subscribe_label_deleted'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_deleted_fk_editor'), primary_key=True, nullable=False)
-    gid = Column(UUID, ForeignKey('{}.label_deletion.gid'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_deleted_fk_gid'), primary_key=True, nullable=False)
-    deleted_by_id = Column('deleted_by', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_label_deleted_fk_deleted_by'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_label_deleted_fk_editor'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey(apply_schema('deleted_entity.gid', 'musicbrainz'), name='editor_subscribe_label_deleted_fk_gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_label_deleted_fk_deleted_by'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
@@ -782,8 +879,8 @@ class EditorSubscribeEditor(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_editor_fk_editor'), nullable=False)
-    subscribed_editor_id = Column('subscribed_editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_editor_fk_subscribed_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_editor_fk_editor'), nullable=False)
+    subscribed_editor_id = Column('subscribed_editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_editor_fk_subscribed_editor'), nullable=False)
     last_edit_sent = Column(Integer, nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -795,9 +892,9 @@ class EditorSubscribeSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_fk_editor'), nullable=False)
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_fk_series'), nullable=False)
-    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_fk_last_edit_sent'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_series_fk_editor'), nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='editor_subscribe_series_fk_series'), nullable=False)
+    last_edit_sent_id = Column('last_edit_sent', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_series_fk_last_edit_sent'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
@@ -808,9 +905,9 @@ class EditorSubscribeSeriesDeleted(Base):
     __tablename__ = 'editor_subscribe_series_deleted'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_deleted_fk_editor'), primary_key=True, nullable=False)
-    gid = Column(UUID, ForeignKey('{}.series_deletion.gid'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_deleted_fk_gid'), primary_key=True, nullable=False)
-    deleted_by_id = Column('deleted_by', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_subscribe_series_deleted_fk_deleted_by'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_subscribe_series_deleted_fk_editor'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey(apply_schema('deleted_entity.gid', 'musicbrainz'), name='editor_subscribe_series_deleted_fk_gid'), primary_key=True, nullable=False)
+    deleted_by_id = Column('deleted_by', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='editor_subscribe_series_deleted_fk_deleted_by'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     deleted_by = relationship('Edit', foreign_keys=[deleted_by_id], innerjoin=True)
@@ -830,7 +927,7 @@ class Event(Base):
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
     time = Column(Time(timezone=False))
-    type_id = Column('type', Integer, ForeignKey('{}.event_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('event_type.id', 'musicbrainz'), name='event_fk_type'))
     cancelled = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     setlist = Column(String)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
@@ -848,7 +945,7 @@ class EventMeta(Base):
     __tablename__ = 'event_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -859,8 +956,8 @@ class EventRatingRaw(Base):
     __tablename__ = 'event_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_rating_raw_fk_event'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_rating_raw_fk_event'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='event_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
@@ -871,9 +968,9 @@ class EventTagRaw(Base):
     __tablename__ = 'event_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_tag_raw_fk_event'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_tag_raw_fk_event'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='event_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='event_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
@@ -887,9 +984,10 @@ class EventAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.event_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('event_alias_type.id', 'musicbrainz'), name='event_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('EventAliasType', foreign_keys=[parent_id])
 
@@ -899,12 +997,12 @@ class EventAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_alias_fk_event'), nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_alias_fk_event'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.event_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('event_alias_type.id', 'musicbrainz'), name='event_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -926,8 +1024,8 @@ class EventAnnotation(Base):
     __tablename__ = 'event_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_annotation_fk_event'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_annotation_fk_annotation'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_annotation_fk_event'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='event_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -938,7 +1036,7 @@ class EventGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Event', foreign_keys=[redirect_id], innerjoin=True)
@@ -956,8 +1054,8 @@ class EventTag(Base):
     __tablename__ = 'event_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_tag_fk_event'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_tag_fk_tag'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_tag_fk_event'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='event_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -971,9 +1069,10 @@ class EventType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.event_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='event_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('event_type.id', 'musicbrainz'), name='event_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('EventType', foreign_keys=[parent_id])
 
@@ -984,9 +1083,10 @@ class Gender(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.gender.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='gender_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('gender.id', 'musicbrainz'), name='gender_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('Gender', foreign_keys=[parent_id])
 
@@ -997,9 +1097,10 @@ class InstrumentType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.instrument_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('instrument_type.id', 'musicbrainz'), name='instrument_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('InstrumentType', foreign_keys=[parent_id])
 
@@ -1011,7 +1112,7 @@ class Instrument(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.instrument_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('instrument_type.id', 'musicbrainz'), name='instrument_fk_type'))
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
@@ -1025,7 +1126,7 @@ class InstrumentGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Instrument', foreign_keys=[redirect_id], innerjoin=True)
@@ -1045,9 +1146,10 @@ class InstrumentAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.instrument_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('instrument_alias_type.id', 'musicbrainz'), name='instrument_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('InstrumentAliasType', foreign_keys=[parent_id])
 
@@ -1057,12 +1159,12 @@ class InstrumentAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_alias_fk_instrument'), nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_alias_fk_instrument'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.instrument_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('instrument_alias_type.id', 'musicbrainz'), name='instrument_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -1084,8 +1186,8 @@ class InstrumentAnnotation(Base):
     __tablename__ = 'instrument_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_annotation_fk_instrument'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_annotation_fk_annotation'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_annotation_fk_instrument'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='instrument_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -1095,8 +1197,8 @@ class InstrumentTag(Base):
     __tablename__ = 'instrument_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_tag_fk_instrument'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_tag_fk_tag'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_tag_fk_instrument'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='instrument_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -1108,9 +1210,9 @@ class InstrumentTagRaw(Base):
     __tablename__ = 'instrument_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_tag_raw_fk_instrument'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='instrument_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_tag_raw_fk_instrument'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='instrument_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='instrument_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
@@ -1122,7 +1224,7 @@ class ISO31661(Base):
     __tablename__ = 'iso_3166_1'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='iso_3166_1_fk_area'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='iso_3166_1_fk_area'), nullable=False)
     code = Column(CHAR(2), primary_key=True)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_1_codes'))
@@ -1132,7 +1234,7 @@ class ISO31662(Base):
     __tablename__ = 'iso_3166_2'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='iso_3166_2_fk_area'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='iso_3166_2_fk_area'), nullable=False)
     code = Column(String(10), primary_key=True)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_2_codes'))
@@ -1142,7 +1244,7 @@ class ISO31663(Base):
     __tablename__ = 'iso_3166_3'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='iso_3166_3_fk_area'), nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='iso_3166_3_fk_area'), nullable=False)
     code = Column(CHAR(4), primary_key=True)
 
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True, backref=backref(u'iso_3166_3_codes'))
@@ -1153,7 +1255,7 @@ class ISRC(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='isrc_fk_recording'), nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='isrc_fk_recording'), nullable=False)
     isrc = Column(CHAR(12), nullable=False)
     source = Column(SMALLINT)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1167,7 +1269,7 @@ class ISWC(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True, nullable=False)
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='iswc_fk_work'), nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='iswc_fk_work'), nullable=False)
     iswc = Column(CHAR(15))
     source = Column(SMALLINT)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1181,9 +1283,9 @@ class LinkAreaArea(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_area_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_area_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_area_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_area_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_area_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_area_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1216,9 +1318,9 @@ class LinkAreaArtist(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_artist_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_artist_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_artist_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_artist_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_artist_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_area_artist_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1251,9 +1353,9 @@ class LinkAreaEvent(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_event_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_event_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_event_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_area_event_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1286,9 +1388,9 @@ class LinkAreaInstrument(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_instrument_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_instrument_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_instrument_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_area_instrument_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1321,9 +1423,9 @@ class LinkAreaLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_label_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_label_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_label_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_area_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1356,9 +1458,9 @@ class LinkAreaPlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_area_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1391,9 +1493,9 @@ class LinkAreaRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_area_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1426,9 +1528,9 @@ class LinkAreaRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_area_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1461,9 +1563,9 @@ class LinkAreaReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_area_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1496,9 +1598,9 @@ class LinkAreaSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_area_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1531,9 +1633,9 @@ class LinkAreaURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_area_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1566,9 +1668,9 @@ class LinkAreaWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_area_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_area_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='l_area_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_area_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1601,9 +1703,9 @@ class LinkArtistArtist(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_artist_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_artist_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_artist_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_artist_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_artist_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_artist_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1636,9 +1738,9 @@ class LinkArtistEvent(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_event_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_event_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_event_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_artist_event_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1671,9 +1773,9 @@ class LinkArtistInstrument(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_instrument_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_instrument_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_instrument_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_artist_instrument_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1706,9 +1808,9 @@ class LinkArtistLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_label_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_label_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_label_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_artist_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1741,9 +1843,9 @@ class LinkArtistPlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_artist_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1776,9 +1878,9 @@ class LinkArtistRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_artist_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1811,9 +1913,9 @@ class LinkArtistRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_artist_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1846,9 +1948,9 @@ class LinkArtistReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_artist_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1881,9 +1983,9 @@ class LinkArtistSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_artist_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1916,9 +2018,9 @@ class LinkArtistURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_artist_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1951,9 +2053,9 @@ class LinkArtistWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_artist_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_artist_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='l_artist_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_artist_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -1986,9 +2088,9 @@ class LinkEventEvent(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_event_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_event_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_event_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_event_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_event_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_event_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2021,9 +2123,9 @@ class LinkEventInstrument(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_instrument_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_instrument_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_instrument_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_event_instrument_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2056,9 +2158,9 @@ class LinkEventLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_label_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_label_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_label_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_event_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2091,9 +2193,9 @@ class LinkEventPlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_event_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2126,9 +2228,9 @@ class LinkEventRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_event_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2161,9 +2263,9 @@ class LinkEventRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_event_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2196,9 +2298,9 @@ class LinkEventReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_event_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2231,9 +2333,9 @@ class LinkEventSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_event_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2266,9 +2368,9 @@ class LinkEventURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_event_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2301,9 +2403,9 @@ class LinkEventWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_event_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_event_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='l_event_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_event_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2336,9 +2438,9 @@ class LinkLabelLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_label_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_label_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_label_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2371,9 +2473,9 @@ class LinkInstrumentInstrument(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_instrument_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_instrument_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_instrument_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_instrument_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_instrument_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_instrument_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2406,9 +2508,9 @@ class LinkInstrumentLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_label_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_label_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_label_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_label_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_label_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_instrument_label_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2441,9 +2543,9 @@ class LinkInstrumentPlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_instrument_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2476,9 +2578,9 @@ class LinkInstrumentRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_instrument_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2511,9 +2613,9 @@ class LinkInstrumentRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_instrument_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2546,9 +2648,9 @@ class LinkInstrumentReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_instrument_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2581,9 +2683,9 @@ class LinkInstrumentSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_instrument_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2616,9 +2718,9 @@ class LinkInstrumentURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_instrument_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2651,9 +2753,9 @@ class LinkInstrumentWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_instrument_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_instrument_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='l_instrument_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_instrument_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2686,9 +2788,9 @@ class LinkLabelPlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_label_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2721,9 +2823,9 @@ class LinkLabelRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_label_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2756,9 +2858,9 @@ class LinkLabelRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_label_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2791,9 +2893,9 @@ class LinkLabelReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_label_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2826,9 +2928,9 @@ class LinkLabelSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_label_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2861,9 +2963,9 @@ class LinkLabelURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_label_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2896,9 +2998,9 @@ class LinkLabelWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_label_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_label_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='l_label_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_label_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2931,9 +3033,9 @@ class LinkPlacePlace(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_place_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_place_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_place_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_place_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_place_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_place_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -2966,9 +3068,9 @@ class LinkPlaceRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_place_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3001,9 +3103,9 @@ class LinkPlaceRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_place_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3036,9 +3138,9 @@ class LinkPlaceReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_place_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3071,9 +3173,9 @@ class LinkPlaceSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_place_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3106,9 +3208,9 @@ class LinkPlaceURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_place_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3141,9 +3243,9 @@ class LinkPlaceWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_place_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_place_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='l_place_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_place_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3176,9 +3278,9 @@ class LinkRecordingRecording(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_recording_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_recording_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_recording_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_recording_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_recording_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_recording_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3211,9 +3313,9 @@ class LinkRecordingRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_recording_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3246,9 +3348,9 @@ class LinkRecordingReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_recording_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3281,9 +3383,9 @@ class LinkRecordingSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_recording_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3316,9 +3418,9 @@ class LinkRecordingURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_recording_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3351,9 +3453,9 @@ class LinkRecordingWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_recording_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_recording_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='l_recording_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_recording_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3386,9 +3488,9 @@ class LinkReleaseRelease(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_release_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_release_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_release_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3421,9 +3523,9 @@ class LinkReleaseReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3456,9 +3558,9 @@ class LinkReleaseSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_release_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3491,9 +3593,9 @@ class LinkReleaseURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_release_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3526,9 +3628,9 @@ class LinkReleaseWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='l_release_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_release_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3561,9 +3663,9 @@ class LinkReleaseGroupReleaseGroup(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_release_group_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_release_group_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_release_group_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_group_release_group_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_group_release_group_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_group_release_group_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3596,9 +3698,9 @@ class LinkReleaseGroupSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_group_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_group_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_release_group_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3631,9 +3733,9 @@ class LinkReleaseGroupURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_group_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_group_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_release_group_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3666,9 +3768,9 @@ class LinkReleaseGroupWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_release_group_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_release_group_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='l_release_group_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_release_group_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3701,9 +3803,9 @@ class LinkSeriesSeries(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_series_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_series_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_series_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_series_series_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_series_series_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_series_series_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3736,9 +3838,9 @@ class LinkSeriesURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_series_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_series_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_series_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3771,9 +3873,9 @@ class LinkSeriesWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_series_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_series_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='l_series_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_series_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3806,9 +3908,9 @@ class LinkURLURL(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_url_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_url_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_url_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_url_url_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_url_url_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_url_url_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3841,9 +3943,9 @@ class LinkURLWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_url_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_url_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='l_url_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_url_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3876,9 +3978,9 @@ class LinkWorkWork(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_work_work_fk_link'), nullable=False)
-    entity0_id = Column('entity0', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_work_work_fk_entity0'), nullable=False)
-    entity1_id = Column('entity1', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='l_work_work_fk_entity1'), nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='l_work_work_fk_link'), nullable=False)
+    entity0_id = Column('entity0', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_work_work_fk_entity0'), nullable=False)
+    entity1_id = Column('entity1', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='l_work_work_fk_entity1'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     link_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -3920,8 +4022,8 @@ class Label(Base):
     end_date_month = Column(SMALLINT)
     end_date_day = Column(SMALLINT)
     label_code = Column(Integer)
-    type_id = Column('type', Integer, ForeignKey('{}.label_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_fk_type'))
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_fk_area'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('label_type.id', 'musicbrainz'), name='label_fk_type'))
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='label_fk_area'))
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -3934,22 +4036,12 @@ class Label(Base):
     end_date = composite(PartialDate, end_date_year, end_date_month, end_date_day)
 
 
-class LabelDeletion(Base):
-    __tablename__ = 'label_deletion'
-    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-
-    gid = Column(UUID, primary_key=True, nullable=False)
-    last_known_name = Column(String, nullable=False)
-    last_known_comment = Column(String, nullable=False)
-    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
-
-
 class LabelRatingRaw(Base):
     __tablename__ = 'label_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_rating_raw_fk_label'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_rating_raw_fk_label'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='label_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
@@ -3960,9 +4052,9 @@ class LabelTagRaw(Base):
     __tablename__ = 'label_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_tag_raw_fk_label'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_tag_raw_fk_label'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='label_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='label_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
@@ -3976,9 +4068,10 @@ class LabelAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.label_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('label_alias_type.id', 'musicbrainz'), name='label_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('LabelAliasType', foreign_keys=[parent_id])
 
@@ -3988,12 +4081,12 @@ class LabelAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_alias_fk_label'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_alias_fk_label'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.label_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('label_alias_type.id', 'musicbrainz'), name='label_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -4015,8 +4108,8 @@ class LabelAnnotation(Base):
     __tablename__ = 'label_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_annotation_fk_label'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_annotation_fk_annotation'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_annotation_fk_label'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='label_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -4026,7 +4119,7 @@ class LabelIPI(Base):
     __tablename__ = 'label_ipi'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_ipi_fk_label'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_ipi_fk_label'), primary_key=True, nullable=False)
     ipi = Column(CHAR(11), primary_key=True, nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -4038,7 +4131,7 @@ class LabelISNI(Base):
     __tablename__ = 'label_isni'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_isni_fk_label'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_isni_fk_label'), primary_key=True, nullable=False)
     isni = Column(CHAR(16), primary_key=True, nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -4050,7 +4143,7 @@ class LabelMeta(Base):
     __tablename__ = 'label_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -4062,7 +4155,7 @@ class LabelGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Label', foreign_keys=[redirect_id], innerjoin=True)
@@ -4080,8 +4173,8 @@ class LabelTag(Base):
     __tablename__ = 'label_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_tag_fk_label'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_tag_fk_tag'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_tag_fk_label'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='label_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -4095,9 +4188,10 @@ class LabelType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.label_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='label_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('label_type.id', 'musicbrainz'), name='label_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('LabelType', foreign_keys=[parent_id])
 
@@ -4120,7 +4214,7 @@ class Link(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    link_type_id = Column('link_type', Integer, ForeignKey('{}.link_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_fk_link_type'), nullable=False)
+    link_type_id = Column('link_type', Integer, ForeignKey(apply_schema('link_type.id', 'musicbrainz'), name='link_fk_link_type'), nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
     begin_date_day = Column(SMALLINT)
@@ -4141,8 +4235,8 @@ class LinkAttribute(Base):
     __tablename__ = 'link_attribute'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_fk_link'), primary_key=True, nullable=False)
-    attribute_type_id = Column('attribute_type', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_fk_attribute_type'), primary_key=True, nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='link_attribute_fk_link'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_attribute_fk_attribute_type'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
@@ -4154,8 +4248,8 @@ class LinkAttributeType(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column('parent', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_type_fk_parent'))
-    root_id = Column('root', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_type_fk_root'), nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_attribute_type_fk_parent'))
+    root_id = Column('root', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_attribute_type_fk_root'), nullable=False)
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     gid = Column(UUID, nullable=False)
     name = Column(String(255), nullable=False)
@@ -4170,7 +4264,7 @@ class LinkCreditableAttributeType(Base):
     __tablename__ = 'link_creditable_attribute_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    attribute_type_id = Column('attribute_type', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_creditable_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_creditable_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
 
@@ -4179,8 +4273,8 @@ class LinkAttributeCredit(Base):
     __tablename__ = 'link_attribute_credit'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_credit_fk_link'), primary_key=True, nullable=False)
-    attribute_type = Column(Integer, ForeignKey('{}.link_creditable_attribute_type.attribute_type'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_credit_fk_attribute_type'), primary_key=True, nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='link_attribute_credit_fk_link'), primary_key=True, nullable=False)
+    attribute_type = Column(Integer, ForeignKey(apply_schema('link_creditable_attribute_type.attribute_type', 'musicbrainz'), name='link_attribute_credit_fk_attribute_type'), primary_key=True, nullable=False)
     credited_as = Column(String, nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
@@ -4190,7 +4284,7 @@ class LinkTextAttributeType(Base):
     __tablename__ = 'link_text_attribute_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    attribute_type_id = Column('attribute_type', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_text_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_text_attribute_type_fk_attribute_type', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     attribute_type = relationship('LinkAttributeType', foreign_keys=[attribute_type_id], innerjoin=True)
 
@@ -4199,8 +4293,8 @@ class LinkAttributeTextValue(Base):
     __tablename__ = 'link_attribute_text_value'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    link_id = Column('link', Integer, ForeignKey('{}.link.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_text_value_fk_link'), primary_key=True, nullable=False)
-    attribute_type = Column(Integer, ForeignKey('{}.link_text_attribute_type.attribute_type'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_attribute_text_value_fk_attribute_type'), primary_key=True, nullable=False)
+    link_id = Column('link', Integer, ForeignKey(apply_schema('link.id', 'musicbrainz'), name='link_attribute_text_value_fk_link'), primary_key=True, nullable=False)
+    attribute_type = Column(Integer, ForeignKey(apply_schema('link_text_attribute_type.attribute_type', 'musicbrainz'), name='link_attribute_text_value_fk_attribute_type'), primary_key=True, nullable=False)
     text_value = Column(String, nullable=False)
 
     link = relationship('Link', foreign_keys=[link_id], innerjoin=True)
@@ -4211,7 +4305,7 @@ class LinkType(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    parent_id = Column('parent', Integer, ForeignKey('{}.link_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('link_type.id', 'musicbrainz'), name='link_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     gid = Column(UUID, nullable=False)
     entity_type0 = Column(String(50), nullable=False)
@@ -4235,8 +4329,8 @@ class LinkTypeAttributeType(Base):
     __tablename__ = 'link_type_attribute_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    link_type_id = Column('link_type', Integer, ForeignKey('{}.link_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_type_attribute_type_fk_link_type'), primary_key=True, nullable=False)
-    attribute_type_id = Column('attribute_type', Integer, ForeignKey('{}.link_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='link_type_attribute_type_fk_attribute_type'), primary_key=True, nullable=False)
+    link_type_id = Column('link_type', Integer, ForeignKey(apply_schema('link_type.id', 'musicbrainz'), name='link_type_attribute_type_fk_link_type'), primary_key=True, nullable=False)
+    attribute_type_id = Column('attribute_type', Integer, ForeignKey(apply_schema('link_attribute_type.id', 'musicbrainz'), name='link_type_attribute_type_fk_attribute_type'), primary_key=True, nullable=False)
     min = Column(SMALLINT)
     max = Column(SMALLINT)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -4251,11 +4345,11 @@ class EditorCollection(Base):
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_fk_editor'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_collection_fk_editor'), nullable=False)
     name = Column(String, nullable=False)
     public = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     description = Column(String, default='', server_default=sql.text("''"), nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.editor_collection_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_fk_type'), nullable=False)
+    type_id = Column('type', Integer, ForeignKey(apply_schema('editor_collection_type.id', 'musicbrainz'), name='editor_collection_fk_type'), nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     type = relationship('EditorCollectionType', foreign_keys=[type_id], innerjoin=True)
@@ -4268,9 +4362,10 @@ class EditorCollectionType(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     entity_type = Column(String(50), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.editor_collection_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('editor_collection_type.id', 'musicbrainz'), name='editor_collection_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('EditorCollectionType', foreign_keys=[parent_id])
 
@@ -4279,8 +4374,8 @@ class EditorCollectionArea(Base):
     __tablename__ = 'editor_collection_area'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_area_fk_collection'), primary_key=True, nullable=False)
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_area_fk_area'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_area_fk_collection'), primary_key=True, nullable=False)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='editor_collection_area_fk_area'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
@@ -4290,8 +4385,8 @@ class EditorCollectionArtist(Base):
     __tablename__ = 'editor_collection_artist'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_artist_fk_collection'), primary_key=True, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_artist_fk_artist'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_artist_fk_collection'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='editor_collection_artist_fk_artist'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
@@ -4301,8 +4396,8 @@ class EditorCollectionEvent(Base):
     __tablename__ = 'editor_collection_event'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_event_fk_collection'), primary_key=True, nullable=False)
-    event_id = Column('event', Integer, ForeignKey('{}.event.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_event_fk_event'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_event_fk_collection'), primary_key=True, nullable=False)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='editor_collection_event_fk_event'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
@@ -4312,8 +4407,8 @@ class EditorCollectionInstrument(Base):
     __tablename__ = 'editor_collection_instrument'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_instrument_fk_collection'), primary_key=True, nullable=False)
-    instrument_id = Column('instrument', Integer, ForeignKey('{}.instrument.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_instrument_fk_instrument'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_instrument_fk_collection'), primary_key=True, nullable=False)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='editor_collection_instrument_fk_instrument'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
@@ -4323,8 +4418,8 @@ class EditorCollectionLabel(Base):
     __tablename__ = 'editor_collection_label'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_label_fk_collection'), primary_key=True, nullable=False)
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_label_fk_label'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_label_fk_collection'), primary_key=True, nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='editor_collection_label_fk_label'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
@@ -4334,8 +4429,8 @@ class EditorCollectionPlace(Base):
     __tablename__ = 'editor_collection_place'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_place_fk_collection'), primary_key=True, nullable=False)
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_place_fk_place'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_place_fk_collection'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='editor_collection_place_fk_place'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
@@ -4345,8 +4440,8 @@ class EditorCollectionRecording(Base):
     __tablename__ = 'editor_collection_recording'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_recording_fk_collection'), primary_key=True, nullable=False)
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_recording_fk_recording'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_recording_fk_collection'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='editor_collection_recording_fk_recording'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
@@ -4356,8 +4451,8 @@ class EditorCollectionRelease(Base):
     __tablename__ = 'editor_collection_release'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_release_fk_collection'), primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_release_fk_release'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_release_fk_collection'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='editor_collection_release_fk_release'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -4367,8 +4462,8 @@ class EditorCollectionReleaseGroup(Base):
     __tablename__ = 'editor_collection_release_group'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_release_group_fk_collection'), primary_key=True, nullable=False)
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_release_group_fk_release_group'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_release_group_fk_collection'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='editor_collection_release_group_fk_release_group'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
@@ -4378,8 +4473,8 @@ class EditorCollectionSeries(Base):
     __tablename__ = 'editor_collection_series'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_series_fk_collection'), primary_key=True, nullable=False)
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_series_fk_series'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_series_fk_collection'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='editor_collection_series_fk_series'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
@@ -4389,11 +4484,21 @@ class EditorCollectionWork(Base):
     __tablename__ = 'editor_collection_work'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    collection_id = Column('collection', Integer, ForeignKey('{}.editor_collection.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_work_fk_collection'), primary_key=True, nullable=False)
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_collection_work_fk_work'), primary_key=True, nullable=False)
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_work_fk_collection'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='editor_collection_work_fk_work'), primary_key=True, nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+
+
+class EditorCollectionDeletedEntity(Base):
+    __tablename__ = 'editor_collection_deleted_entity'
+    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_deleted_entity_fk_collection'), primary_key=True, nullable=False)
+    gid = Column(UUID, ForeignKey(apply_schema('deleted_entity.gid', 'musicbrainz'), name='editor_collection_deleted_entity_fk_gid'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
 
 
 class EditorOauthToken(Base):
@@ -4401,8 +4506,8 @@ class EditorOauthToken(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_oauth_token_fk_editor'), nullable=False)
-    application_id = Column('application', Integer, ForeignKey('{}.application.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_oauth_token_fk_application'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_oauth_token_fk_editor'), nullable=False)
+    application_id = Column('application', Integer, ForeignKey(apply_schema('application.id', 'musicbrainz'), name='editor_oauth_token_fk_application'), nullable=False)
     authorization_code = Column(String)
     refresh_token = Column(String)
     access_token = Column(String)
@@ -4418,7 +4523,7 @@ class EditorWatchPreferences(Base):
     __tablename__ = 'editor_watch_preferences'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_preferences_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_preferences_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
     notify_via_email = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
     notification_timeframe = Column(Interval, default='1 week', server_default=sql.text("'1 week'"), nullable=False)
     last_checked = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
@@ -4430,8 +4535,8 @@ class EditorWatchArtist(Base):
     __tablename__ = 'editor_watch_artist'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    artist_id = Column('artist', Integer, ForeignKey('{}.artist.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_artist_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='editor_watch_artist_fk_artist', ondelete='CASCADE'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_artist_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
@@ -4441,8 +4546,8 @@ class EditorWatchReleaseGroupType(Base):
     __tablename__ = 'editor_watch_release_group_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_release_group_type_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
-    release_group_type_id = Column('release_group_type', Integer, ForeignKey('{}.release_group_primary_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_release_group_type_fk_release_group_type'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_release_group_type_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
+    release_group_type_id = Column('release_group_type', Integer, ForeignKey(apply_schema('release_group_primary_type.id', 'musicbrainz'), name='editor_watch_release_group_type_fk_release_group_type'), primary_key=True, nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     release_group_type = relationship('ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id], innerjoin=True)
@@ -4452,8 +4557,8 @@ class EditorWatchReleaseStatus(Base):
     __tablename__ = 'editor_watch_release_status'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_release_status_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
-    release_status_id = Column('release_status', Integer, ForeignKey('{}.release_status.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='editor_watch_release_status_fk_release_status'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_release_status_fk_editor', ondelete='CASCADE'), primary_key=True, nullable=False)
+    release_status_id = Column('release_status', Integer, ForeignKey(apply_schema('release_status.id', 'musicbrainz'), name='editor_watch_release_status_fk_release_status'), primary_key=True, nullable=False)
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     release_status = relationship('ReleaseStatus', foreign_keys=[release_status_id], innerjoin=True)
@@ -4464,9 +4569,9 @@ class Medium(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_fk_release'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='medium_fk_release'), nullable=False)
     position = Column(Integer, nullable=False)
-    format_id = Column('format', Integer, ForeignKey('{}.medium_format.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_fk_format'))
+    format_id = Column('format', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_fk_format'))
     name = Column(String, default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -4481,8 +4586,8 @@ class MediumCDTOC(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    medium_id = Column('medium', Integer, ForeignKey('{}.medium.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_cdtoc_fk_medium'), nullable=False)
-    cdtoc_id = Column('cdtoc', Integer, ForeignKey('{}.cdtoc.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_cdtoc_fk_cdtoc'), nullable=False)
+    medium_id = Column('medium', Integer, ForeignKey(apply_schema('medium.id', 'musicbrainz'), name='medium_cdtoc_fk_medium'), nullable=False)
+    cdtoc_id = Column('cdtoc', Integer, ForeignKey(apply_schema('cdtoc.id', 'musicbrainz'), name='medium_cdtoc_fk_cdtoc'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -4496,11 +4601,12 @@ class MediumFormat(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.medium_format.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_format_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_format_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     year = Column(SMALLINT)
     has_discids = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('MediumFormat', foreign_keys=[parent_id])
 
@@ -4509,7 +4615,7 @@ class OrderableLinkType(Base):
     __tablename__ = 'orderable_link_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    link_type_id = Column('link_type', Integer, ForeignKey('{}.link_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='orderable_link_type_fk_link_type'), primary_key=True, nullable=False)
+    link_type_id = Column('link_type', Integer, ForeignKey(apply_schema('link_type.id', 'musicbrainz'), name='orderable_link_type_fk_link_type'), primary_key=True, nullable=False)
     direction = Column(SMALLINT, default=1, server_default=sql.text('1'), nullable=False)
 
     link_type = relationship('LinkType', foreign_keys=[link_type_id], innerjoin=True)
@@ -4522,9 +4628,9 @@ class Place(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.place_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('place_type.id', 'musicbrainz'), name='place_fk_type'))
     address = Column(String, default='', server_default=sql.text("''"), nullable=False)
-    area_id = Column('area', Integer, ForeignKey('{}.area.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_fk_area'))
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='place_fk_area'))
     coordinates = Column(Point)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -4549,12 +4655,12 @@ class PlaceAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_alias_fk_place'), nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_alias_fk_place'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.place_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('place_alias_type.id', 'musicbrainz'), name='place_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -4578,9 +4684,10 @@ class PlaceAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.place_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('place_alias_type.id', 'musicbrainz'), name='place_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('PlaceAliasType', foreign_keys=[parent_id])
 
@@ -4589,8 +4696,8 @@ class PlaceAnnotation(Base):
     __tablename__ = 'place_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_annotation_fk_place'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_annotation_fk_annotation'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_annotation_fk_place'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='place_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -4601,7 +4708,7 @@ class PlaceGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Place', foreign_keys=[redirect_id], innerjoin=True)
@@ -4619,8 +4726,8 @@ class PlaceTag(Base):
     __tablename__ = 'place_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_tag_fk_place'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_tag_fk_tag'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_tag_fk_place'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='place_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -4632,9 +4739,9 @@ class PlaceTagRaw(Base):
     __tablename__ = 'place_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    place_id = Column('place', Integer, ForeignKey('{}.place.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_tag_raw_fk_place'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_tag_raw_fk_place'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='place_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='place_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
@@ -4648,9 +4755,10 @@ class PlaceType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.place_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='place_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('place_type.id', 'musicbrainz'), name='place_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('PlaceType', foreign_keys=[parent_id])
 
@@ -4672,7 +4780,7 @@ class Recording(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('{}.artist_credit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_fk_artist_credit'), nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='recording_fk_artist_credit'), nullable=False)
     length = Column(Integer)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -4688,9 +4796,10 @@ class RecordingAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.recording_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('recording_alias_type.id', 'musicbrainz'), name='recording_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('RecordingAliasType', foreign_keys=[parent_id])
 
@@ -4700,12 +4809,12 @@ class RecordingAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_alias_fk_recording'), nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_alias_fk_recording'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.recording_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('recording_alias_type.id', 'musicbrainz'), name='recording_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -4727,8 +4836,8 @@ class RecordingRatingRaw(Base):
     __tablename__ = 'recording_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_rating_raw_fk_recording'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_rating_raw_fk_recording'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='recording_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
@@ -4739,9 +4848,9 @@ class RecordingTagRaw(Base):
     __tablename__ = 'recording_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_tag_raw_fk_recording'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_tag_raw_fk_recording'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='recording_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='recording_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
@@ -4753,8 +4862,8 @@ class RecordingAnnotation(Base):
     __tablename__ = 'recording_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_annotation_fk_recording'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_annotation_fk_annotation'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_annotation_fk_recording'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='recording_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -4764,7 +4873,7 @@ class RecordingMeta(Base):
     __tablename__ = 'recording_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -4776,7 +4885,7 @@ class RecordingGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Recording', foreign_keys=[redirect_id], innerjoin=True)
@@ -4794,8 +4903,8 @@ class RecordingTag(Base):
     __tablename__ = 'recording_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_tag_fk_recording'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='recording_tag_fk_tag'), primary_key=True, nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_tag_fk_recording'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='recording_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -4810,12 +4919,12 @@ class Release(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('{}.artist_credit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_artist_credit'), nullable=False)
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_release_group'), nullable=False)
-    status_id = Column('status', Integer, ForeignKey('{}.release_status.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_status'))
-    packaging_id = Column('packaging', Integer, ForeignKey('{}.release_packaging.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_packaging'))
-    language_id = Column('language', Integer, ForeignKey('{}.language.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_language'))
-    script_id = Column('script', Integer, ForeignKey('{}.script.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_fk_script'))
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='release_fk_artist_credit'), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_fk_release_group'), nullable=False)
+    status_id = Column('status', Integer, ForeignKey(apply_schema('release_status.id', 'musicbrainz'), name='release_fk_status'))
+    packaging_id = Column('packaging', Integer, ForeignKey(apply_schema('release_packaging.id', 'musicbrainz'), name='release_fk_packaging'))
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='release_fk_language'))
+    script_id = Column('script', Integer, ForeignKey(apply_schema('script.id', 'musicbrainz'), name='release_fk_script'))
     barcode = Column(String(255))
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -4836,9 +4945,10 @@ class ReleaseAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_alias_type.id', 'musicbrainz'), name='release_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleaseAliasType', foreign_keys=[parent_id])
 
@@ -4848,12 +4958,12 @@ class ReleaseAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_alias_fk_release'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_alias_fk_release'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.release_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('release_alias_type.id', 'musicbrainz'), name='release_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -4875,8 +4985,8 @@ class ReleaseCountry(Base):
     __tablename__ = 'release_country'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_country_fk_release'), primary_key=True, nullable=False)
-    country_id = Column('country', Integer, ForeignKey('{}.country_area.area'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_country_fk_country'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_country_fk_release'), primary_key=True, nullable=False)
+    country_id = Column('country', Integer, ForeignKey(apply_schema('country_area.area', 'musicbrainz'), name='release_country_fk_country'), primary_key=True, nullable=False)
     date_year = Column(SMALLINT)
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
@@ -4891,7 +5001,7 @@ class ReleaseUnknownCountry(Base):
     __tablename__ = 'release_unknown_country'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_unknown_country_fk_release'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_unknown_country_fk_release'), primary_key=True, nullable=False)
     date_year = Column(SMALLINT)
     date_month = Column(SMALLINT)
     date_day = Column(SMALLINT)
@@ -4921,9 +5031,9 @@ class ReleaseTagRaw(Base):
     __tablename__ = 'release_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_tag_raw_fk_release'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_tag_raw_fk_release'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='release_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='release_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -4935,8 +5045,8 @@ class ReleaseAnnotation(Base):
     __tablename__ = 'release_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_annotation_fk_release'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_annotation_fk_annotation'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_annotation_fk_release'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='release_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -4947,7 +5057,7 @@ class ReleaseGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Release', foreign_keys=[redirect_id], innerjoin=True)
@@ -4965,7 +5075,7 @@ class ReleaseMeta(Base):
     __tablename__ = 'release_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     date_added = Column(DateTime(timezone=True), server_default=sql.func.now())
     info_url = Column(String(255))
     amazon_asin = Column(String(10))
@@ -4979,7 +5089,7 @@ class ReleaseCoverArt(Base):
     __tablename__ = 'release_coverart'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_coverart_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_coverart_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     last_updated = Column(DateTime(timezone=True))
     cover_art_url = Column(String(255))
 
@@ -4991,8 +5101,8 @@ class ReleaseLabel(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_label_fk_release'), nullable=False)
-    label_id = Column('label', Integer, ForeignKey('{}.label.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_label_fk_label'))
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_label_fk_release'), nullable=False)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='release_label_fk_label'))
     catalog_number = Column(String(255))
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5006,9 +5116,10 @@ class ReleasePackaging(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_packaging.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_packaging_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_packaging.id', 'musicbrainz'), name='release_packaging_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleasePackaging', foreign_keys=[parent_id])
 
@@ -5019,9 +5130,10 @@ class ReleaseStatus(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_status.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_status_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_status.id', 'musicbrainz'), name='release_status_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleaseStatus', foreign_keys=[parent_id])
 
@@ -5030,8 +5142,8 @@ class ReleaseTag(Base):
     __tablename__ = 'release_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_tag_fk_release'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_tag_fk_tag'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_tag_fk_release'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='release_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5046,8 +5158,8 @@ class ReleaseGroup(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('{}.artist_credit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_fk_artist_credit'), nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.release_group_primary_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_fk_type'))
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='release_group_fk_artist_credit'), nullable=False)
+    type_id = Column('type', Integer, ForeignKey(apply_schema('release_group_primary_type.id', 'musicbrainz'), name='release_group_fk_type'))
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -5062,9 +5174,10 @@ class ReleaseGroupAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_group_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_alias_type.id', 'musicbrainz'), name='release_group_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleaseGroupAliasType', foreign_keys=[parent_id])
 
@@ -5074,12 +5187,12 @@ class ReleaseGroupAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_alias_fk_release_group'), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_alias_fk_release_group'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.release_group_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('release_group_alias_type.id', 'musicbrainz'), name='release_group_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -5101,8 +5214,8 @@ class ReleaseGroupRatingRaw(Base):
     __tablename__ = 'release_group_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_rating_raw_fk_release_group'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_rating_raw_fk_release_group'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='release_group_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
@@ -5113,9 +5226,9 @@ class ReleaseGroupTagRaw(Base):
     __tablename__ = 'release_group_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_tag_raw_fk_release_group'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_tag_raw_fk_release_group'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='release_group_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='release_group_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
@@ -5127,8 +5240,8 @@ class ReleaseGroupAnnotation(Base):
     __tablename__ = 'release_group_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_annotation_fk_release_group'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_annotation_fk_annotation'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_annotation_fk_release_group'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='release_group_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -5139,7 +5252,7 @@ class ReleaseGroupGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('ReleaseGroup', foreign_keys=[redirect_id], innerjoin=True)
@@ -5157,7 +5270,7 @@ class ReleaseGroupMeta(Base):
     __tablename__ = 'release_group_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     release_count = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     first_release_date_year = Column(SMALLINT)
     first_release_date_month = Column(SMALLINT)
@@ -5174,8 +5287,8 @@ class ReleaseGroupTag(Base):
     __tablename__ = 'release_group_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_tag_fk_release_group'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_tag_fk_tag'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_tag_fk_release_group'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='release_group_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5189,9 +5302,10 @@ class ReleaseGroupPrimaryType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_group_primary_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_primary_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_primary_type.id', 'musicbrainz'), name='release_group_primary_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleaseGroupPrimaryType', foreign_keys=[parent_id])
 
@@ -5202,9 +5316,10 @@ class ReleaseGroupSecondaryType(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.release_group_secondary_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_secondary_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_secondary_type.id', 'musicbrainz'), name='release_group_secondary_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ReleaseGroupSecondaryType', foreign_keys=[parent_id])
 
@@ -5213,8 +5328,8 @@ class ReleaseGroupSecondaryTypeJoin(Base):
     __tablename__ = 'release_group_secondary_type_join'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_secondary_type_join_fk_release_group'), primary_key=True, nullable=False)
-    secondary_type_id = Column('secondary_type', Integer, ForeignKey('{}.release_group_secondary_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='release_group_secondary_type_join_fk_secondary_type'), primary_key=True, nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_secondary_type_join_fk_release_group'), primary_key=True, nullable=False)
+    secondary_type_id = Column('secondary_type', Integer, ForeignKey(apply_schema('release_group_secondary_type.id', 'musicbrainz'), name='release_group_secondary_type_join_fk_secondary_type'), primary_key=True, nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True, backref=backref('secondary_types'))
@@ -5240,9 +5355,9 @@ class Series(Base):
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.series_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_fk_type'), nullable=False)
-    ordering_attribute = Column(Integer, ForeignKey('{}.link_text_attribute_type.attribute_type'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_fk_ordering_attribute'), nullable=False)
-    ordering_type_id = Column('ordering_type', Integer, ForeignKey('{}.series_ordering_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_fk_ordering_type'), nullable=False)
+    type_id = Column('type', Integer, ForeignKey(apply_schema('series_type.id', 'musicbrainz'), name='series_fk_type'), nullable=False)
+    ordering_attribute = Column(Integer, ForeignKey(apply_schema('link_text_attribute_type.attribute_type', 'musicbrainz'), name='series_fk_ordering_attribute'), nullable=False)
+    ordering_type_id = Column('ordering_type', Integer, ForeignKey(apply_schema('series_ordering_type.id', 'musicbrainz'), name='series_fk_ordering_type'), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5257,9 +5372,10 @@ class SeriesType(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     entity_type = Column(String(50), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.series_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('series_type.id', 'musicbrainz'), name='series_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('SeriesType', foreign_keys=[parent_id])
 
@@ -5270,21 +5386,12 @@ class SeriesOrderingType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.series_ordering_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_ordering_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('series_ordering_type.id', 'musicbrainz'), name='series_ordering_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('SeriesOrderingType', foreign_keys=[parent_id])
-
-
-class SeriesDeletion(Base):
-    __tablename__ = 'series_deletion'
-    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-
-    gid = Column(UUID, primary_key=True, nullable=False)
-    last_known_name = Column(String, nullable=False)
-    last_known_comment = Column(String, nullable=False)
-    deleted_at = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
 
 
 class SeriesGIDRedirect(Base):
@@ -5292,7 +5399,7 @@ class SeriesGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Series', foreign_keys=[redirect_id], innerjoin=True)
@@ -5312,9 +5419,10 @@ class SeriesAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.series_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('series_alias_type.id', 'musicbrainz'), name='series_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('SeriesAliasType', foreign_keys=[parent_id])
 
@@ -5324,12 +5432,12 @@ class SeriesAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_alias_fk_series'), nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_alias_fk_series'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.series_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('series_alias_type.id', 'musicbrainz'), name='series_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -5351,8 +5459,8 @@ class SeriesAnnotation(Base):
     __tablename__ = 'series_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_annotation_fk_series'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_annotation_fk_annotation'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_annotation_fk_series'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='series_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -5362,8 +5470,8 @@ class SeriesTag(Base):
     __tablename__ = 'series_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_tag_fk_series'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_tag_fk_tag'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_tag_fk_series'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='series_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5375,9 +5483,9 @@ class SeriesTagRaw(Base):
     __tablename__ = 'series_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    series_id = Column('series', Integer, ForeignKey('{}.series.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_tag_raw_fk_series'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='series_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_tag_raw_fk_series'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='series_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='series_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
@@ -5398,8 +5506,8 @@ class TagRelation(Base):
     __tablename__ = 'tag_relation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    tag1_id = Column('tag1', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='tag_relation_fk_tag1'), primary_key=True, nullable=False)
-    tag2_id = Column('tag2', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='tag_relation_fk_tag2'), primary_key=True, nullable=False)
+    tag1_id = Column('tag1', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='tag_relation_fk_tag1'), primary_key=True, nullable=False)
+    tag2_id = Column('tag2', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='tag_relation_fk_tag2'), primary_key=True, nullable=False)
     weight = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5413,12 +5521,12 @@ class Track(Base):
 
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
-    recording_id = Column('recording', Integer, ForeignKey('{}.recording.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='track_fk_recording'), nullable=False)
-    medium_id = Column('medium', Integer, ForeignKey('{}.medium.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='track_fk_medium'), nullable=False)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='track_fk_recording'), nullable=False)
+    medium_id = Column('medium', Integer, ForeignKey(apply_schema('medium.id', 'musicbrainz'), name='track_fk_medium'), nullable=False)
     position = Column(Integer, nullable=False)
     number = Column(String, nullable=False)
     name = Column(String, nullable=False)
-    artist_credit_id = Column('artist_credit', Integer, ForeignKey('{}.artist_credit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='track_fk_artist_credit'), nullable=False)
+    artist_credit_id = Column('artist_credit', Integer, ForeignKey(apply_schema('artist_credit.id', 'musicbrainz'), name='track_fk_artist_credit'), nullable=False)
     length = Column(Integer)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
@@ -5434,7 +5542,7 @@ class TrackGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.track.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='track_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('track.id', 'musicbrainz'), name='track_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Track', foreign_keys=[redirect_id], innerjoin=True)
@@ -5453,7 +5561,7 @@ class TrackRaw(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    release_id = Column('release', Integer, ForeignKey('{}.release_raw.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='track_raw_fk_release'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release_raw.id', 'musicbrainz'), name='track_raw_fk_release'), nullable=False)
     title = Column(String(255), nullable=False)
     artist = Column(String(255))
     sequence = Column(Integer, nullable=False)
@@ -5465,7 +5573,7 @@ class MediumIndex(Base):
     __tablename__ = 'medium_index'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    medium_id = Column('medium', Integer, ForeignKey('{}.medium.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='medium_index_fk_medium', ondelete='CASCADE'), primary_key=True)
+    medium_id = Column('medium', Integer, ForeignKey(apply_schema('medium.id', 'musicbrainz'), name='medium_index_fk_medium', ondelete='CASCADE'), primary_key=True)
     toc = Column(Cube)
 
     medium = relationship('Medium', foreign_keys=[medium_id])
@@ -5487,7 +5595,7 @@ class URLGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.url.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='url_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('url.id', 'musicbrainz'), name='url_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('URL', foreign_keys=[redirect_id], innerjoin=True)
@@ -5506,8 +5614,8 @@ class Vote(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='vote_fk_editor'), nullable=False)
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='vote_fk_edit'), nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='vote_fk_editor'), nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', 'musicbrainz'), name='vote_fk_edit'), nullable=False)
     vote = Column(SMALLINT, nullable=False)
     vote_time = Column(DateTime(timezone=True), server_default=sql.func.now())
     superseded = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
@@ -5523,32 +5631,22 @@ class Work(Base):
     id = Column(Integer, primary_key=True)
     gid = Column(UUID, nullable=False)
     name = Column(String, nullable=False)
-    type_id = Column('type', Integer, ForeignKey('{}.work_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('work_type.id', 'musicbrainz'), name='work_fk_type'))
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    language_id = Column('language', Integer, ForeignKey('{}.language.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_fk_language'))
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='work_fk_language'))
 
     type = relationship('WorkType', foreign_keys=[type_id])
     language = relationship('Language', foreign_keys=[language_id])
-
-
-class WorkLastmod(Base):
-    __tablename__ = 'work_lastmod'
-    __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-
-    id = Column('id', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_lastmod_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    last_modified = Column(DateTime(timezone=True), server_default=sql.func.now())
-
-    work = relationship('Work', foreign_keys=[id], innerjoin=True)
 
 
 class WorkRatingRaw(Base):
     __tablename__ = 'work_rating_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_rating_raw_fk_work'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_rating_raw_fk_editor'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_rating_raw_fk_work'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='work_rating_raw_fk_editor'), primary_key=True, nullable=False)
     rating = Column(SMALLINT, nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
@@ -5559,9 +5657,9 @@ class WorkTagRaw(Base):
     __tablename__ = 'work_tag_raw'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_tag_raw_fk_work'), primary_key=True, nullable=False)
-    editor_id = Column('editor', Integer, ForeignKey('{}.editor.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_tag_raw_fk_editor'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_tag_raw_fk_tag'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_tag_raw_fk_work'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='work_tag_raw_fk_editor'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='work_tag_raw_fk_tag'), primary_key=True, nullable=False)
     is_upvote = Column(Boolean, default=True, server_default=sql.true(), nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
@@ -5575,9 +5673,10 @@ class WorkAliasType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.work_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_alias_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('work_alias_type.id', 'musicbrainz'), name='work_alias_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('WorkAliasType', foreign_keys=[parent_id])
 
@@ -5587,12 +5686,12 @@ class WorkAlias(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_alias_fk_work'), nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_alias_fk_work'), nullable=False)
     name = Column(String, nullable=False)
     locale = Column(String)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    type_id = Column('type', Integer, ForeignKey('{}.work_alias_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_alias_fk_type'))
+    type_id = Column('type', Integer, ForeignKey(apply_schema('work_alias_type.id', 'musicbrainz'), name='work_alias_fk_type'))
     sort_name = Column(String, nullable=False)
     begin_date_year = Column(SMALLINT)
     begin_date_month = Column(SMALLINT)
@@ -5614,8 +5713,8 @@ class WorkAnnotation(Base):
     __tablename__ = 'work_annotation'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_annotation_fk_work'), primary_key=True, nullable=False)
-    annotation_id = Column('annotation', Integer, ForeignKey('{}.annotation.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_annotation_fk_annotation'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_annotation_fk_work'), primary_key=True, nullable=False)
+    annotation_id = Column('annotation', Integer, ForeignKey(apply_schema('annotation.id', 'musicbrainz'), name='work_annotation_fk_annotation'), primary_key=True, nullable=False)
 
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
@@ -5626,7 +5725,7 @@ class WorkGIDRedirect(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     gid = Column(UUID, primary_key=True, nullable=False)
-    redirect_id = Column('new_id', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_gid_redirect_fk_new_id'), nullable=False)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_gid_redirect_fk_new_id'), nullable=False)
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
     redirect = relationship('Work', foreign_keys=[redirect_id], innerjoin=True)
@@ -5644,7 +5743,7 @@ class WorkMeta(Base):
     __tablename__ = 'work_meta'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    id = Column('id', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
 
@@ -5655,8 +5754,8 @@ class WorkTag(Base):
     __tablename__ = 'work_tag'
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_tag_fk_work'), primary_key=True, nullable=False)
-    tag_id = Column('tag', Integer, ForeignKey('{}.tag.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_tag_fk_tag'), primary_key=True, nullable=False)
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_tag_fk_work'), primary_key=True, nullable=False)
+    tag_id = Column('tag', Integer, ForeignKey(apply_schema('tag.id', 'musicbrainz'), name='work_tag_fk_tag'), primary_key=True, nullable=False)
     count = Column(Integer, nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
 
@@ -5670,9 +5769,10 @@ class WorkType(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.work_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('work_type.id', 'musicbrainz'), name='work_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('WorkType', foreign_keys=[parent_id])
 
@@ -5685,9 +5785,10 @@ class WorkAttributeType(Base):
     name = Column(String(255), nullable=False)
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     free_text = Column(Boolean, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.work_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('work_attribute_type.id', 'musicbrainz'), name='work_attribute_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('WorkAttributeType', foreign_keys=[parent_id])
 
@@ -5697,11 +5798,12 @@ class WorkAttributeTypeAllowedValue(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('{}.work_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_type_allowed_value_fk_work_attribute_type'), nullable=False)
+    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey(apply_schema('work_attribute_type.id', 'musicbrainz'), name='work_attribute_type_allowed_value_fk_work_attribute_type'), nullable=False)
     value = Column(String)
-    parent_id = Column('parent', Integer, ForeignKey('{}.work_attribute_type_allowed_value.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_type_allowed_value_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('work_attribute_type_allowed_value.id', 'musicbrainz'), name='work_attribute_type_allowed_value_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     work_attribute_type = relationship('WorkAttributeType', foreign_keys=[work_attribute_type_id], innerjoin=True)
     parent = relationship('WorkAttributeTypeAllowedValue', foreign_keys=[parent_id])
@@ -5712,9 +5814,9 @@ class WorkAttribute(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
 
     id = Column(Integer, primary_key=True)
-    work_id = Column('work', Integer, ForeignKey('{}.work.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_fk_work'), nullable=False)
-    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey('{}.work_attribute_type.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_fk_work_attribute_type'), nullable=False)
-    work_attribute_type_allowed_value_id = Column('work_attribute_type_allowed_value', Integer, ForeignKey('{}.work_attribute_type_allowed_value.id'.format(mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), name='work_attribute_fk_work_attribute_type_allowed_value'))
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_attribute_fk_work'), nullable=False)
+    work_attribute_type_id = Column('work_attribute_type', Integer, ForeignKey(apply_schema('work_attribute_type.id', 'musicbrainz'), name='work_attribute_fk_work_attribute_type'), nullable=False)
+    work_attribute_type_allowed_value_id = Column('work_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('work_attribute_type_allowed_value.id', 'musicbrainz'), name='work_attribute_fk_work_attribute_type_allowed_value'))
     work_attribute_text = Column(String)
 
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
@@ -5728,9 +5830,10 @@ class ArtType(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
-    parent_id = Column('parent', Integer, ForeignKey('{}.art_type.id'.format(mbdata.config.schemas.get(u'cover_art_archive', u'cover_art_archive')), name='art_type_fk_parent'))
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('art_type.id', u'cover_art_archive'), name='art_type_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     description = Column(String)
+    gid = Column(UUID, nullable=False)
 
     parent = relationship('ArtType', foreign_keys=[parent_id])
 
@@ -5748,13 +5851,13 @@ class CoverArt(Base):
     __table_args__ = {'schema': mbdata.config.schemas.get('cover_art_archive', 'cover_art_archive')}
 
     id = Column(BIGINT, primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='cover_art_fk_release', ondelete='CASCADE'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', u'musicbrainz'), name='cover_art_fk_release', ondelete='CASCADE'), nullable=False)
     comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
-    edit_id = Column('edit', Integer, ForeignKey('{}.edit.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='cover_art_fk_edit'), nullable=False)
+    edit_id = Column('edit', Integer, ForeignKey(apply_schema('edit.id', u'musicbrainz'), name='cover_art_fk_edit'), nullable=False)
     ordering = Column(Integer, nullable=False)
     date_uploaded = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
-    mime_type = Column(String, ForeignKey('{}.image_type.mime_type'.format(mbdata.config.schemas.get(u'cover_art_archive', u'cover_art_archive')), name='cover_art_fk_mime_type'), nullable=False)
+    mime_type = Column(String, ForeignKey(apply_schema('image_type.mime_type', u'cover_art_archive'), name='cover_art_fk_mime_type'), nullable=False)
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
@@ -5764,8 +5867,8 @@ class CoverArtType(Base):
     __tablename__ = 'cover_art_type'
     __table_args__ = {'schema': mbdata.config.schemas.get('cover_art_archive', 'cover_art_archive')}
 
-    id = Column('id', BIGINT, ForeignKey('{}.cover_art.id'.format(mbdata.config.schemas.get(u'cover_art_archive', u'cover_art_archive')), name='cover_art_type_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
-    type_id = Column('type_id', Integer, ForeignKey('{}.art_type.id'.format(mbdata.config.schemas.get(u'cover_art_archive', u'cover_art_archive')), name='cover_art_type_fk_type_id'), primary_key=True, nullable=False)
+    id = Column('id', BIGINT, ForeignKey(apply_schema('cover_art.id', u'cover_art_archive'), name='cover_art_type_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    type_id = Column('type_id', Integer, ForeignKey(apply_schema('art_type.id', u'cover_art_archive'), name='cover_art_type_fk_type_id'), primary_key=True, nullable=False)
 
     cover_art = relationship('CoverArt', foreign_keys=[id], innerjoin=True)
     type = relationship('ArtType', foreign_keys=[type_id], innerjoin=True)
@@ -5775,8 +5878,8 @@ class ReleaseGroupCoverArt(Base):
     __tablename__ = 'release_group_cover_art'
     __table_args__ = {'schema': mbdata.config.schemas.get('cover_art_archive', 'cover_art_archive')}
 
-    release_group_id = Column('release_group', Integer, ForeignKey('{}.release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='release_group_cover_art_fk_release_group'), primary_key=True, nullable=False)
-    release_id = Column('release', Integer, ForeignKey('{}.release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='release_group_cover_art_fk_release'), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', u'musicbrainz'), name='release_group_cover_art_fk_release_group'), primary_key=True, nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', u'musicbrainz'), name='release_group_cover_art_fk_release'), nullable=False)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -5794,7 +5897,7 @@ class LinkAreaAreaExample(Base):
     __tablename__ = 'l_area_area_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_area.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_area_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_area.id', u'musicbrainz'), name='l_area_area_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5805,7 +5908,7 @@ class LinkAreaArtistExample(Base):
     __tablename__ = 'l_area_artist_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_artist.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_artist_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_artist.id', u'musicbrainz'), name='l_area_artist_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5816,7 +5919,7 @@ class LinkAreaEventExample(Base):
     __tablename__ = 'l_area_event_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_event.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_event_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_event.id', u'musicbrainz'), name='l_area_event_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5827,7 +5930,7 @@ class LinkAreaInstrumentExample(Base):
     __tablename__ = 'l_area_instrument_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_instrument.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_instrument_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_instrument.id', u'musicbrainz'), name='l_area_instrument_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5838,7 +5941,7 @@ class LinkAreaLabelExample(Base):
     __tablename__ = 'l_area_label_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_label.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_label_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_label.id', u'musicbrainz'), name='l_area_label_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5849,7 +5952,7 @@ class LinkAreaPlaceExample(Base):
     __tablename__ = 'l_area_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_place.id', u'musicbrainz'), name='l_area_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5860,7 +5963,7 @@ class LinkAreaRecordingExample(Base):
     __tablename__ = 'l_area_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_recording.id', u'musicbrainz'), name='l_area_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5871,7 +5974,7 @@ class LinkAreaReleaseExample(Base):
     __tablename__ = 'l_area_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_release.id', u'musicbrainz'), name='l_area_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5882,7 +5985,7 @@ class LinkAreaReleaseGroupExample(Base):
     __tablename__ = 'l_area_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_release_group.id', u'musicbrainz'), name='l_area_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5893,7 +5996,7 @@ class LinkAreaURLExample(Base):
     __tablename__ = 'l_area_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_url.id', u'musicbrainz'), name='l_area_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5904,7 +6007,7 @@ class LinkAreaWorkExample(Base):
     __tablename__ = 'l_area_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_work.id', u'musicbrainz'), name='l_area_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5915,7 +6018,7 @@ class LinkArtistArtistExample(Base):
     __tablename__ = 'l_artist_artist_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_artist.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_artist_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_artist.id', u'musicbrainz'), name='l_artist_artist_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5926,7 +6029,7 @@ class LinkArtistEventExample(Base):
     __tablename__ = 'l_artist_event_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_event.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_event_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_event.id', u'musicbrainz'), name='l_artist_event_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5937,7 +6040,7 @@ class LinkArtistInstrumentExample(Base):
     __tablename__ = 'l_artist_instrument_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_instrument.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_instrument_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_instrument.id', u'musicbrainz'), name='l_artist_instrument_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5948,7 +6051,7 @@ class LinkArtistLabelExample(Base):
     __tablename__ = 'l_artist_label_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_label.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_label_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_label.id', u'musicbrainz'), name='l_artist_label_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5959,7 +6062,7 @@ class LinkArtistPlaceExample(Base):
     __tablename__ = 'l_artist_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_place.id', u'musicbrainz'), name='l_artist_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5970,7 +6073,7 @@ class LinkArtistRecordingExample(Base):
     __tablename__ = 'l_artist_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_recording.id', u'musicbrainz'), name='l_artist_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5981,7 +6084,7 @@ class LinkArtistReleaseExample(Base):
     __tablename__ = 'l_artist_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_release.id', u'musicbrainz'), name='l_artist_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -5992,7 +6095,7 @@ class LinkArtistReleaseGroupExample(Base):
     __tablename__ = 'l_artist_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_release_group.id', u'musicbrainz'), name='l_artist_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6003,7 +6106,7 @@ class LinkArtistURLExample(Base):
     __tablename__ = 'l_artist_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_url.id', u'musicbrainz'), name='l_artist_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6014,7 +6117,7 @@ class LinkArtistWorkExample(Base):
     __tablename__ = 'l_artist_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_work.id', u'musicbrainz'), name='l_artist_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6025,7 +6128,7 @@ class LinkEventEventExample(Base):
     __tablename__ = 'l_event_event_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_event.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_event_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_event.id', u'musicbrainz'), name='l_event_event_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6036,7 +6139,7 @@ class LinkEventInstrumentExample(Base):
     __tablename__ = 'l_event_instrument_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_instrument.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_instrument_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_instrument.id', u'musicbrainz'), name='l_event_instrument_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6047,7 +6150,7 @@ class LinkEventLabelExample(Base):
     __tablename__ = 'l_event_label_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_label.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_label_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_label.id', u'musicbrainz'), name='l_event_label_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6058,7 +6161,7 @@ class LinkEventPlaceExample(Base):
     __tablename__ = 'l_event_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_place.id', u'musicbrainz'), name='l_event_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6069,7 +6172,7 @@ class LinkEventRecordingExample(Base):
     __tablename__ = 'l_event_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_recording.id', u'musicbrainz'), name='l_event_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6080,7 +6183,7 @@ class LinkEventReleaseExample(Base):
     __tablename__ = 'l_event_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_release.id', u'musicbrainz'), name='l_event_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6091,7 +6194,7 @@ class LinkEventReleaseGroupExample(Base):
     __tablename__ = 'l_event_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_release_group.id', u'musicbrainz'), name='l_event_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6102,7 +6205,7 @@ class LinkEventSeriesExample(Base):
     __tablename__ = 'l_event_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_series.id', u'musicbrainz'), name='l_event_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6113,7 +6216,7 @@ class LinkEventURLExample(Base):
     __tablename__ = 'l_event_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_url.id', u'musicbrainz'), name='l_event_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6124,7 +6227,7 @@ class LinkEventWorkExample(Base):
     __tablename__ = 'l_event_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_event_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_event_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_event_work.id', u'musicbrainz'), name='l_event_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6135,7 +6238,7 @@ class LinkInstrumentInstrumentExample(Base):
     __tablename__ = 'l_instrument_instrument_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_instrument.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_instrument_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_instrument.id', u'musicbrainz'), name='l_instrument_instrument_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6146,7 +6249,7 @@ class LinkInstrumentLabelExample(Base):
     __tablename__ = 'l_instrument_label_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_label.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_label_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_label.id', u'musicbrainz'), name='l_instrument_label_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6157,7 +6260,7 @@ class LinkInstrumentPlaceExample(Base):
     __tablename__ = 'l_instrument_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_place.id', u'musicbrainz'), name='l_instrument_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6168,7 +6271,7 @@ class LinkInstrumentRecordingExample(Base):
     __tablename__ = 'l_instrument_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_recording.id', u'musicbrainz'), name='l_instrument_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6179,7 +6282,7 @@ class LinkInstrumentReleaseExample(Base):
     __tablename__ = 'l_instrument_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_release.id', u'musicbrainz'), name='l_instrument_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6190,7 +6293,7 @@ class LinkInstrumentReleaseGroupExample(Base):
     __tablename__ = 'l_instrument_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_release_group.id', u'musicbrainz'), name='l_instrument_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6201,7 +6304,7 @@ class LinkInstrumentSeriesExample(Base):
     __tablename__ = 'l_instrument_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_series.id', u'musicbrainz'), name='l_instrument_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6212,7 +6315,7 @@ class LinkInstrumentURLExample(Base):
     __tablename__ = 'l_instrument_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_url.id', u'musicbrainz'), name='l_instrument_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6223,7 +6326,7 @@ class LinkInstrumentWorkExample(Base):
     __tablename__ = 'l_instrument_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_instrument_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_instrument_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_instrument_work.id', u'musicbrainz'), name='l_instrument_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6234,7 +6337,7 @@ class LinkLabelLabelExample(Base):
     __tablename__ = 'l_label_label_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_label.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_label_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_label.id', u'musicbrainz'), name='l_label_label_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6245,7 +6348,7 @@ class LinkLabelPlaceExample(Base):
     __tablename__ = 'l_label_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_place.id', u'musicbrainz'), name='l_label_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6256,7 +6359,7 @@ class LinkLabelRecordingExample(Base):
     __tablename__ = 'l_label_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_recording.id', u'musicbrainz'), name='l_label_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6267,7 +6370,7 @@ class LinkLabelReleaseExample(Base):
     __tablename__ = 'l_label_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_release.id', u'musicbrainz'), name='l_label_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6278,7 +6381,7 @@ class LinkLabelReleaseGroupExample(Base):
     __tablename__ = 'l_label_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_release_group.id', u'musicbrainz'), name='l_label_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6289,7 +6392,7 @@ class LinkLabelURLExample(Base):
     __tablename__ = 'l_label_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_url.id', u'musicbrainz'), name='l_label_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6300,7 +6403,7 @@ class LinkLabelWorkExample(Base):
     __tablename__ = 'l_label_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_work.id', u'musicbrainz'), name='l_label_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6311,7 +6414,7 @@ class LinkPlacePlaceExample(Base):
     __tablename__ = 'l_place_place_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_place.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_place_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_place.id', u'musicbrainz'), name='l_place_place_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6322,7 +6425,7 @@ class LinkPlaceRecordingExample(Base):
     __tablename__ = 'l_place_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_recording.id', u'musicbrainz'), name='l_place_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6333,7 +6436,7 @@ class LinkPlaceReleaseExample(Base):
     __tablename__ = 'l_place_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_release.id', u'musicbrainz'), name='l_place_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6344,7 +6447,7 @@ class LinkPlaceReleaseGroupExample(Base):
     __tablename__ = 'l_place_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_release_group.id', u'musicbrainz'), name='l_place_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6355,7 +6458,7 @@ class LinkPlaceURLExample(Base):
     __tablename__ = 'l_place_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_url.id', u'musicbrainz'), name='l_place_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6366,7 +6469,7 @@ class LinkPlaceWorkExample(Base):
     __tablename__ = 'l_place_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_work.id', u'musicbrainz'), name='l_place_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6377,7 +6480,7 @@ class LinkRecordingRecordingExample(Base):
     __tablename__ = 'l_recording_recording_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_recording.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_recording_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_recording.id', u'musicbrainz'), name='l_recording_recording_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6388,7 +6491,7 @@ class LinkRecordingReleaseExample(Base):
     __tablename__ = 'l_recording_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_release.id', u'musicbrainz'), name='l_recording_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6399,7 +6502,7 @@ class LinkRecordingReleaseGroupExample(Base):
     __tablename__ = 'l_recording_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_release_group.id', u'musicbrainz'), name='l_recording_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6410,7 +6513,7 @@ class LinkRecordingURLExample(Base):
     __tablename__ = 'l_recording_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_url.id', u'musicbrainz'), name='l_recording_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6421,7 +6524,7 @@ class LinkRecordingWorkExample(Base):
     __tablename__ = 'l_recording_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_work.id', u'musicbrainz'), name='l_recording_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6432,7 +6535,7 @@ class LinkReleaseReleaseExample(Base):
     __tablename__ = 'l_release_release_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_release.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_release_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_release.id', u'musicbrainz'), name='l_release_release_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6443,7 +6546,7 @@ class LinkReleaseReleaseGroupExample(Base):
     __tablename__ = 'l_release_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_release_group.id', u'musicbrainz'), name='l_release_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6454,7 +6557,7 @@ class LinkReleaseURLExample(Base):
     __tablename__ = 'l_release_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_url.id', u'musicbrainz'), name='l_release_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6465,7 +6568,7 @@ class LinkReleaseWorkExample(Base):
     __tablename__ = 'l_release_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_work.id', u'musicbrainz'), name='l_release_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6476,7 +6579,7 @@ class LinkReleaseGroupReleaseGroupExample(Base):
     __tablename__ = 'l_release_group_release_group_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_group_release_group.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_group_release_group_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_group_release_group.id', u'musicbrainz'), name='l_release_group_release_group_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6487,7 +6590,7 @@ class LinkReleaseGroupURLExample(Base):
     __tablename__ = 'l_release_group_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_group_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_group_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_group_url.id', u'musicbrainz'), name='l_release_group_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6498,7 +6601,7 @@ class LinkReleaseGroupWorkExample(Base):
     __tablename__ = 'l_release_group_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_group_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_group_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_group_work.id', u'musicbrainz'), name='l_release_group_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6509,7 +6612,7 @@ class LinkAreaSeriesExample(Base):
     __tablename__ = 'l_area_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_area_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_area_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_area_series.id', u'musicbrainz'), name='l_area_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6520,7 +6623,7 @@ class LinkArtistSeriesExample(Base):
     __tablename__ = 'l_artist_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_artist_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_artist_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_artist_series.id', u'musicbrainz'), name='l_artist_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6531,7 +6634,7 @@ class LinkLabelSeriesExample(Base):
     __tablename__ = 'l_label_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_label_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_label_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_label_series.id', u'musicbrainz'), name='l_label_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6542,7 +6645,7 @@ class LinkPlaceSeriesExample(Base):
     __tablename__ = 'l_place_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_place_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_place_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_place_series.id', u'musicbrainz'), name='l_place_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6553,7 +6656,7 @@ class LinkRecordingSeriesExample(Base):
     __tablename__ = 'l_recording_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_recording_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_recording_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_recording_series.id', u'musicbrainz'), name='l_recording_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6564,7 +6667,7 @@ class LinkReleaseSeriesExample(Base):
     __tablename__ = 'l_release_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_series.id', u'musicbrainz'), name='l_release_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6575,7 +6678,7 @@ class LinkReleaseGroupSeriesExample(Base):
     __tablename__ = 'l_release_group_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_release_group_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_release_group_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_release_group_series.id', u'musicbrainz'), name='l_release_group_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6586,7 +6689,7 @@ class LinkSeriesSeriesExample(Base):
     __tablename__ = 'l_series_series_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_series_series.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_series_series_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_series_series.id', u'musicbrainz'), name='l_series_series_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6597,7 +6700,7 @@ class LinkSeriesURLExample(Base):
     __tablename__ = 'l_series_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_series_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_series_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_series_url.id', u'musicbrainz'), name='l_series_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6608,7 +6711,7 @@ class LinkSeriesWorkExample(Base):
     __tablename__ = 'l_series_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_series_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_series_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_series_work.id', u'musicbrainz'), name='l_series_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6619,7 +6722,7 @@ class LinkURLURLExample(Base):
     __tablename__ = 'l_url_url_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_url_url.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_url_url_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_url_url.id', u'musicbrainz'), name='l_url_url_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6630,7 +6733,7 @@ class LinkURLWorkExample(Base):
     __tablename__ = 'l_url_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_url_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_url_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_url_work.id', u'musicbrainz'), name='l_url_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6641,7 +6744,7 @@ class LinkWorkWorkExample(Base):
     __tablename__ = 'l_work_work_example'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.l_work_work.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='l_work_work_example_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('l_work_work.id', u'musicbrainz'), name='l_work_work_example_fk_id'), primary_key=True, nullable=False)
     published = Column(Boolean, nullable=False)
     name = Column(String, nullable=False)
 
@@ -6652,7 +6755,7 @@ class LinkTypeDocumentation(Base):
     __tablename__ = 'link_type_documentation'
     __table_args__ = {'schema': mbdata.config.schemas.get('documentation', 'documentation')}
 
-    id = Column('id', Integer, ForeignKey('{}.link_type.id'.format(mbdata.config.schemas.get(u'musicbrainz', u'musicbrainz')), name='link_type_documentation_fk_id'), primary_key=True, nullable=False)
+    id = Column('id', Integer, ForeignKey(apply_schema('link_type.id', u'musicbrainz'), name='link_type_documentation_fk_id'), primary_key=True, nullable=False)
     documentation = Column(String, nullable=False)
     examples_deleted = Column(SMALLINT, default=0, server_default=sql.text('0'), nullable=False)
 

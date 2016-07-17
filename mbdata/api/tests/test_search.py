@@ -25,7 +25,7 @@ def test_export_artist(db):
         'kind': ['artist'],
         'area': [u'Denmark'],
         'gender': [u'Male'],
-        'ipi': [u'00054968649'],
+        'ipi': [u'00549686493', u'00054968649'],
         'isni': [u'0000000117742762'],
         'mbid': [u'95e9aba6-f85c-48a0-9ec9-395d4f0e3875'],
         'name': [u'Trentem\xf8ller'],

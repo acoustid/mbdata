@@ -3,7 +3,7 @@
 
 import re
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.dialects.postgres import UUID
+from sqlalchemy.dialects.postgres import UUID, JSONB
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.sql.expression import ClauseElement, TextClause
 
@@ -11,6 +11,12 @@ from sqlalchemy.sql.expression import ClauseElement, TextClause
 @compiles(UUID, 'sqlite')
 def visit_uuid_sqlite(element, compiler, **kwargs):
     return 'CHAR(32)'
+
+
+# XXX this should really serialize/deserialize to JSON
+@compiles(JSONB, 'sqlite')
+def visit_jsonb_sqlite(element, compiler, **kwargs):
+    return 'TEXT'
 
 
 class regexp(ClauseElement):

@@ -10,38 +10,53 @@ def test_artist_get(client):
 
     expected = {
         u'response': {
-            u'artist': {
-                u'id': u'95e9aba6-f85c-48a0-9ec9-395d4f0e3875',
-                u'name': u'Trentem\xf8ller',
-                u'sort_name': u'Trentem\xf8ller',
-                u'type': u'Person',
-                u'gender': u'Male',
-                u'area': {
-                    u'name': u'Denmark',
-                    u"type": u"Country",
-                    u"iso_3166_1": ["DK"],
-                },
-                u"begin_area": {
-                    u"part_of": {
-                        u"part_of": {
-                            u"name": u"Denmark",
-                            u"type": u"Country",
-                            u"iso_3166_1": ["DK"],
-                        },
-                        u"iso_3166_2": ["DK-85"],
-                        u"name": u"Region Zealand",
-                        u"type": u"Subdivision",
-                    },
-                    u"name": u"Vordingborg Municipality",
-                    u"type": u"Municipality",
-                },
-                u'begin_date': {u'day': 16, u'month': 10, u'year': 1974},
-                u"ipis": [
-                    u"00054968649"
-                ],
-                u"isnis": [
-                    u"0000000117742762"
-                ],
+            "artist": {
+                "id": "95e9aba6-f85c-48a0-9ec9-395d4f0e3875",
+                "name": u"Trentem\xf8ller", 
+                "begin_date": {
+                    "year": 1972, 
+                    "day": 16, 
+                    "month": 10
+                }, 
+                "area": {
+                    "iso_3166_1": [
+                        "DK"
+                    ], 
+                    "type": "Country", 
+                    "name": "Denmark"
+                }, 
+                "gender": "Male", 
+                "ipis": [
+                    "00054968649", 
+                    "00549686493"
+                ], 
+                "begin_area": {
+                    "part_of": {
+                        "part_of": {
+                            "part_of": {
+                                "iso_3166_1": [
+                                    "DK"
+                                ], 
+                                "type": "Country", 
+                                "name": "Denmark"
+                            }, 
+                            "iso_3166_2": [
+                                "DK-85"
+                            ], 
+                            "type": "Subdivision", 
+                            "name": "Region Zealand"
+                        }, 
+                        "type": "Municipality", 
+                        "name": "Vordingborg Municipality"
+                    }, 
+                    "type": "City", 
+                    "name": "Vordingborg"
+                }, 
+                "isnis": [
+                    "0000000117742762"
+                ], 
+                "sort_name": u"Trentem\xf8ller", 
+                "type": "Person", 
             },
             u'status': {
                 u'code': 0,

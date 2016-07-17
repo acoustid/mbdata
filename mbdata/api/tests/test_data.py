@@ -13,7 +13,7 @@ def test_load_areas_simple(db):
     load_areas(db, [artist], AreaIncludes.parse([]))
 
     assert_true(artist.area)
-    assert_equal(artist.area.name, 'United States')
+    assert_equal(artist.area.name, 'Canada')
     assert_false(hasattr(artist.area, 'part_of'))
 
     assert_true(artist.begin_area)
@@ -32,7 +32,7 @@ def test_load_areas_recursive(db):
     load_areas(db, [artist], AreaIncludes.parse(['part_of']))
 
     assert_true(artist.area)
-    assert_equal(artist.area.name, 'United States')
+    assert_equal(artist.area.name, 'Canada')
     assert_false(artist.area.part_of)
 
     assert_true(artist.begin_area)

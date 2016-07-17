@@ -10,25 +10,33 @@ def test_place_get(client):
 
     expected = {
         u'response': {
-            u'place': {
-                u'id': u'bd55aeb7-19d1-4607-a500-14b8479d3fed',
-                u'name': u'Abbey Road Studios',
-                u'address': u"3 Abbey Road, St John's Wood, London",
-                u'type': u'Studio',
-                u'coordinates': {u'latitude': 51.53192, u'longitude': -0.17835},
-                u"area": {
-                    u"part_of": {
-                        u"part_of": {
-                            u"part_of": {
-                                u"name": u"United Kingdom"
-                            },
-                            u"name": u"England"
-                        },
-                        u"name": u"London"
-                    },
-                    u"name": u"Westminster"
-                },
-                u'begin_date': {u'year': 1931},
+            "place": {
+                "begin_date": {
+                    "year": 1931
+                }, 
+                "name": "Abbey Road Studios", 
+                "area": {
+                    "part_of": {
+                        "part_of": {
+                            "part_of": {
+                                "part_of": {
+                                    "name": "United Kingdom"
+                                }, 
+                                "name": "England"
+                            }, 
+                            "name": "London"
+                        }, 
+                        "name": "Westminster"
+                    }, 
+                    "name": "St John's Wood"
+                }, 
+                "coordinates": {
+                    "latitude": 51.53192, 
+                    "longitude": -0.17835
+                }, 
+                "address": "3 Abbey Road, St John's Wood, London", 
+                "type": "Studio", 
+                "id": "bd55aeb7-19d1-4607-a500-14b8479d3fed"
             },
             u'status': {
                 u'code': 0,

@@ -31,6 +31,7 @@ TYPE_MAPPING = {
     'INTERVAL': 'Interval',
     'POINT': 'Point',
     'CUBE': 'Cube',
+    'JSONB': 'JSONB',
 }
 
 
@@ -158,8 +159,8 @@ def parse_create_tables_sql(sql, schema='musicbrainz'):
     return types, tables
 
 
-def join_foreign_key(schema_name, table_name, column_name):
-    return '{0}.{1}.{2}'.format(schema_name, table_name, column_name)
+def join_foreign_key(*args):
+    return '.'.join(map(str, args))
 
 
 def generate_models_header():
@@ -170,7 +171,7 @@ def generate_models_header():
     yield '# pylint: disable=W0232'
     yield ''
     yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql'
-    yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT'
+    yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT, JSONB'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
     yield 'from sqlalchemy.orm import relationship, composite, backref'
@@ -188,6 +189,13 @@ def generate_models_header():
     yield ''
     yield 'if not mbdata.config.use_cube:'
     yield '    Cube = Text'
+    yield ''
+    yield ''
+    yield 'def apply_schema(name, schema):'
+    yield '    schema = mbdata.config.schemas.get(schema, schema)'
+    yield '    if schema:'
+    yield '        name = "{}.{}".format(schema, name)'
+    yield '    return name'
     yield ''
     yield ''
 
@@ -380,7 +388,7 @@ def generate_models_from_sql(sql):
                         aliases.append((relationship_name, foreign_key.table))
 
                 foreign_key_params = [
-                    "{0!r}.format(mbdata.config.schemas.get({1!r}, {1!r}))".format(join_foreign_key('{}', foreign_key.table, foreign_key.column), foreign_key.schema),
+                    "apply_schema({0!r}, {1!r})".format(join_foreign_key(foreign_key.table, foreign_key.column), foreign_key.schema),
                     "name='{0}_fk_{1}'".format(table.name, column.name),
                 ]
                 if foreign_key.cascade:

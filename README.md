@@ -124,7 +124,7 @@ Normally you should work against a regular PostgreSQL database with MusicBrainz
 data, but for testing purposes, you can use a SQLite database with small data
 sub-set used in unit tests. You can create the database using:
 
-	./bin/create_sample_db.py sample.db
+    ./bin/create_sample_db.py sample.db
 
 Then you can change your configuration:
 
