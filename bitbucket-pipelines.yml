@@ -1,0 +1,8 @@
+image: ubuntu:xenial
+
+pipelines:
+  default:
+    - step:
+        script:
+          - apt install python-all-dev tox
+          - tox
