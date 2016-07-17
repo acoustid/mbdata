@@ -68,8 +68,10 @@ class PartialDate(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.year or self.month or self.day)
+
+    __nonzero__ = __bool__
 
 
 class Point(UserDefinedType):

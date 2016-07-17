@@ -1,6 +1,7 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
+from __future__ import print_function
 import re
 import sqlparse
 from sqlparse import tokens as T
@@ -468,11 +469,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     for line in generate_models_header():
-        print line
+        print(line)
 
     for file_name in args.sql:
         with open(file_name, 'r') as file:
             sql = file.read()
         for line in generate_models_from_sql(sql):
-            print line
+            print(line)
 

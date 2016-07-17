@@ -1,6 +1,7 @@
+from __future__ import print_function
 import sys
 from nose.tools import *
-from StringIO import StringIO
+from six import StringIO
 import sqlparse
 from sqlparse import tokens as T
 from sqlparse.sql import Token, TokenList, Parenthesis, Identifier
@@ -87,15 +88,15 @@ CREATE TYPE FLUENCY AS ENUM ('basic', 'intermediate', 'advanced', 'native');
     statements = sqlparse.parse(sql)
     for statement in statements:
         statement._pprint_tree()
-        print
+        print()
     statements = parse_statements(statements)
     for statement in statements:
-        print repr(statement)
+        print(repr(statement))
 
 
 def test_set_statement():
     sql = "SET search_path = 'cover_art_archive';"
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
     assert_equals('search_path', statement.get_name())
@@ -104,7 +105,7 @@ def test_set_statement():
 
 def test_set_statement_without_quotes():
     sql = "SET search_path = cover_art_archive;"
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
     assert_equals('search_path', statement.get_name())
@@ -113,7 +114,7 @@ def test_set_statement_without_quotes():
 
 def test_set_statement_with_to():
     sql = "SET search_path TO 'cover_art_archive';"
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
     assert_equals('search_path', statement.get_name())
@@ -122,7 +123,7 @@ def test_set_statement_with_to():
 
 def test_create_type_statement():
     sql = "CREATE TYPE FLUENCY AS ENUM ('basic', 'intermediate');"
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateType)
     assert_equals('FLUENCY', statement.get_name())
@@ -137,7 +138,7 @@ CREATE TABLE table_name (
     created TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
     '''
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateTable)
     assert_equals('table_name', statement.get_name())
@@ -172,7 +173,7 @@ CREATE TABLE table_name (
 
 def test_create_table_statement_check_constraint():
     sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CHECK (edits_pending > 0)); '''
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateTable)
     columns = list(statement.get_columns())
@@ -187,7 +188,7 @@ def test_create_table_statement_check_constraint():
 
 def test_create_table_statement_named_check_constraint():
     sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CONSTRAINT check_column CHECK (edits_pending > 0)); '''
-    statement = parse_statements(sqlparse.parse(sql)).next()
+    statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateTable)
     columns = list(statement.get_columns())

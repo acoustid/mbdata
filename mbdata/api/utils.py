@@ -4,7 +4,7 @@
 import re
 import logging
 import xml.sax.saxutils
-from cStringIO import StringIO
+from six import StringIO, text_type
 from flask import request, abort, current_app, json
 from mbdata.api.errors import (
     SUCCESS,
@@ -33,7 +33,7 @@ PARAM_TYPES = {
     'uuid': to_uuid,
     'enum': to_enum,
     'int': int,
-    'text': unicode,
+    'text': text_type,
 }
 
 def get_param(name, type=None, default=None, required=False, container=None):

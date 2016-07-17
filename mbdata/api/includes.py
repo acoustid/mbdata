@@ -3,11 +3,12 @@
 
 import re
 import itertools
+from six import string_types
 from mbdata.utils.models import ENTITY_TYPES
 
 
 def _iter_includes(tokens):
-    if isinstance(tokens, basestring):
+    if isinstance(tokens, string_types):
         yield tokens
         return
 
@@ -46,8 +47,7 @@ def expand_includes(input):
 
 
 def expand_includes_multi(inputs):
-    return itertools.chain.from_iterable(
-        itertools.imap(expand_includes, inputs))
+    return itertools.chain.from_iterable(map(expand_includes, inputs))
 
 
 class Includes(object):
@@ -67,8 +67,10 @@ class Includes(object):
         except AttributeError:
             return False
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.itself
+
+    __nonzero__ = __bool__
 
     def __getattr__(self, name):
         if name not in self.INCLUDES and name not in self.SUB_INCLUDES:
@@ -100,7 +102,7 @@ class Includes(object):
                     raise ValueError("unknown include {0}{1}.{2}".format(prefix, include, sub_include))
                 sub_includes.setdefault(include, []).append(sub_include)
 
-        for include, sub_params in sub_includes.iteritems():
+        for include, sub_params in sub_includes.items():
             includes[include] = cls.SUB_INCLUDES[include].parse(sub_params, '{0}.'.format(include))
 
         return cls(includes)

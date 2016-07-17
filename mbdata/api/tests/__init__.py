@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 
+from __future__ import print_function
 import os
 import tempfile
 import logging
@@ -90,8 +91,8 @@ def assert_dict_equal(d1, d2):
         standard_msg = '%s != %s' % (safe_repr(d1, True), safe_repr(d2, True))
         standard_msg += '\n'
         standard_msg += '\n'.join(difflib.unified_diff(
-            json.dumps(d1, indent=4, ensure_ascii=False, sort_keys=True).splitlines(),
             json.dumps(d2, indent=4, ensure_ascii=False, sort_keys=True).splitlines(),
+            json.dumps(d1, indent=4, ensure_ascii=False, sort_keys=True).splitlines(),
             '(expected)', '(actual)', lineterm=''
         ))
         t.fail(standard_msg)
@@ -100,11 +101,11 @@ def assert_dict_equal(d1, d2):
 def assert_json_response_equal(rv, expected):
     assert_equal(rv.status_code, 200, 'expected 200, got {0} with data {1!r}'.format(rv.status_code, rv.data))
     assert_equal(rv.content_type, 'application/json; charset=UTF-8')
-    actual = json.loads(rv.data)
+    actual = json.loads(rv.data.decode('utf8'))
     try:
         assert_dict_equal(actual, expected)
     except AssertionError:
-        print 'Complete response:'
-        print json.dumps(actual, indent=4, ensure_ascii=False)
+        print('Complete response:')
+        print(json.dumps(actual, indent=4, ensure_ascii=False))
         raise
 

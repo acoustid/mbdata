@@ -62,7 +62,7 @@ def fetch_areas(session, ids, include):
 
 
 def _fetch_parent_areas(session, areas, options):
-    for area in areas.itervalues():
+    for area in areas.values():
         area.part_of = None
 
     link_type_id_query = session.query(LinkType.id).\
@@ -86,7 +86,7 @@ def _fetch_parent_areas(session, areas, options):
 
 def _fetch_parent_areas_iterate(session, area_parent_query, areas, options):
     while True:
-        area_ids = [area.id for area in areas.itervalues() if area.part_of is None]
+        area_ids = [area.id for area in areas.values() if area.part_of is None]
 
         query = session.query(Area, area_parent_query.c.child_id).\
             filter(Area.id == area_parent_query.c.parent_id).\
@@ -105,7 +105,7 @@ def _fetch_parent_areas_iterate(session, area_parent_query, areas, options):
 
 
 def _fetch_parent_areas_cte(session, area_parent_query, areas, options):
-    area_ids = [area.id for area in areas.itervalues() if area.part_of is None]
+    area_ids = [area.id for area in areas.values() if area.part_of is None]
 
     area_ancestors_cte = session.query(
             area_parent_query.c.child_id,
@@ -295,7 +295,7 @@ def load_links_by_target_type(db, all_objs, target_type, include):
         model = inspect(obj).mapper.class_
         grouped_objs.setdefault(model, {})[obj.id] = obj
 
-    for model, objs in grouped_objs.iteritems():
+    for model, objs in grouped_objs.items():
         _load_links_by_types(db, objs, attr, model, target_type, include)
 
 

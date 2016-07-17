@@ -1,6 +1,6 @@
 import sys
 from nose.tools import *
-from StringIO import StringIO
+from six import StringIO
 import sqlparse
 from sqlparse import tokens as T
 from sqlparse.sql import Token, TokenList, Parenthesis, Identifier

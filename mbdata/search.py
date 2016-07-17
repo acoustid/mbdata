@@ -1,10 +1,10 @@
+from __future__ import print_function
 import os
 import re
 import sys
 import itertools
-import urllib2
 import tempfile
-from cStringIO import StringIO
+from six import StringIO
 from lxml import etree as ET
 from lxml.builder import E
 from solr import Solr
@@ -281,7 +281,7 @@ def iter_data_entity(db, entity, condition=None, batches=True):
     if batches:
         min_id = query.with_entities(sql.func.min(entity.model.id)).scalar()
         max_id = query.with_entities(sql.func.max(entity.model.id)).scalar()
-        for i in xrange(min_id, max_id + 1, BATCH_SIZE):
+        for i in range(min_id, max_id + 1, BATCH_SIZE):
             queries.append(query.filter(entity.model.id.between(i, i + BATCH_SIZE - 1)))
     else:
         queries.append(query)
@@ -313,7 +313,7 @@ def export_docs(stream):
         try:
             yield id, E.doc(*[E.field(re.sub('[\x00-\x08\x0b\x0c\x0e-\x1f]', '', unicode(value)), name=name) for (name, value) in data])
         except ValueError:
-            print id, data
+            print(id, data)
             raise
 
 
@@ -414,23 +414,23 @@ def export_update_triggers(db):
 
 
 def export_triggers(db):
-    print '\\set ON_ERROR_STOP'
-    print
+    print('\\set ON_ERROR_STOP')
+    print()
 
-    print 'BEGIN;'
-    print
+    print('BEGIN;')
+    print()
 
-    print 'CREATE SCHEMA mbdata;'
-    print
+    print('CREATE SCHEMA mbdata;')
+    print()
 
-    print 'CREATE TABLE mbdata.search_queue (seq SERIAL PRIMARY KEY, kind TEXT NOT NULL, id INTEGER NOT NULL);'
-    print
+    print('CREATE TABLE mbdata.search_queue (seq SERIAL PRIMARY KEY, kind TEXT NOT NULL, id INTEGER NOT NULL);')
+    print()
 
     for s in export_update_triggers(db):
-        print s
-        print
+        print(s)
+        print()
 
-    print 'COMMIT;'
+    print('COMMIT;')
 
 
 def iter_updates(db, kind, ids):
@@ -476,8 +476,8 @@ def update_index(db, solr):
         num_docs = save_update_xml(xml, itertools.chain.from_iterable(streams))
         if num_docs:
             solr._update(xml.getvalue())
-            print 'Updated {0} documents'.format(num_docs)
-    	solr.commit()
+            print('Updated {0} documents'.format(num_docs))
+        solr.commit()
 
 
 def create_index_xml(db, path, sample=False):
@@ -496,7 +496,7 @@ def create_index(db, solr, sample=False):
             break
         total_num_docs += num_docs
         solr._update(xml.getvalue())
-        print 'Indexed {0} documents'.format(total_num_docs)
+        print('Indexed {0} documents'.format(total_num_docs))
         sys.stdout.flush()
     solr.commit()
 
@@ -595,10 +595,10 @@ def create_solr_home(dir):
     os.makedirs(dir)
     xml_to_file(os.path.join(dir, 'solr.xml'), build_solr_xml())
     with open(os.path.join(dir, 'README.txt'), 'w') as file:
-        print >>file, 'Start the Solr instance:'
-        print >>file, ''
-        print >>file, ' $ cd /path/to/solr-4.6.1/example/'
-        print >>file, ' $ java -Dsolr.solr.home=%s -jar start.jar' % dir
+        print('Start the Solr instance:', file=file)
+        print('', file=file)
+        print(' $ cd /path/to/solr-4.6.1/example/', file=file)
+        print(' $ java -Dsolr.solr.home=%s -jar start.jar' % dir, file=file)
     create_solr_core(os.path.join(dir, 'musicbrainz'))
 
 
