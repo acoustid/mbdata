@@ -4,6 +4,6 @@ pipelines:
   default:
     - step:
         script:
-          - apt update
-          - apt install python-all-dev tox
+          - apt -y update
+          - apt -y install python-all-dev tox
           - tox
