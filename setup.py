@@ -2,9 +2,13 @@
 
 from setuptools import setup
 
+with open('README.rst') as file:
+    long_description = file.read()
+
 setup(name='mbdata',
       version='2016.07.17',
       description='MusicBrainz Database Tools',
+      long_description=long_description,
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
       url='https://bitbucket.org/lalinsky/mbdata',
