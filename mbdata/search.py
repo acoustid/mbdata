@@ -7,7 +7,6 @@ import tempfile
 from six import StringIO
 from lxml import etree as ET
 from lxml.builder import E
-from solr import Solr
 from sqlalchemy import sql, Column, Integer, String, MetaData
 from sqlalchemy.orm import Load, relationship
 from sqlalchemy.orm.properties import RelationshipProperty, ColumnProperty

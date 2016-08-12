@@ -4,7 +4,7 @@ import argparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from solr import Solr
+from pysolr import Solr
 
 import settings
 from mbdata.search import update_index

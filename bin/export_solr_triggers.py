@@ -4,7 +4,6 @@ import argparse
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from solr import Solr
 
 import settings
 from mbdata.search import export_triggers

@@ -1,6 +1,5 @@
 six
 SQLAlchemy==0.9.8
 Flask==0.11
-solrpy3 ; python_version >= '3.0'
-solrpy ; python_version < '3.0'
+pysolr==3.3.2
 lxml
