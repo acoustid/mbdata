@@ -13,5 +13,5 @@ args = parser.parse_args()
 # TODO allow creating just a core in an existing Solr home
 
 create_solr_home(args.directory)
-print open(os.path.join(args.directory, 'README.txt')).read()
+print(open(os.path.join(args.directory, 'README.txt')).read())
 

@@ -4,6 +4,7 @@ import re
 import sys
 import itertools
 import tempfile
+import six
 from six import StringIO
 from lxml import etree as ET
 from lxml.builder import E
@@ -109,7 +110,6 @@ schema = Schema([
         Field('mbid', 'redirect_gids.gid', type='string'),
         Field('comment', 'comment'),
         Field('name', 'name'),
-        Field('sort_name', 'sort_name'),
         Field('type', 'type.name'),
         Field('code', 'iso_3166_1_codes.code'),
         Field('code', 'iso_3166_2_codes.code'),
@@ -405,7 +405,8 @@ def export_update_triggers(db):
             yield generate_trigger_func(entity.name, table.name, 'del', selects[path])
             yield generate_trigger(entity.name, table.schema, table.name, 'del')
 
-        for path, cols in columns.iteritems():
+        # TODO use six.iteritems, is it a performance impact to simply use columns.items() instead?
+        for path, cols in six.iteritems(columns):
             cols_conds = ['NEW.{col} IS DISTINCT FROM OLD.{col}'.format(col=col.name) for col in cols]
             table = path[-1].mapped_table
             yield generate_trigger_func(entity.name, table.name, 'upd', selects[path])
@@ -470,7 +471,8 @@ def update_index(db, solr):
             db.delete(item)
         xml = StringIO()
         streams = []
-        for kind, ids in items.iteritems():
+        # TODO use six.iteritems, is it a performance impact to simply use columns.items() instead?
+        for kind, ids in six.iteritems(items):
             streams.append(iter_updates(db, kind, ids))
         num_docs = save_update_xml(xml, itertools.chain.from_iterable(streams))
         if num_docs:
@@ -535,7 +537,8 @@ def build_schema_xml():
         E.field(name='id', type='string', indexed='true', stored='true', required='true'),
         E.field(name='kind', type='string', indexed='true', stored='true', required='true'),
     ]
-    for name, type in field_types.iteritems():
+    # TODO use six.iteritems, is it a performance impact to simply use columns.items() instead?
+    for name, type in six.iteritems(field_types):
         elem = E.field(name=name, type=type, indexed='true', stored='false')
         if field_multi.get(name):
             elem.attrib['multiValued'] = 'true'
@@ -577,7 +580,7 @@ def build_solr_xml():
 
 
 def xml_to_file(path, doc):
-    with open(path, 'w') as file:
+    with open(path, 'wb') as file:
         file.write(ET.tostring(doc, pretty_print=True, encoding='UTF-8', xml_declaration=True))
 
 
