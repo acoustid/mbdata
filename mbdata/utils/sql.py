@@ -25,24 +25,24 @@ def group_parentheses(tokens):
 class Set(Statement):
 
     def get_name(self):
-        set_token = self.token_next_match(0, T.Keyword, 'SET')
+        idx, set_token = self.token_next_by(m=(T.Keyword, 'SET'))
         if set_token is None:
             raise ValueError('unknown format - missing SET')
-        token = self.token_next(set_token)
+        idx, token = self.token_next(idx)
         if token is None:
             raise ValueError('unknown format - missing SET name')
         return token.value
 
     def _find_value(self):
-        comparison = self.token_next_match(0, T.Comparison, '=')
+        idx, comparison = self.token_next_by(m=(T.Comparison, '='))
         if comparison is None:
-            comparison = self.token_next_match(0, T.Keyword, 'TO')
+            idx, comparison = self.token_next_by(m=(T.Keyword, 'TO'))
             if comparison is None:
                 raise ValueError('unknown format')
-        return comparison
+        return idx, comparison
 
     def get_value(self):
-        token = self.token_next(self._find_value())
+        idx, token = self.token_next(self._find_value()[0])
         if token is None or token.match(T.Punctuation, ';'):
             return None
         if token.ttype == T.String.Single:
@@ -59,31 +59,44 @@ class CreateTable(Statement):
         self._group_columns()
 
     def _group_columns(self):
-        body_token = self.token_next_by_instance(0, Parenthesis)
+        idx, body_token = self.token_next_by(Parenthesis)
         if body_token is None:
             raise ValueError('unknown format - missing TABLE body')
 
-        tokens = []
-        end_of_column = False
-        for token in body_token.tokens[1:-1]:
-            if end_of_column and not token.value.startswith('--'):
-                if tokens and tokens[0].value not in ('CONSTRAINT', 'CHECK'):
-                    body_token.group_tokens(CreateTableColumn, tokens)
-                tokens = []
-                end_of_column = False
-            if tokens or not token.value.startswith('--'):
-                tokens.append(token)
-            if token.match(T.Punctuation, ','):
-                end_of_column = True
-        if tokens and tokens[0].value not in ('CONSTRAINT', 'CHECK'):
-            body_token.group_tokens(CreateTableColumn, tokens)
+        start = 1
+        end = len(body_token.tokens) - 1
+
+        groups = []
+
+        while start < end:
+            group_start = start
+            while group_start <= end and body_token.tokens[group_start].value.startswith('--'):
+                group_start += 1
+
+            group_end = group_start
+            while group_end < end:
+                group_end += 1
+                if body_token.tokens[group_end].match(T.Punctuation, ','):
+                    break
+            while group_end < end:
+                group_end += 1
+                if not body_token.tokens[group_end].value.startswith('--'):
+                    break
+
+            start = group_end
+
+            if body_token.tokens[group_start].value not in ('CONSTRAINT', 'CHECK'):
+                groups.insert(0, (group_start, group_end))
+
+        for group_start, group_end in groups:
+            body_token.group_tokens(CreateTableColumn, group_start, group_end, include_end=0)
 
     def get_name(self):
-        table_token = self.token_next_match(0, T.Keyword, 'TABLE')
+        idx, table_token = self.token_next_by(m=(T.Keyword, 'TABLE'))
         if table_token is None:
             raise ValueError('unknown format - missing TABLE')
 
-        token = self.token_next(table_token)
+        idx, token = self.token_next(idx)
         if token is None:
             raise ValueError('unknown format - missing TABLE name')
 
@@ -100,14 +113,14 @@ class CreateTable(Statement):
 class CreateTableColumnCheckConstraint(TokenList):
 
     def get_name(self):
-        constraint_token = self.token_next_match(0, T.Keyword, 'CONSTRAINT')
+        idx, constraint_token = self.token_next_by(m=(T.Keyword, 'CONSTRAINT'))
         if constraint_token is not None:
-            name_token = self.token_next(constraint_token)
+            idx, name_token = self.token_next(idx)
             if name_token is not None:
                 return name_token.value
 
     def _get_body_tokens(self):
-        body_token = self.token_next_by_instance(0, Parenthesis)
+        idx, body_token = self.token_next_by(i=Parenthesis)
         if body_token is not None:
             return TokenList(body_token.tokens[1:-1])
 
@@ -132,103 +145,103 @@ class CreateTableColumn(TokenList):
         return name_token.value
 
     def get_type(self):
-        name_token = self.token_first()
+        idx, name_token = self.token_next(-1)
 
-        token = self.token_next(name_token)
+        idx, token = self.token_next(idx)
         type = token.value
 
-        token = self.token_next(token)
+        idx, token = self.token_next(idx)
         if token and isinstance(token, Parenthesis):
             type += token.value
-            token = self.token_next(token)
+            idx, token = self.token_next(idx)
 
         if token and token.normalized == 'WITH':
-            t = self.token_next(token)
+            idx2, t = self.token_next(idx)
             if t and t.normalized == 'TIME':
-                t = self.token_next(t)
+                idx2, t = self.token_next(idx2)
                 if t and t.normalized == 'ZONE':
                     type += ' WITH TIME ZONE'
-                    token = self.token_next(t)
+                    idx2, token = self.token_next(idx2)
 
         if token and token.normalized == 'WITHOUT':
-            t = self.token_next(token)
+            idx2, t = self.token_next(idx)
             if t and t.normalized == 'TIME':
-                t = self.token_next(t)
+                idx2, t = self.token_next(idx2)
                 if t and t.normalized == 'ZONE':
                     type += ' WITHOUT TIME ZONE'
-                    token = self.token_next(t)
+                    idx2, token = self.token_next(idx2)
 
         return type
 
     def get_default_value(self):
-        token = self.token_next_match(0, T.Keyword, 'DEFAULT')
+        idx, token = self.token_next_by(m=(T.Keyword, 'DEFAULT'))
         if token is None:
             return None
 
-        token = self.token_next(token)
+        idx, token = self.token_next(idx)
         default = token.value
 
-        token = self.token_next(token)
+        idx, token = self.token_next(idx)
         if token and isinstance(token, Parenthesis):
             default += token.value
-            token = self.token_next(token)
+            idx, token = self.token_next(idx)
 
         return default
 
     def get_comments(self):
         comments = []
-        token = self.token_next_by_type(0, T.Comment.Single)
+        idx, token = self.token_next_by(t=T.Comment.Single)
 
         while token is not None:
             comments.append(token.value.strip())
-            idx = self.token_index(token) + 1
-            token = self.token_next_by_type(idx, T.Comment.Single)
+            idx += 1
+            idx, token = self.token_next_by(t=T.Comment.Single, idx=idx)
 
         return comments
 
     def is_not_null(self):
-        token = self.token_next_match(0, T.Keyword, 'NOT NULL')
+        idx, token = self.token_next_by(m=(T.Keyword, 'NOT NULL'))
         if token is None:
             return False
         return True
 
     def get_check_constraint(self):
-        check_token = self.token_next_match(0, T.Keyword, 'CHECK')
+        idx, check_token = self.token_next_by(m=(T.Keyword, 'CHECK'))
         if check_token is None:
             return None
 
         tokens = []
 
-        constraint_name_token = self.token_prev(check_token)
+        idx2, constraint_name_token = self.token_prev(idx)
         if constraint_name_token is not None:
-            constraint_token = self.token_prev(constraint_name_token)
+            idx2, constraint_token = self.token_prev(idx2)
             if constraint_token is not None and constraint_token.normalized == 'CONSTRAINT':
                 tokens.append(constraint_token)
                 tokens.append(constraint_name_token)
 
         tokens.append(check_token)
 
-        body_token = self.token_next(check_token)
+        idx, body_token = self.token_next(idx)
         tokens.append(body_token)
 
-        return self.group_tokens(CreateTableColumnCheckConstraint, tokens)
+        return CreateTableColumnCheckConstraint(tokens)
 
 
 class CreateType(Statement):
 
     def get_name(self):
-        token = self.token_next_by_type(0, T.Name)
+        idx, token = self.token_next_by(t=T.Name)
         if token is None:
             raise ValueError('unknown format')
 
         return token.value
 
     def get_enum_labels(self):
-        enum_token = self.token_next_match(0, T.Name, 'ENUM')
+        idx, enum_token = self.token_next_by(m=(T.Name, 'ENUM'))
         if enum_token is None:
             raise ValueError('unknown format - missing ENUM')
 
-        parentheses_tokens = self.token_next(enum_token)
+        idx, parentheses_tokens = self.token_next(idx)
         if parentheses_tokens is None or not isinstance(parentheses_tokens, Parenthesis):
             raise ValueError('unknown format - missing parentheses after ENUM')
 
@@ -242,13 +255,13 @@ class CreateType(Statement):
 def parse_statements(statements):
     for statement in statements:
         clean_tokens = group_parentheses(statement.flatten())
-        first_token = statement.token_first()
+        idx, first_token = statement.token_next(-1)
         if first_token is None:
             continue
         if first_token.normalized == 'SET':
             statement = Set(clean_tokens.tokens)
         elif first_token.normalized == 'CREATE':
-            second_token = statement.token_next(first_token)
+            idx, second_token = statement.token_next(idx)
             if second_token is not None:
                 if second_token.normalized == 'TABLE':
                     statement = CreateTable(clean_tokens.tokens)

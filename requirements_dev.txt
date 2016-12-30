@@ -1,2 +1,2 @@
-sqlparse<0.2
+sqlparse>=0.2
 nose

@@ -222,7 +222,7 @@ def make_type_mapper(types):
 
 
 def convert_expression_to_python(token):
-    if not token.is_group():
+    if not token.is_group:
         if token.value.upper() == 'TRUE':
             return 'sql.true()'
         elif token.value.upper() == 'FALSE':
@@ -267,24 +267,23 @@ def convert_expression_to_python(token):
     else:
         parts = []
         op = None
-        idx = 0
+        idx = -1
 
         while True:
-            op_token = token.token_next_match(idx, T.Keyword, ('AND', 'OR'))
+            new_idx, op_token = token.token_next_by(m=(T.Keyword, ('AND', 'OR')), idx=idx)
             if op_token is None:
                 break
             if op is None:
                 op = op_token.normalized
             assert op == op_token.normalized
-            new_idx = token.token_index(op_token)
-            new_tokens = token.tokens[idx:new_idx]
+            new_tokens = token.tokens[idx+1:new_idx]
             if len(new_tokens) == 1:
                 parts.append(convert_expression_to_python(new_tokens[0]))
             else:
                 parts.append(convert_expression_to_python(TokenList(new_tokens)))
             idx = new_idx + 1
 
-        if idx == 0:
+        if idx == -1:
             raise ValueError('unknown expression - {0}'.format(token))
 
         new_tokens = token.tokens[idx:]
