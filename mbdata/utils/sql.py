@@ -10,7 +10,7 @@ from sqlparse.sql import Token, TokenList, Parenthesis, Statement
 def group_parentheses(tokens):
     stack = [[]]
     for token in tokens:
-        if token.is_whitespace():
+        if token.is_whitespace:
             continue
         if token.match(T.Punctuation, '('):
             stack.append([token])
@@ -114,7 +114,7 @@ class CreateTableColumnCheckConstraint(TokenList):
     def get_body(self):
         tokens = []
         for token in self._get_body_tokens().flatten():
-            if token.is_whitespace():
+            if token.is_whitespace:
                 continue
             if token.ttype == T.Comment.Single:
                 continue
