@@ -1,9 +1,0 @@
-image: ubuntu:xenial
-
-pipelines:
-  default:
-    - step:
-        script:
-          - DEBIAN_FRONTEND=noninteractive apt -y update
-          - DEBIAN_FRONTEND=noninteractive apt -y install python-dev python3-dev tox gcc libxml2-dev libxslt1-dev zlib1g-dev
-          - tox
