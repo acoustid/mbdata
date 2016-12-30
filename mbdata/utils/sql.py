@@ -252,20 +252,74 @@ class CreateType(Statement):
         return labels
 
 
+class CreateIndex(Statement):
+
+    def get_name(self):
+        idx, token = self.token_next_by(m=(T.Keyword, 'INDEX'))
+        if token is None:
+            raise ValueError('unknown format - missing INDEX')
+
+        idx, token = self.token_next(idx)
+        if token is None:
+            raise ValueError('unknown format')
+
+        return token.value
+
+    def is_unique(self):
+        idx, token = self.token_next_by(m=(T.Keyword, 'INDEX'))
+        if token is None:
+            raise ValueError('unknown format - missing INDEX')
+
+        idx, token = self.token_prev(idx)
+        if token is None:
+            raise ValueError('unknown format')
+
+        return token.normalized == 'UNIQUE'
+
+    def get_table(self):
+        idx, token = self.token_next_by(m=(T.Keyword, 'ON'))
+        if token is None:
+            raise ValueError('unknown format - missing ON')
+
+        idx, token = self.token_next(idx)
+        if token is None:
+            raise ValueError('unknown format')
+
+        return token.value
+
+    def get_columns(self):
+        idx, parens_token = self.token_next_by(i=Parenthesis)
+        if parens_token is None:
+            raise ValueError('unknown format - missing ON')
+
+        columns = []
+        for token in parens_token.tokens:
+            if token.ttype != T.Punctuation:
+                columns.append(token.value)
+        return columns
+
+
 def parse_statements(statements):
     for statement in statements:
         clean_tokens = group_parentheses(statement.flatten())
-        idx, first_token = statement.token_next(-1)
-        if first_token is None:
+        idx, token = statement.token_next(-1)
+        if token is None:
             continue
-        if first_token.normalized == 'SET':
+        if token.normalized == 'SET':
             statement = Set(clean_tokens.tokens)
-        elif first_token.normalized == 'CREATE':
-            idx, second_token = statement.token_next(idx)
-            if second_token is not None:
-                if second_token.normalized == 'TABLE':
+        elif token.normalized == 'CREATE':
+            idx, token = statement.token_next(idx)
+            if token is not None:
+                if token.normalized == 'TABLE':
                     statement = CreateTable(clean_tokens.tokens)
-                elif second_token.normalized == 'TYPE':
+                elif token.normalized == 'TYPE':
                     statement = CreateType(clean_tokens.tokens)
+                elif token.normalized == 'INDEX':
+                    statement = CreateIndex(clean_tokens.tokens)
+                elif token.normalized == 'UNIQUE':
+                    idx, token = statement.token_next(idx)
+                    if token is not None:
+                        if token.normalized == 'INDEX':
+                            statement = CreateIndex(clean_tokens.tokens)
         yield statement
 

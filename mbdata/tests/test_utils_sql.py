@@ -11,6 +11,7 @@ from mbdata.utils.sql import (
     Set,
     CreateTable,
     CreateType,
+    CreateIndex,
 )
 
 
@@ -200,3 +201,26 @@ def test_create_table_statement_named_check_constraint():
     assert_equal('check_column', check.get_name())
     assert_equal('edits_pending>0', str(check.get_body()))
 
+
+def test_create_index():
+    sql = '''CREATE INDEX statistic_name ON statistic (name); '''
+    statement = next(parse_statements(sqlparse.parse(sql)))
+
+    assert_is_instance(statement, CreateIndex)
+    assert_equal('statistic_name', statement.get_name())
+    assert_equal('statistic', statement.get_table())
+    assert_equal(['name'], statement.get_columns())
+    assert_false(statement.is_unique())
+
+
+def test_create_unique_index():
+    sql = '''CREATE UNIQUE INDEX statistic_name_date_collected ON statistic (name, date_collected); '''
+    statement = next(parse_statements(sqlparse.parse(sql)))
+
+    statement._pprint_tree()
+
+    assert_is_instance(statement, CreateIndex)
+    assert_equal('statistic_name_date_collected', statement.get_name())
+    assert_equal('statistic', statement.get_table())
+    assert_equal(['name', 'date_collected'], statement.get_columns())
+    assert_true(statement.is_unique())

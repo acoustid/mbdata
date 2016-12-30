@@ -2,11 +2,12 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from __future__ import print_function
+import os
 import re
 import sqlparse
 from sqlparse import tokens as T
 from sqlparse.sql import TokenList, Parenthesis
-from mbdata.utils.sql import CreateTable, CreateType, Set, parse_statements
+from mbdata.utils.sql import CreateTable, CreateType, CreateIndex, Set, parse_statements
 
 
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
@@ -93,6 +94,16 @@ class Enum(object):
         self.labels = labels
 
 
+class Index(object):
+
+    def __init__(self, schema, name, table, columns, unique):
+        self.schema = schema
+        self.name = name
+        self.table = table
+        self.columns = columns
+        self.unique = unique
+
+
 def split_fqn(fqn, schema=None):
     parts = fqn.split('.')
     if len(parts) == 1:
@@ -142,22 +153,30 @@ def parse_create_type(statement, schema):
     return Enum(schema, statement.get_name(), statement.get_enum_labels())
 
 
-def parse_create_tables_sql(sql, schema='musicbrainz'):
-    types = []
+def parse_create_index(statement, schema):
+    return Index(schema, statement.get_name(), statement.get_table(), statement.get_columns(), unique=statement.is_unique())
+
+
+def parse_sql(sql, schema='musicbrainz'):
     tables = []
+    types = []
+    indexes = []
 
     statements = parse_statements(sqlparse.parse(sql))
     for statement in statements:
         if isinstance(statement, Set) and statement.get_name() == 'search_path':
             schema = statement.get_value().split(',')[0].strip()
 
-        elif isinstance(statement, CreateType):
-            types.append(parse_create_type(statement, schema))
-
         elif isinstance(statement, CreateTable):
             tables.append(parse_create_table(statement, schema))
 
-    return types, tables
+        elif isinstance(statement, CreateType):
+            types.append(parse_create_type(statement, schema))
+
+        elif isinstance(statement, CreateIndex):
+            indexes.append(parse_create_index(statement, schema))
+
+    return tables, types, indexes
 
 
 def join_foreign_key(*args):
@@ -171,7 +190,7 @@ def generate_models_header():
     yield '# pylint: disable=C0302'
     yield '# pylint: disable=W0232'
     yield ''
-    yield 'from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql'
+    yield 'from sqlalchemy import Column, Index, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql'
     yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT, JSONB'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
@@ -295,15 +314,24 @@ def convert_expression_to_python(token):
         return 'sql.{0}_({1})'.format(op.lower(), ', '.join(parts))
 
 
-def generate_models_from_sql(sql):
-    types, tables = parse_create_tables_sql(sql)
+def generate_models_from_sql(tables, types, indexes):
     map_type = make_type_mapper(types)
 
     for table in tables:
         model_name = format_model_name(table.name)
         yield 'class {0}(Base):'.format(model_name)
         yield '    __tablename__ = {0!r}'.format(str(table.name))
-        yield '    __table_args__ = {{\'schema\': mbdata.config.schemas.get({0!r}, {0!r})}}'.format(str(table.schema))
+        yield '    __table_args__ = ('
+        for index in indexes:
+            if index.table == table.name and index.schema == table.schema:
+                extra = ['{!r}'.format(str(column)) for column in index.columns]
+                if index.unique:
+                    extra.append('unique=True')
+                extra = ', '.join([repr(str(index.name))] + extra)
+                if 'DESC' not in extra and '(' not in extra: # XXX fix
+                    yield '        Index({}),'.format(extra)
+        yield '        {{\'schema\': mbdata.config.schemas.get({0!r}, {0!r})}}'.format(str(table.schema))
+        yield '    )'
         yield ''
 
         composites = []
@@ -470,9 +498,24 @@ if __name__ == '__main__':
     for line in generate_models_header():
         print(line)
 
+    tables = []
+    types = []
+    indexes = []
     for file_name in args.sql:
-        with open(file_name, 'r') as file:
-            sql = file.read()
-        for line in generate_models_from_sql(sql):
-            print(line)
+        file_names = [file_name]
+
+        indexes_file_name = file_name.replace('CreateTables', 'CreateIndexes')
+        if os.path.exists(indexes_file_name):
+            file_names.append(indexes_file_name)
+
+        for file_name in file_names:
+            with open(file_name, 'r') as file:
+                sql = file.read()
+                tables2, types2, indexes2 = parse_sql(sql)
+                tables.extend(tables2)
+                types.extend(types2)
+                indexes.extend(indexes2)
+
+    for line in generate_models_from_sql(tables, types, indexes):
+        print(line)
 

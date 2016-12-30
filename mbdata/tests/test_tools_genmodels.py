@@ -6,7 +6,7 @@ from sqlparse import tokens as T
 from sqlparse.sql import Token, TokenList, Parenthesis, Identifier
 from mbdata.tools.genmodels import (
     format_model_name,
-    parse_create_tables_sql,
+    parse_sql,
     convert_expression_to_python,
 )
 
@@ -44,7 +44,7 @@ CREATE TABLE cover_art (
 );
     '''
 
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equals(1, len(types))
 
@@ -87,7 +87,7 @@ CREATE TABLE cover_art (
 
 def test_expression_to_python_binary_op_compare():
     sql = '''CREATE TABLE table (id SERIAL CHECK (id >= 0));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -98,7 +98,7 @@ def test_expression_to_python_binary_op_compare():
 
 def test_expression_to_python_is_null():
     sql = '''CREATE TABLE table (id SERIAL CHECK (id IS NULL));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -110,7 +110,7 @@ def test_expression_to_python_is_null():
 
 def test_expression_to_python_is_not_null():
     sql = '''CREATE TABLE table (id SERIAL CHECK (id IS NOT NULL));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -122,7 +122,7 @@ def test_expression_to_python_is_not_null():
 
 def test_expression_to_python_nested_op():
     sql = '''CREATE TABLE table (id SERIAL CHECK (((a IS NOT NULL OR b IS NOT NULL) AND c = TRUE) OR ((a IS NULL AND a IS NULL))));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -134,7 +134,7 @@ def test_expression_to_python_nested_op():
 
 def test_expression_to_python_special_name():
     sql = '''CREATE TABLE table (length INTEGER CHECK (length IS NULL OR length > 0));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -147,7 +147,7 @@ def test_expression_to_python_special_name():
 
 def test_expression_to_python_special_name_2():
     sql = '''CREATE TABLE table (date DATE NOT NULL CHECK (date >= '2000-01-01'));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
@@ -160,7 +160,7 @@ def test_expression_to_python_special_name_2():
 
 def test_expression_to_python_regex_op():
     sql = '''CREATE TABLE table (id SERIAL CHECK (id ~ E'^\\\\d{11}$'));'''
-    types, tables = parse_create_tables_sql(sql)
+    tables, types, indexes = parse_sql(sql)
 
     assert_equal(1, len(tables))
     assert_equal(1, len(tables[0].columns))
