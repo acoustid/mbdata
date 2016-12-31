@@ -3,7 +3,7 @@
 
 import re
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.dialects.postgres import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.sql.expression import ClauseElement, TextClause
 

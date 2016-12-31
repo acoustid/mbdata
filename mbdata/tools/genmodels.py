@@ -191,7 +191,7 @@ def generate_models_header():
     yield '# pylint: disable=W0232'
     yield ''
     yield 'from sqlalchemy import Column, Index, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql'
-    yield 'from sqlalchemy.dialects.postgres import UUID, SMALLINT, BIGINT, JSONB'
+    yield 'from sqlalchemy.dialects.postgresql import UUID, SMALLINT, BIGINT, JSONB'
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
     yield 'from sqlalchemy.orm import relationship, composite, backref'
