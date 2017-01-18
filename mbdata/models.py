@@ -5,11 +5,10 @@
 # pylint: disable=W0232
 
 from sqlalchemy import Column, Index, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql
-from sqlalchemy.dialects.postgresql import UUID, SMALLINT, BIGINT, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
-from mbdata.types import PartialDate, Point, Cube, regexp
+from mbdata.types import PartialDate, Point, Cube, regexp, UUID, SMALLINT, BIGINT, JSONB
 
 import mbdata.config
 mbdata.config.freeze()
