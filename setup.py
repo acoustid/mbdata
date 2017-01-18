@@ -6,7 +6,7 @@ with open('README.rst') as file:
     long_description = file.read()
 
 setup(name='mbdata',
-      version='2016.07.17',
+      version='2017.01.18',
       description='MusicBrainz Database Tools',
       long_description=long_description,
       author='Lukas Lalinsky',

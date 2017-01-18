@@ -1,3 +1,9 @@
+Version 2017.01.18
+==================
+
+-  Added index definitions to models.
+-  Support for SQLAlchemy 1.1.
+
 Version 2016.07.17
 ==================
 
