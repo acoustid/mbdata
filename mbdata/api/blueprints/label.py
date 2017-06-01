@@ -2,9 +2,9 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all
 from mbdata.models import Label, LabelGIDRedirect
-from mbdata.utils import defer_everything_but, get_something_by_gid
+from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import LabelIncludes
 from mbdata.api.serialize import serialize_label

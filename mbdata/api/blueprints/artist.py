@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer, load_only
 from mbdata.models import (
     Artist,
     ArtistCreditName,
@@ -10,7 +10,7 @@ from mbdata.models import (
     Release,
     ReleaseGroup,
 )
-from mbdata.utils import defer_everything_but, get_something_by_gid
+from mbdata.utils import get_something_by_gid
 from mbdata.api.utils import get_param, response_ok, response_error
 from mbdata.api.includes import ArtistIncludes, ReleaseIncludes
 from mbdata.api.serialize import (
@@ -39,7 +39,7 @@ def get_artist_by_gid(query, gid):
 
 def get_plain_artist_by_gid_or_error(gid):
     query = g.db.query(Artist).\
-        options(*defer_everything_but(Artist, "id", "gid"))
+        options(load_only("id", "gid"))
     artist = get_artist_by_gid(query, gid)
     if artist is None:
         abort(response_error(NOT_FOUND_ERROR, 'artist not found'))

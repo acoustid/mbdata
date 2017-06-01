@@ -1297,7 +1297,6 @@ def create_sample_data(session):
     work_ghost_town.comment = u''
     work_ghost_town.edits_pending = 0
     work_ghost_town.last_updated = datetime.datetime(2013, 1, 5, 15, 44, 7, 489077)
-    work_ghost_town.language = language_english
     work_ghost_town.meta = workmeta_1
     work_ghost_town.type = worktype_song
     session.add(work_ghost_town)
@@ -4555,7 +4554,6 @@ def create_sample_data(session):
     work_he_poos_clouds.comment = u''
     work_he_poos_clouds.edits_pending = 0
     work_he_poos_clouds.last_updated = datetime.datetime(2013, 8, 1, 12, 5, 51, 364186)
-    work_he_poos_clouds.language = language_english
     work_he_poos_clouds.meta = workmeta_5
     work_he_poos_clouds.type = worktype_song
     session.add(work_he_poos_clouds)
