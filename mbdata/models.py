@@ -285,6 +285,63 @@ class AreaAnnotation(Base):
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
+class AreaAttributeType(Base):
+    __tablename__ = 'area_attribute_type'
+    __table_args__ = (
+        Index('area_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('area_attribute_type.id', 'musicbrainz'), name='area_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('AreaAttributeType', foreign_keys=[parent_id])
+
+
+class AreaAttributeTypeAllowedValue(Base):
+    __tablename__ = 'area_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('area_attribute_type_allowed_value_idx_name', 'area_attribute_type'),
+        Index('area_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    area_attribute_type_id = Column('area_attribute_type', Integer, ForeignKey(apply_schema('area_attribute_type.id', 'musicbrainz'), name='area_attribute_type_allowed_value_fk_area_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('area_attribute_type_allowed_value.id', 'musicbrainz'), name='area_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    area_attribute_type = relationship('AreaAttributeType', foreign_keys=[area_attribute_type_id], innerjoin=True)
+    parent = relationship('AreaAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class AreaAttribute(Base):
+    __tablename__ = 'area_attribute'
+    __table_args__ = (
+        Index('area_attribute_idx_area', 'area'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='area_attribute_fk_area'), nullable=False)
+    area_attribute_type_id = Column('area_attribute_type', Integer, ForeignKey(apply_schema('area_attribute_type.id', 'musicbrainz'), name='area_attribute_fk_area_attribute_type'), nullable=False)
+    area_attribute_type_allowed_value_id = Column('area_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('area_attribute_type_allowed_value.id', 'musicbrainz'), name='area_attribute_fk_area_attribute_type_allowed_value'))
+    area_attribute_text = Column(String)
+
+    area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
+    area_attribute_type = relationship('AreaAttributeType', foreign_keys=[area_attribute_type_id], innerjoin=True)
+    area_attribute_type_allowed_value = relationship('AreaAttributeTypeAllowedValue', foreign_keys=[area_attribute_type_allowed_value_id])
+
+
 class AreaTag(Base):
     __tablename__ = 'area_tag'
     __table_args__ = (
@@ -424,6 +481,63 @@ class ArtistAnnotation(Base):
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class ArtistAttributeType(Base):
+    __tablename__ = 'artist_attribute_type'
+    __table_args__ = (
+        Index('artist_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('artist_attribute_type.id', 'musicbrainz'), name='artist_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('ArtistAttributeType', foreign_keys=[parent_id])
+
+
+class ArtistAttributeTypeAllowedValue(Base):
+    __tablename__ = 'artist_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('artist_attribute_type_allowed_value_idx_name', 'artist_attribute_type'),
+        Index('artist_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    artist_attribute_type_id = Column('artist_attribute_type', Integer, ForeignKey(apply_schema('artist_attribute_type.id', 'musicbrainz'), name='artist_attribute_type_allowed_value_fk_artist_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('artist_attribute_type_allowed_value.id', 'musicbrainz'), name='artist_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    artist_attribute_type = relationship('ArtistAttributeType', foreign_keys=[artist_attribute_type_id], innerjoin=True)
+    parent = relationship('ArtistAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class ArtistAttribute(Base):
+    __tablename__ = 'artist_attribute'
+    __table_args__ = (
+        Index('artist_attribute_idx_artist', 'artist'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_attribute_fk_artist'), nullable=False)
+    artist_attribute_type_id = Column('artist_attribute_type', Integer, ForeignKey(apply_schema('artist_attribute_type.id', 'musicbrainz'), name='artist_attribute_fk_artist_attribute_type'), nullable=False)
+    artist_attribute_type_allowed_value_id = Column('artist_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('artist_attribute_type_allowed_value.id', 'musicbrainz'), name='artist_attribute_fk_artist_attribute_type_allowed_value'))
+    artist_attribute_text = Column(String)
+
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    artist_attribute_type = relationship('ArtistAttributeType', foreign_keys=[artist_attribute_type_id], innerjoin=True)
+    artist_attribute_type_allowed_value = relationship('ArtistAttributeTypeAllowedValue', foreign_keys=[artist_attribute_type_allowed_value_id])
 
 
 class ArtistIPI(Base):
@@ -952,6 +1066,15 @@ class Editor(Base):
     area = relationship('Area', foreign_keys=[area_id])
 
 
+class OldEditorName(Base):
+    __tablename__ = 'old_editor_name'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    name = Column(String(64), nullable=False)
+
+
 class EditorLanguage(Base):
     __tablename__ = 'editor_language'
     __table_args__ = (
@@ -1253,6 +1376,63 @@ class EventAnnotation(Base):
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
+class EventAttributeType(Base):
+    __tablename__ = 'event_attribute_type'
+    __table_args__ = (
+        Index('event_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('event_attribute_type.id', 'musicbrainz'), name='event_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('EventAttributeType', foreign_keys=[parent_id])
+
+
+class EventAttributeTypeAllowedValue(Base):
+    __tablename__ = 'event_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('event_attribute_type_allowed_value_idx_name', 'event_attribute_type'),
+        Index('event_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    event_attribute_type_id = Column('event_attribute_type', Integer, ForeignKey(apply_schema('event_attribute_type.id', 'musicbrainz'), name='event_attribute_type_allowed_value_fk_event_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('event_attribute_type_allowed_value.id', 'musicbrainz'), name='event_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    event_attribute_type = relationship('EventAttributeType', foreign_keys=[event_attribute_type_id], innerjoin=True)
+    parent = relationship('EventAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class EventAttribute(Base):
+    __tablename__ = 'event_attribute'
+    __table_args__ = (
+        Index('event_attribute_idx_event', 'event'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_attribute_fk_event'), nullable=False)
+    event_attribute_type_id = Column('event_attribute_type', Integer, ForeignKey(apply_schema('event_attribute_type.id', 'musicbrainz'), name='event_attribute_fk_event_attribute_type'), nullable=False)
+    event_attribute_type_allowed_value_id = Column('event_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('event_attribute_type_allowed_value.id', 'musicbrainz'), name='event_attribute_fk_event_attribute_type_allowed_value'))
+    event_attribute_text = Column(String)
+
+    event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+    event_attribute_type = relationship('EventAttributeType', foreign_keys=[event_attribute_type_id], innerjoin=True)
+    event_attribute_type_allowed_value = relationship('EventAttributeTypeAllowedValue', foreign_keys=[event_attribute_type_allowed_value_id])
+
+
 class EventGIDRedirect(Base):
     __tablename__ = 'event_gid_redirect'
     __table_args__ = (
@@ -1444,6 +1624,63 @@ class InstrumentAnnotation(Base):
 
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class InstrumentAttributeType(Base):
+    __tablename__ = 'instrument_attribute_type'
+    __table_args__ = (
+        Index('instrument_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('instrument_attribute_type.id', 'musicbrainz'), name='instrument_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('InstrumentAttributeType', foreign_keys=[parent_id])
+
+
+class InstrumentAttributeTypeAllowedValue(Base):
+    __tablename__ = 'instrument_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('instrument_attribute_type_allowed_value_idx_name', 'instrument_attribute_type'),
+        Index('instrument_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    instrument_attribute_type_id = Column('instrument_attribute_type', Integer, ForeignKey(apply_schema('instrument_attribute_type.id', 'musicbrainz'), name='instrument_attribute_type_allowed_value_fk_instrument_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('instrument_attribute_type_allowed_value.id', 'musicbrainz'), name='instrument_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    instrument_attribute_type = relationship('InstrumentAttributeType', foreign_keys=[instrument_attribute_type_id], innerjoin=True)
+    parent = relationship('InstrumentAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class InstrumentAttribute(Base):
+    __tablename__ = 'instrument_attribute'
+    __table_args__ = (
+        Index('instrument_attribute_idx_instrument', 'instrument'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='instrument_attribute_fk_instrument'), nullable=False)
+    instrument_attribute_type_id = Column('instrument_attribute_type', Integer, ForeignKey(apply_schema('instrument_attribute_type.id', 'musicbrainz'), name='instrument_attribute_fk_instrument_attribute_type'), nullable=False)
+    instrument_attribute_type_allowed_value_id = Column('instrument_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('instrument_attribute_type_allowed_value.id', 'musicbrainz'), name='instrument_attribute_fk_instrument_attribute_type_allowed_value'))
+    instrument_attribute_text = Column(String)
+
+    instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
+    instrument_attribute_type = relationship('InstrumentAttributeType', foreign_keys=[instrument_attribute_type_id], innerjoin=True)
+    instrument_attribute_type_allowed_value = relationship('InstrumentAttributeTypeAllowedValue', foreign_keys=[instrument_attribute_type_allowed_value_id])
 
 
 class InstrumentTag(Base):
@@ -4730,6 +4967,63 @@ class LabelAnnotation(Base):
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
+class LabelAttributeType(Base):
+    __tablename__ = 'label_attribute_type'
+    __table_args__ = (
+        Index('label_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('label_attribute_type.id', 'musicbrainz'), name='label_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('LabelAttributeType', foreign_keys=[parent_id])
+
+
+class LabelAttributeTypeAllowedValue(Base):
+    __tablename__ = 'label_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('label_attribute_type_allowed_value_idx_name', 'label_attribute_type'),
+        Index('label_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    label_attribute_type_id = Column('label_attribute_type', Integer, ForeignKey(apply_schema('label_attribute_type.id', 'musicbrainz'), name='label_attribute_type_allowed_value_fk_label_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('label_attribute_type_allowed_value.id', 'musicbrainz'), name='label_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    label_attribute_type = relationship('LabelAttributeType', foreign_keys=[label_attribute_type_id], innerjoin=True)
+    parent = relationship('LabelAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class LabelAttribute(Base):
+    __tablename__ = 'label_attribute'
+    __table_args__ = (
+        Index('label_attribute_idx_label', 'label'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='label_attribute_fk_label'), nullable=False)
+    label_attribute_type_id = Column('label_attribute_type', Integer, ForeignKey(apply_schema('label_attribute_type.id', 'musicbrainz'), name='label_attribute_fk_label_attribute_type'), nullable=False)
+    label_attribute_type_allowed_value_id = Column('label_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('label_attribute_type_allowed_value.id', 'musicbrainz'), name='label_attribute_fk_label_attribute_type_allowed_value'))
+    label_attribute_text = Column(String)
+
+    label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
+    label_attribute_type = relationship('LabelAttributeType', foreign_keys=[label_attribute_type_id], innerjoin=True)
+    label_attribute_type_allowed_value = relationship('LabelAttributeTypeAllowedValue', foreign_keys=[label_attribute_type_allowed_value_id])
+
+
 class LabelIPI(Base):
     __tablename__ = 'label_ipi'
     __table_args__ = (
@@ -5286,6 +5580,89 @@ class Medium(Base):
     format = relationship('MediumFormat', foreign_keys=[format_id])
 
 
+class MediumAttributeType(Base):
+    __tablename__ = 'medium_attribute_type'
+    __table_args__ = (
+        Index('medium_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('medium_attribute_type.id', 'musicbrainz'), name='medium_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('MediumAttributeType', foreign_keys=[parent_id])
+
+
+class MediumAttributeTypeAllowedFormat(Base):
+    __tablename__ = 'medium_attribute_type_allowed_format'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    medium_format_id = Column('medium_format', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_attribute_type_allowed_format_fk_medium_format'), primary_key=True, nullable=False)
+    medium_attribute_type_id = Column('medium_attribute_type', Integer, ForeignKey(apply_schema('medium_attribute_type.id', 'musicbrainz'), name='medium_attribute_type_allowed_format_fk_medium_attribute_type'), primary_key=True, nullable=False)
+
+    medium_format = relationship('MediumFormat', foreign_keys=[medium_format_id], innerjoin=True)
+    medium_attribute_type = relationship('MediumAttributeType', foreign_keys=[medium_attribute_type_id], innerjoin=True)
+
+
+class MediumAttributeTypeAllowedValue(Base):
+    __tablename__ = 'medium_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('medium_attribute_type_allowed_value_idx_name', 'medium_attribute_type'),
+        Index('medium_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    medium_attribute_type_id = Column('medium_attribute_type', Integer, ForeignKey(apply_schema('medium_attribute_type.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_fk_medium_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('medium_attribute_type_allowed_value.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    medium_attribute_type = relationship('MediumAttributeType', foreign_keys=[medium_attribute_type_id], innerjoin=True)
+    parent = relationship('MediumAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class MediumAttributeTypeAllowedValueAllowedFormat(Base):
+    __tablename__ = 'medium_attribute_type_allowed_value_allowed_format'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    medium_format_id = Column('medium_format', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_format'), primary_key=True, nullable=False)
+    medium_attribute_type_allowed_value_id = Column('medium_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('medium_attribute_type_allowed_value.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_attribute_type_allowed_value'), primary_key=True, nullable=False)
+
+    medium_format = relationship('MediumFormat', foreign_keys=[medium_format_id], innerjoin=True)
+    medium_attribute_type_allowed_value = relationship('MediumAttributeTypeAllowedValue', foreign_keys=[medium_attribute_type_allowed_value_id], innerjoin=True)
+
+
+class MediumAttribute(Base):
+    __tablename__ = 'medium_attribute'
+    __table_args__ = (
+        Index('medium_attribute_idx_medium', 'medium'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    medium_id = Column('medium', Integer, ForeignKey(apply_schema('medium.id', 'musicbrainz'), name='medium_attribute_fk_medium'), nullable=False)
+    medium_attribute_type_id = Column('medium_attribute_type', Integer, ForeignKey(apply_schema('medium_attribute_type.id', 'musicbrainz'), name='medium_attribute_fk_medium_attribute_type'), nullable=False)
+    medium_attribute_type_allowed_value_id = Column('medium_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('medium_attribute_type_allowed_value.id', 'musicbrainz'), name='medium_attribute_fk_medium_attribute_type_allowed_value'))
+    medium_attribute_text = Column(String)
+
+    medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True)
+    medium_attribute_type = relationship('MediumAttributeType', foreign_keys=[medium_attribute_type_id], innerjoin=True)
+    medium_attribute_type_allowed_value = relationship('MediumAttributeTypeAllowedValue', foreign_keys=[medium_attribute_type_allowed_value_id])
+
+
 class MediumCDTOC(Base):
     __tablename__ = 'medium_cdtoc'
     __table_args__ = (
@@ -5430,6 +5807,63 @@ class PlaceAnnotation(Base):
 
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class PlaceAttributeType(Base):
+    __tablename__ = 'place_attribute_type'
+    __table_args__ = (
+        Index('place_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('place_attribute_type.id', 'musicbrainz'), name='place_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('PlaceAttributeType', foreign_keys=[parent_id])
+
+
+class PlaceAttributeTypeAllowedValue(Base):
+    __tablename__ = 'place_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('place_attribute_type_allowed_value_idx_name', 'place_attribute_type'),
+        Index('place_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    place_attribute_type_id = Column('place_attribute_type', Integer, ForeignKey(apply_schema('place_attribute_type.id', 'musicbrainz'), name='place_attribute_type_allowed_value_fk_place_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('place_attribute_type_allowed_value.id', 'musicbrainz'), name='place_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    place_attribute_type = relationship('PlaceAttributeType', foreign_keys=[place_attribute_type_id], innerjoin=True)
+    parent = relationship('PlaceAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class PlaceAttribute(Base):
+    __tablename__ = 'place_attribute'
+    __table_args__ = (
+        Index('place_attribute_idx_place', 'place'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_attribute_fk_place'), nullable=False)
+    place_attribute_type_id = Column('place_attribute_type', Integer, ForeignKey(apply_schema('place_attribute_type.id', 'musicbrainz'), name='place_attribute_fk_place_attribute_type'), nullable=False)
+    place_attribute_type_allowed_value_id = Column('place_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('place_attribute_type_allowed_value.id', 'musicbrainz'), name='place_attribute_fk_place_attribute_type_allowed_value'))
+    place_attribute_text = Column(String)
+
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+    place_attribute_type = relationship('PlaceAttributeType', foreign_keys=[place_attribute_type_id], innerjoin=True)
+    place_attribute_type_allowed_value = relationship('PlaceAttributeTypeAllowedValue', foreign_keys=[place_attribute_type_allowed_value_id])
 
 
 class PlaceGIDRedirect(Base):
@@ -5633,6 +6067,63 @@ class RecordingAnnotation(Base):
 
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class RecordingAttributeType(Base):
+    __tablename__ = 'recording_attribute_type'
+    __table_args__ = (
+        Index('recording_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('recording_attribute_type.id', 'musicbrainz'), name='recording_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('RecordingAttributeType', foreign_keys=[parent_id])
+
+
+class RecordingAttributeTypeAllowedValue(Base):
+    __tablename__ = 'recording_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('recording_attribute_type_allowed_value_idx_name', 'recording_attribute_type'),
+        Index('recording_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    recording_attribute_type_id = Column('recording_attribute_type', Integer, ForeignKey(apply_schema('recording_attribute_type.id', 'musicbrainz'), name='recording_attribute_type_allowed_value_fk_recording_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('recording_attribute_type_allowed_value.id', 'musicbrainz'), name='recording_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    recording_attribute_type = relationship('RecordingAttributeType', foreign_keys=[recording_attribute_type_id], innerjoin=True)
+    parent = relationship('RecordingAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class RecordingAttribute(Base):
+    __tablename__ = 'recording_attribute'
+    __table_args__ = (
+        Index('recording_attribute_idx_recording', 'recording'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_attribute_fk_recording'), nullable=False)
+    recording_attribute_type_id = Column('recording_attribute_type', Integer, ForeignKey(apply_schema('recording_attribute_type.id', 'musicbrainz'), name='recording_attribute_fk_recording_attribute_type'), nullable=False)
+    recording_attribute_type_allowed_value_id = Column('recording_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('recording_attribute_type_allowed_value.id', 'musicbrainz'), name='recording_attribute_fk_recording_attribute_type_allowed_value'))
+    recording_attribute_text = Column(String)
+
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    recording_attribute_type = relationship('RecordingAttributeType', foreign_keys=[recording_attribute_type_id], innerjoin=True)
+    recording_attribute_type_allowed_value = relationship('RecordingAttributeTypeAllowedValue', foreign_keys=[recording_attribute_type_allowed_value_id])
 
 
 class RecordingMeta(Base):
@@ -5852,6 +6343,63 @@ class ReleaseAnnotation(Base):
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class ReleaseAttributeType(Base):
+    __tablename__ = 'release_attribute_type'
+    __table_args__ = (
+        Index('release_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_attribute_type.id', 'musicbrainz'), name='release_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('ReleaseAttributeType', foreign_keys=[parent_id])
+
+
+class ReleaseAttributeTypeAllowedValue(Base):
+    __tablename__ = 'release_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('release_attribute_type_allowed_value_idx_name', 'release_attribute_type'),
+        Index('release_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    release_attribute_type_id = Column('release_attribute_type', Integer, ForeignKey(apply_schema('release_attribute_type.id', 'musicbrainz'), name='release_attribute_type_allowed_value_fk_release_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_attribute_type_allowed_value.id', 'musicbrainz'), name='release_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    release_attribute_type = relationship('ReleaseAttributeType', foreign_keys=[release_attribute_type_id], innerjoin=True)
+    parent = relationship('ReleaseAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class ReleaseAttribute(Base):
+    __tablename__ = 'release_attribute'
+    __table_args__ = (
+        Index('release_attribute_idx_release', 'release'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_attribute_fk_release'), nullable=False)
+    release_attribute_type_id = Column('release_attribute_type', Integer, ForeignKey(apply_schema('release_attribute_type.id', 'musicbrainz'), name='release_attribute_fk_release_attribute_type'), nullable=False)
+    release_attribute_type_allowed_value_id = Column('release_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('release_attribute_type_allowed_value.id', 'musicbrainz'), name='release_attribute_fk_release_attribute_type_allowed_value'))
+    release_attribute_text = Column(String)
+
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    release_attribute_type = relationship('ReleaseAttributeType', foreign_keys=[release_attribute_type_id], innerjoin=True)
+    release_attribute_type_allowed_value = relationship('ReleaseAttributeTypeAllowedValue', foreign_keys=[release_attribute_type_allowed_value_id])
 
 
 class ReleaseGIDRedirect(Base):
@@ -6089,6 +6637,63 @@ class ReleaseGroupAnnotation(Base):
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
+
+
+class ReleaseGroupAttributeType(Base):
+    __tablename__ = 'release_group_attribute_type'
+    __table_args__ = (
+        Index('release_group_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('ReleaseGroupAttributeType', foreign_keys=[parent_id])
+
+
+class ReleaseGroupAttributeTypeAllowedValue(Base):
+    __tablename__ = 'release_group_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('release_group_attribute_type_allowed_value_idx_name', 'release_group_attribute_type'),
+        Index('release_group_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    release_group_attribute_type_id = Column('release_group_attribute_type', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_type_allowed_value_fk_release_group_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_attribute_type_allowed_value.id', 'musicbrainz'), name='release_group_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    release_group_attribute_type = relationship('ReleaseGroupAttributeType', foreign_keys=[release_group_attribute_type_id], innerjoin=True)
+    parent = relationship('ReleaseGroupAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class ReleaseGroupAttribute(Base):
+    __tablename__ = 'release_group_attribute'
+    __table_args__ = (
+        Index('release_group_attribute_idx_release_group', 'release_group'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_attribute_fk_release_group'), nullable=False)
+    release_group_attribute_type_id = Column('release_group_attribute_type', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_fk_release_group_attribute_type'), nullable=False)
+    release_group_attribute_type_allowed_value_id = Column('release_group_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('release_group_attribute_type_allowed_value.id', 'musicbrainz'), name='release_group_attribute_fk_release_group_attribute_type_allowed_value'))
+    release_group_attribute_text = Column(String)
+
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
+    release_group_attribute_type = relationship('ReleaseGroupAttributeType', foreign_keys=[release_group_attribute_type_id], innerjoin=True)
+    release_group_attribute_type_allowed_value = relationship('ReleaseGroupAttributeTypeAllowedValue', foreign_keys=[release_group_attribute_type_allowed_value_id])
 
 
 class ReleaseGroupGIDRedirect(Base):
@@ -6351,6 +6956,63 @@ class SeriesAnnotation(Base):
     annotation = relationship('Annotation', foreign_keys=[annotation_id], innerjoin=True)
 
 
+class SeriesAttributeType(Base):
+    __tablename__ = 'series_attribute_type'
+    __table_args__ = (
+        Index('series_attribute_type_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    free_text = Column(Boolean, nullable=False)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('series_attribute_type.id', 'musicbrainz'), name='series_attribute_type_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    parent = relationship('SeriesAttributeType', foreign_keys=[parent_id])
+
+
+class SeriesAttributeTypeAllowedValue(Base):
+    __tablename__ = 'series_attribute_type_allowed_value'
+    __table_args__ = (
+        Index('series_attribute_type_allowed_value_idx_name', 'series_attribute_type'),
+        Index('series_attribute_type_allowed_value_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    series_attribute_type_id = Column('series_attribute_type', Integer, ForeignKey(apply_schema('series_attribute_type.id', 'musicbrainz'), name='series_attribute_type_allowed_value_fk_series_attribute_type'), nullable=False)
+    value = Column(String)
+    parent_id = Column('parent', Integer, ForeignKey(apply_schema('series_attribute_type_allowed_value.id', 'musicbrainz'), name='series_attribute_type_allowed_value_fk_parent'))
+    child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    description = Column(String)
+    gid = Column(UUID, nullable=False)
+
+    series_attribute_type = relationship('SeriesAttributeType', foreign_keys=[series_attribute_type_id], innerjoin=True)
+    parent = relationship('SeriesAttributeTypeAllowedValue', foreign_keys=[parent_id])
+
+
+class SeriesAttribute(Base):
+    __tablename__ = 'series_attribute'
+    __table_args__ = (
+        Index('series_attribute_idx_series', 'series'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='series_attribute_fk_series'), nullable=False)
+    series_attribute_type_id = Column('series_attribute_type', Integer, ForeignKey(apply_schema('series_attribute_type.id', 'musicbrainz'), name='series_attribute_fk_series_attribute_type'), nullable=False)
+    series_attribute_type_allowed_value_id = Column('series_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('series_attribute_type_allowed_value.id', 'musicbrainz'), name='series_attribute_fk_series_attribute_type_allowed_value'))
+    series_attribute_text = Column(String)
+
+    series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
+    series_attribute_type = relationship('SeriesAttributeType', foreign_keys=[series_attribute_type_id], innerjoin=True)
+    series_attribute_type_allowed_value = relationship('SeriesAttributeTypeAllowedValue', foreign_keys=[series_attribute_type_allowed_value_id])
+
+
 class SeriesTag(Base):
     __tablename__ = 'series_tag'
     __table_args__ = (
@@ -6565,10 +7227,23 @@ class Work(Base):
     comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
-    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='work_fk_language'))
 
     type = relationship('WorkType', foreign_keys=[type_id])
-    language = relationship('Language', foreign_keys=[language_id])
+
+
+class WorkLanguage(Base):
+    __tablename__ = 'work_language'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='work_language_fk_work'), primary_key=True, nullable=False)
+    language_id = Column('language', Integer, ForeignKey(apply_schema('language.id', 'musicbrainz'), name='work_language_fk_language'), primary_key=True, nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
+    language = relationship('Language', foreign_keys=[language_id], innerjoin=True)
 
 
 class WorkRatingRaw(Base):

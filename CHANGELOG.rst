@@ -1,3 +1,8 @@
+Version 2017.06.01
+==================
+
+-  Updated to MusicBrainz database schema 24.
+
 Version 2017.01.18
 ==================
 
