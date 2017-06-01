@@ -1066,15 +1066,6 @@ class Editor(Base):
     area = relationship('Area', foreign_keys=[area_id])
 
 
-class OldEditorName(Base):
-    __tablename__ = 'old_editor_name'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-    )
-
-    name = Column(String(64), nullable=False)
-
-
 class EditorLanguage(Base):
     __tablename__ = 'editor_language'
     __table_args__ = (

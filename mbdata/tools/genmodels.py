@@ -317,6 +317,9 @@ def generate_models_from_sql(tables, types, indexes):
     map_type = make_type_mapper(types)
 
     for table in tables:
+        if table.name == 'old_editor_name':
+            continue
+
         model_name = format_model_name(table.name)
         yield 'class {0}(Base):'.format(model_name)
         yield '    __tablename__ = {0!r}'.format(str(table.name))
