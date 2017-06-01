@@ -1,3 +1,8 @@
+Version 2017.06.02
+==================
+
+-  Remove old_editor_name mapping.
+
 Version 2017.06.01
 ==================
 
