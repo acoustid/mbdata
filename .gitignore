@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 *.db
-e/
+/e/
+/.tox/
 mbdata.egg-info/
 settings.py
