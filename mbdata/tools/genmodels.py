@@ -417,9 +417,10 @@ def generate_models_from_sql(tables, types, indexes):
                         aliases.append((attribute_name, column.name))
                         aliases.append((relationship_name, foreign_key.table))
 
+                foreign_key_name = "{0}_fk_{1}".format(table.name, column.name)[:63]
                 foreign_key_params = [
                     "apply_schema({0!r}, {1!r})".format(join_foreign_key(foreign_key.table, foreign_key.column), foreign_key.schema),
-                    "name='{0}_fk_{1}'".format(table.name, column.name),
+                    "name='{0}'".format(foreign_key_name),
                 ]
                 if foreign_key.cascade:
                     foreign_key_params.append("ondelete='CASCADE'")

@@ -1645,7 +1645,7 @@ class InstrumentAttributeTypeAllowedValue(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    instrument_attribute_type_id = Column('instrument_attribute_type', Integer, ForeignKey(apply_schema('instrument_attribute_type.id', 'musicbrainz'), name='instrument_attribute_type_allowed_value_fk_instrument_attribute_type'), nullable=False)
+    instrument_attribute_type_id = Column('instrument_attribute_type', Integer, ForeignKey(apply_schema('instrument_attribute_type.id', 'musicbrainz'), name='instrument_attribute_type_allowed_value_fk_instrument_attribute'), nullable=False)
     value = Column(String)
     parent_id = Column('parent', Integer, ForeignKey(apply_schema('instrument_attribute_type_allowed_value.id', 'musicbrainz'), name='instrument_attribute_type_allowed_value_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -5629,8 +5629,8 @@ class MediumAttributeTypeAllowedValueAllowedFormat(Base):
         {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
     )
 
-    medium_format_id = Column('medium_format', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_format'), primary_key=True, nullable=False)
-    medium_attribute_type_allowed_value_id = Column('medium_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('medium_attribute_type_allowed_value.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_attribute_type_allowed_value'), primary_key=True, nullable=False)
+    medium_format_id = Column('medium_format', Integer, ForeignKey(apply_schema('medium_format.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_fo'), primary_key=True, nullable=False)
+    medium_attribute_type_allowed_value_id = Column('medium_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('medium_attribute_type_allowed_value.id', 'musicbrainz'), name='medium_attribute_type_allowed_value_allowed_format_fk_medium_at'), primary_key=True, nullable=False)
 
     medium_format = relationship('MediumFormat', foreign_keys=[medium_format_id], innerjoin=True)
     medium_attribute_type_allowed_value = relationship('MediumAttributeTypeAllowedValue', foreign_keys=[medium_attribute_type_allowed_value_id], innerjoin=True)
@@ -6088,7 +6088,7 @@ class RecordingAttributeTypeAllowedValue(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    recording_attribute_type_id = Column('recording_attribute_type', Integer, ForeignKey(apply_schema('recording_attribute_type.id', 'musicbrainz'), name='recording_attribute_type_allowed_value_fk_recording_attribute_type'), nullable=False)
+    recording_attribute_type_id = Column('recording_attribute_type', Integer, ForeignKey(apply_schema('recording_attribute_type.id', 'musicbrainz'), name='recording_attribute_type_allowed_value_fk_recording_attribute_t'), nullable=False)
     value = Column(String)
     parent_id = Column('parent', Integer, ForeignKey(apply_schema('recording_attribute_type_allowed_value.id', 'musicbrainz'), name='recording_attribute_type_allowed_value_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -6658,7 +6658,7 @@ class ReleaseGroupAttributeTypeAllowedValue(Base):
     )
 
     id = Column(Integer, primary_key=True)
-    release_group_attribute_type_id = Column('release_group_attribute_type', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_type_allowed_value_fk_release_group_attribute_type'), nullable=False)
+    release_group_attribute_type_id = Column('release_group_attribute_type', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_type_allowed_value_fk_release_group_att'), nullable=False)
     value = Column(String)
     parent_id = Column('parent', Integer, ForeignKey(apply_schema('release_group_attribute_type_allowed_value.id', 'musicbrainz'), name='release_group_attribute_type_allowed_value_fk_parent'))
     child_order = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
@@ -6679,7 +6679,7 @@ class ReleaseGroupAttribute(Base):
     id = Column(Integer, primary_key=True)
     release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='release_group_attribute_fk_release_group'), nullable=False)
     release_group_attribute_type_id = Column('release_group_attribute_type', Integer, ForeignKey(apply_schema('release_group_attribute_type.id', 'musicbrainz'), name='release_group_attribute_fk_release_group_attribute_type'), nullable=False)
-    release_group_attribute_type_allowed_value_id = Column('release_group_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('release_group_attribute_type_allowed_value.id', 'musicbrainz'), name='release_group_attribute_fk_release_group_attribute_type_allowed_value'))
+    release_group_attribute_type_allowed_value_id = Column('release_group_attribute_type_allowed_value', Integer, ForeignKey(apply_schema('release_group_attribute_type_allowed_value.id', 'musicbrainz'), name='release_group_attribute_fk_release_group_attribute_type_allowed'))
     release_group_attribute_text = Column(String)
 
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
