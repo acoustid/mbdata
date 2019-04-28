@@ -47,7 +47,7 @@ def handle_list_releases():
 
     query = query_release(g.db, include).\
         filter(Release.release_group_id == release_group_query).\
-        order_by(Release.id).limit(10) # FIXME
+        order_by(Release.id).limit(10)  # FIXME
 
     releases_data = []
     for release in query:

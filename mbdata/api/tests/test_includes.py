@@ -70,7 +70,7 @@ def test_includes_parse_simple_2():
     assert_false(include.mediums.tracks.artists)
 
 
-def test_includes_parse_dotted():
+def test_includes_parse_dotted2():
     include = ReleaseIncludes.parse(['artists', 'mediums.tracks'])
     assert_true(include.artists)
     assert_true(include.mediums)
@@ -78,7 +78,7 @@ def test_includes_parse_dotted():
     assert_false(include.mediums.tracks.artists)
 
 
-def test_includes_parse_dotted_deep():
+def test_includes_parse_dotted2_deep():
     include = ReleaseIncludes.parse(['artists', 'mediums.tracks.artists'])
     assert_true(include.artists)
     assert_true(include.mediums)

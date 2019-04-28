@@ -20,7 +20,6 @@ from mbdata.utils import patch_model_schemas, NO_SCHEMAS
 from mbdata.sample_data import create_sample_data
 
 
-#use_file_db = True
 use_file_db = False
 
 db_fd = db_name = None

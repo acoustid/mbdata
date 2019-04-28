@@ -111,7 +111,7 @@ def handle_list_releases():
 
     query = query_release(g.db, include).\
         filter(Release.artist_credit_id.in_(artist_credits_query)).\
-        order_by(Release.id).limit(10) # FIXME
+        order_by(Release.id).limit(10)  # FIXME
 
     releases_data = []
     for release in query:
@@ -131,7 +131,7 @@ def handle_list_release_groups():
 
     query = query_release_group(g.db, include).\
         filter(ReleaseGroup.artist_credit_id.in_(artist_credits_query)).\
-        order_by(ReleaseGroup.id).limit(10) # FIXME
+        order_by(ReleaseGroup.id).limit(10)  # FIXME
 
     release_groups_data = []
     for release_group in query:

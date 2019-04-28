@@ -5,7 +5,7 @@ import argparse
 import datetime
 import re
 import unicodedata
-from sqlalchemy import create_engine, inspect, sql
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import object_session
 from sqlalchemy.orm.collections import InstrumentedList
@@ -30,11 +30,11 @@ RELEASE_GIDS = [
 ]
 
 PLACE_GIDS = [
-    'bd55aeb7-19d1-4607-a500-14b8479d3fed', # Abbey Road Studios
+    'bd55aeb7-19d1-4607-a500-14b8479d3fed',  # Abbey Road Studios
 ]
 
 LABEL_GIDS = [
-    'ecc049d0-88a6-4806-a5b7-0f1367a7d6e1', # Studio Ghibli
+    'ecc049d0-88a6-4806-a5b7-0f1367a7d6e1',  # Studio Ghibli
 ]
 
 
@@ -45,6 +45,8 @@ models = set()
 
 _unaccent_dict = {u'Æ': u'AE', u'æ': u'ae', u'Œ': u'OE', u'œ': u'oe', u'ß': 'ss'}
 _re_latin_letter = re.compile(r"^(LATIN [A-Z]+ LETTER [A-Z]+) WITH")
+
+
 def unaccent(string):
     result = []
     for char in string:
@@ -56,7 +58,7 @@ def unaccent(string):
                 match = _re_latin_letter.search(name)
                 if match:
                     char = unicodedata.lookup(match.group(1))
-            except:
+            except Exception:
                 pass
         result.append(char)
     return "".join(result)
@@ -213,4 +215,3 @@ if __name__ == '__main__':
     session = Session()
 
     dump_sample_data(session)
-

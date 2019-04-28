@@ -36,6 +36,7 @@ PARAM_TYPES = {
     'text': text_type,
 }
 
+
 def get_param(name, type=None, default=None, required=False, container=None):
     if type and type.endswith('+'):
         assert default is None

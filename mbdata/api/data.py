@@ -13,6 +13,7 @@ from mbdata.models import (
     Release,
     Recording,
     ReleaseGroup,
+    Work,
 )
 
 
@@ -121,8 +122,8 @@ def _fetch_parent_areas_cte(session, area_parent_query, areas, options):
             area_parent_query.c.child_id,
             area_parent_query.c.parent_id,
             area_ancestors_cte.c.depth + 1
-        ).\
-        select_from(area_ancestors_cte).\
+        ).
+        select_from(area_ancestors_cte).
         join(area_parent_query, area_ancestors_cte.c.parent_id == area_parent_query.c.child_id)
     )
 
@@ -310,7 +311,6 @@ def _load_links_by_types(db, objs, attr, source_model, target_type, include):
         _load_links_by_types_one_side(model, query, objs, attr, include, "entity0", "entity1", target_type)
         _load_links_by_types_one_side(model, query, objs, attr, include, "entity1", "entity0", target_type)
     else:
-        source_attr = target_attr = None
         if source_model == model.entity0.property.mapper.class_:
             _load_links_by_types_one_side(model, query, objs, attr, include, "entity0", "entity1", target_type)
         else:

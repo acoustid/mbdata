@@ -29,12 +29,14 @@ app.register_blueprint(work_blueprint, url_prefix='/v1/work')
 
 Session = engine = None
 
+
 def setup_db():
     global engine, Session
     engine = create_engine(app.config['DATABASE_URI'], echo=app.config['DATABASE_ECHO'])
-    if engine.url.drivername == 'sqlite': # XXX replace this with explicit schema mapping configuration
+    if engine.url.drivername == 'sqlite':  # XXX replace this with explicit schema mapping configuration
         patch_model_schemas(NO_SCHEMAS)
     Session = sessionmaker(bind=engine)
+
 
 setup_db()
 

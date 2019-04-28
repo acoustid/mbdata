@@ -107,7 +107,7 @@ class Index(object):
 def split_fqn(fqn, schema=None):
     parts = fqn.split('.')
     if len(parts) == 1:
-        return schema, parts[0], 'id' # XXX this shouldn't happen, but there are errors in CreateTables.sql
+        return schema, parts[0], 'id'  # XXX this shouldn't happen, but there are errors in CreateTables.sql
     elif len(parts) == 2:
         return schema, parts[0], parts[1]
     elif len(parts) == 3:
@@ -294,7 +294,7 @@ def convert_expression_to_python(token):
             if op is None:
                 op = op_token.normalized
             assert op == op_token.normalized
-            new_tokens = token.tokens[idx+1:new_idx]
+            new_tokens = token.tokens[idx + 1:new_idx]
             if len(new_tokens) == 1:
                 parts.append(convert_expression_to_python(new_tokens[0]))
             else:
@@ -330,7 +330,7 @@ def generate_models_from_sql(tables, types, indexes):
                 if index.unique:
                     extra.append('unique=True')
                 extra = ', '.join([repr(str(index.name))] + extra)
-                if 'DESC' not in extra and '(' not in extra: # XXX fix
+                if 'DESC' not in extra and '(' not in extra:  # XXX fix
                     yield '        Index({}),'.format(extra)
         yield '        {{\'schema\': mbdata.config.schemas.get({0!r}, {0!r})}}'.format(str(table.schema))
         yield '    )'
@@ -446,7 +446,7 @@ def generate_models_from_sql(tables, types, indexes):
                     else:
                         column_attributes['server_default'] = 'sql.text({0!r})'.format(default)
 
-            #if column.check_constraint:
+            # if column.check_constraint:
             #    check = column.check_constraint
             #    text = convert_expression_to_python(check.text)
             #    if check.name:

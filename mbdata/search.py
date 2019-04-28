@@ -453,7 +453,6 @@ def iter_all(db, sample=False):
 def save_update_xml(xml, stream):
     num_docs = 0
     xml.write('<update>\n')
-    has_more = False
     for elem in stream:
         xml.write(ET.tostring(elem))
         xml.write('\n')
@@ -614,9 +613,9 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     db = Session()
 
-    #export_triggers(db)
+    # export_triggers(db)
     update_index(db, None)
-    #stream = iter_data_all(db, sample=True)
-    #for doc in export_docs(stream):
-    #    print ET.tostring(doc, pretty_print=True)
+    # stream = iter_data_all(db, sample=True)
+    # for doc in export_docs(stream):
+    #     print ET.tostring(doc, pretty_print=True)
 

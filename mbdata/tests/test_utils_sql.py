@@ -1,10 +1,10 @@
 from __future__ import print_function
 import sys
-from nose.tools import *
+from nose.tools import assert_equal, assert_true, assert_false, assert_is_instance, assert_multi_line_equal
 from six import StringIO
 import sqlparse
 from sqlparse import tokens as T
-from sqlparse.sql import Token, TokenList, Parenthesis, Identifier
+from sqlparse.sql import Token, TokenList, Parenthesis
 from mbdata.utils.sql import (
     group_parentheses,
     parse_statements,
@@ -100,8 +100,8 @@ def test_set_statement():
     statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
-    assert_equals('search_path', statement.get_name())
-    assert_equals('cover_art_archive', statement.get_value())
+    assert_equal('search_path', statement.get_name())
+    assert_equal('cover_art_archive', statement.get_value())
 
 
 def test_set_statement_without_quotes():
@@ -109,8 +109,8 @@ def test_set_statement_without_quotes():
     statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
-    assert_equals('search_path', statement.get_name())
-    assert_equals('cover_art_archive', statement.get_value())
+    assert_equal('search_path', statement.get_name())
+    assert_equal('cover_art_archive', statement.get_value())
 
 
 def test_set_statement_with_to():
@@ -118,8 +118,8 @@ def test_set_statement_with_to():
     statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, Set)
-    assert_equals('search_path', statement.get_name())
-    assert_equals('cover_art_archive', statement.get_value())
+    assert_equal('search_path', statement.get_name())
+    assert_equal('cover_art_archive', statement.get_value())
 
 
 def test_create_type_statement():
@@ -127,8 +127,8 @@ def test_create_type_statement():
     statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateType)
-    assert_equals('FLUENCY', statement.get_name())
-    assert_equals(['basic', 'intermediate'], statement.get_enum_labels())
+    assert_equal('FLUENCY', statement.get_name())
+    assert_equal(['basic', 'intermediate'], statement.get_enum_labels())
 
 
 def test_create_table_statement():
@@ -142,34 +142,34 @@ CREATE TABLE table_name (
     statement = next(parse_statements(sqlparse.parse(sql)))
 
     assert_is_instance(statement, CreateTable)
-    assert_equals('table_name', statement.get_name())
+    assert_equal('table_name', statement.get_name())
 
     columns = list(statement.get_columns())
-    assert_equals(3, len(columns))
+    assert_equal(3, len(columns))
 
     column = columns[0]
-    assert_equals('id', column.get_name())
-    assert_equals('SERIAL', column.get_type())
-    assert_equals(None, column.get_default_value())
-    assert_equals(['-- PK'], column.get_comments())
-    assert_equals(False, column.is_not_null())
-    assert_equals(None, column.get_check_constraint())
+    assert_equal('id', column.get_name())
+    assert_equal('SERIAL', column.get_type())
+    assert_equal(None, column.get_default_value())
+    assert_equal(['-- PK'], column.get_comments())
+    assert_equal(False, column.is_not_null())
+    assert_equal(None, column.get_check_constraint())
 
     column = columns[1]
-    assert_equals('name', column.get_name())
-    assert_equals('VARCHAR(100)', column.get_type())
-    assert_equals(None, column.get_default_value())
-    assert_equals([], column.get_comments())
-    assert_equals(True, column.is_not_null())
-    assert_equals(None, column.get_check_constraint())
+    assert_equal('name', column.get_name())
+    assert_equal('VARCHAR(100)', column.get_type())
+    assert_equal(None, column.get_default_value())
+    assert_equal([], column.get_comments())
+    assert_equal(True, column.is_not_null())
+    assert_equal(None, column.get_check_constraint())
 
     column = columns[2]
-    assert_equals('created', column.get_name())
-    assert_equals('TIMESTAMP WITH TIME ZONE', column.get_type())
-    assert_equals('now()', column.get_default_value())
-    assert_equals([], column.get_comments())
-    assert_equals(True, column.is_not_null())
-    assert_equals(None, column.get_check_constraint())
+    assert_equal('created', column.get_name())
+    assert_equal('TIMESTAMP WITH TIME ZONE', column.get_type())
+    assert_equal('now()', column.get_default_value())
+    assert_equal([], column.get_comments())
+    assert_equal(True, column.is_not_null())
+    assert_equal(None, column.get_check_constraint())
 
 
 def test_create_table_statement_check_constraint():

@@ -8,7 +8,7 @@ from mbdata.models import (
     RecordingGIDRedirect,
 )
 from mbdata.utils import get_something_by_gid
-from mbdata.api.data import load_links
+from mbdata.api.data import load_links, query_recording
 from mbdata.api.includes import RecordingIncludes
 from mbdata.api.utils import (
     get_param,

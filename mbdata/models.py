@@ -4,7 +4,7 @@
 # pylint: disable=C0302
 # pylint: disable=W0232
 
-from sqlalchemy import Column, Index, Integer, String, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql
+from sqlalchemy import Column, Index, Integer, String, Text, ForeignKey, Boolean, DateTime, Time, Date, Enum, Interval, CHAR, CheckConstraint, sql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
@@ -21,7 +21,7 @@ else:
     Base = declarative_base()
 
 if not mbdata.config.use_cube:
-    Cube = Text
+    Cube = Text  # noqa: F811
 
 
 def apply_schema(name, schema):

@@ -5,6 +5,7 @@ from collections import namedtuple
 from itsdangerous import URLSafeSerializer, BadSignature
 from flask import current_app, abort
 from mbdata.api.utils import get_param, response_error
+from mbdata.api.errors import INVALID_PARAMETER_ERROR
 
 
 Page = namedtuple('Page', ['start', 'limit', 'doc', 'score'])

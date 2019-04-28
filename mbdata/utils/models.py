@@ -13,6 +13,7 @@ ENTITY_TYPES = {
     'work': models.Work,
 }
 
+
 def get_entity_type_model(type):
     return ENTITY_TYPES[type]
 
