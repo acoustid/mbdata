@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import sys
 import argparse
 import datetime
@@ -102,8 +103,6 @@ def find_name(output, names, obj):
     if key in in_progress:
         return None
 
-    print >>sys.stderr, 'dumping', key
-
     if key in names:
         return names[key]
 
@@ -185,24 +184,24 @@ def dump_sample_data(session):
         for item in query:
             find_name(output, names, item)
 
-    print 'import datetime'
+    print('import datetime')
     models_to_import = list(sorted(models))
     while models_to_import:
-        print 'from mbdata.models import {0}'.format(', '.join(models_to_import[:5]))
+        print('from mbdata.models import {0}'.format(', '.join(models_to_import[:5])))
         models_to_import = models_to_import[5:]
-    print
-    print
+    print()
+    print()
 
-    print 'def create_sample_data(session):'
+    print('def create_sample_data(session):')
 
     for line in '\n\n'.join(output).splitlines():
         if not line:
-            print
+            print()
         else:
-            print '    ' + line
+            print('    ' + line)
 
-    print
-    print '    session.commit()'
+    print()
+    print('    session.commit()')
 
 
 if __name__ == '__main__':

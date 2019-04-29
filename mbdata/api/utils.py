@@ -87,7 +87,7 @@ def dumpxml(output, name, value, parent_name=None):
         output.write('</{0}>'.format(name))
     else:
         output.write('<{0}>'.format(name))
-        output.write(xml.sax.saxutils.escape(unicode(value)).encode('utf8'))
+        output.write(xml.sax.saxutils.escape(text_type(value)).encode('utf8'))
         output.write('</{0}>'.format(name))
 
 

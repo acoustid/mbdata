@@ -1,3 +1,4 @@
+from __future__ import print_function
 import time
 import tarfile
 import sys
@@ -84,7 +85,7 @@ def check_table_exists(db, schema, table):
 
 
 def load_tar(filename, db, config, ignored_schemas, ignored_tables):
-    print "Importing data from", filename
+    print("Importing data from", filename)
     tar = tarfile.open(filename, 'r:bz2')
     cursor = db.cursor()
     for member in tar:
@@ -94,19 +95,19 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
         schema, table = parse_name(config, name)
         fulltable = fqn(schema, table)
         if schema in ignored_schemas:
-            print " - Ignoring", name
+            print(" - Ignoring {}".format(name))
             continue
         if table in ignored_tables:
-            print " - Ignoring", name
+            print(" - Ignoring {}".format(name))
             continue
         if not check_table_exists(db, schema, table):
-            print " - Skipping %s (table %s does not exist)" % (name, fulltable)
+            print(" - Skipping {} (table {} does not exist)".format(name, fulltable))
             continue
         cursor.execute("SELECT 1 FROM %s LIMIT 1" % fulltable)
         if cursor.fetchone():
-            print " - Skipping %s (table %s already contains data)" % (name, fulltable)
+            print(" - Skipping {} (table {} already contains data)".format(name, fulltable))
             continue
-        print " - Loading %s to %s" % (name, fulltable)
+        print(" - Loading {} to {}".format(name, fulltable))
         cursor.copy_from(tar.extractfile(member), fulltable)
         db.commit
 
@@ -263,16 +264,16 @@ class PacketImporter(object):
                 elif type == 'i':
                     self._hook.after_insert(table, values)
             # print 'COMMIT; --', xid
-        print ' - Statistics:'
+        print(' - Statistics:')
         for table in sorted(stats.keys()):
-            print '   * %-30s\t%d\t%d\t%d' % (table, stats[table]['i'], stats[table]['u'], stats[table]['d'])
+            print('   * %-30s\t%d\t%d\t%d' % (table, stats[table]['i'], stats[table]['u'], stats[table]['d']))
         self._hook.before_commit()
         self._db.commit()
         self._hook.after_commit()
 
 
 def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook):
-    print "Processing", fileobj.name
+    print("Processing {}".format(fileobj.name))
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
     importer = PacketImporter(db, schema, ignored_schemas, ignored_tables, replication_seq, hook)
     for member in tar:
@@ -282,7 +283,7 @@ def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_s
                 raise Exception("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
             ts = tar.extractfile(member).read().strip()
-            print ' - Packet was produced at', ts
+            print(' - Packet was produced at {}'.format(ts))
         elif member.name in ('mbdump/Pending', 'mbdump/dbmirror_pending'):
             importer.load_pending(tar.extractfile(member))
         elif member.name in ('mbdump/PendingData', 'mbdump/dbmirror_pendingdata'):
@@ -294,10 +295,10 @@ def download_packet(base_url, token, replication_seq):
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
         url += '?token=' + token
-    print "Downloading", url
+    print("Downloading {}".format(url))
     try:
         data = urllib2.urlopen(url, timeout=60)
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         if e.code == 404:
             return None
         raise
@@ -330,7 +331,7 @@ def mbslave_sync_main(config, args):
         hook = hook_class(config, db, config)
         tmp = download_packet(base_url, token, replication_seq)
         if tmp is None:
-            print 'Not found, stopping'
+            print('Not found, stopping')
             if not args.keep_running:
                 break
             replication_seq -= 1

@@ -310,7 +310,7 @@ def iter_data_all(db, sample=False):
 def export_docs(stream):
     for id, data in stream:
         try:
-            yield id, E.doc(*[E.field(re.sub('[\x00-\x08\x0b\x0c\x0e-\x1f]', '', unicode(value)), name=name) for (name, value) in data])
+            yield id, E.doc(*[E.field(re.sub('[\x00-\x08\x0b\x0c\x0e-\x1f]', '', six.text_type(value)), name=name) for (name, value) in data])
         except ValueError:
             print(id, data)
             raise

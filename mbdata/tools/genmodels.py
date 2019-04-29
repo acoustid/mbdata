@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import re
 import sqlparse
+import six
 from sqlparse import tokens as T
 from sqlparse.sql import TokenList, Parenthesis
 from mbdata.utils.sql import CreateTable, CreateType, CreateIndex, Set, parse_statements
@@ -470,7 +471,7 @@ def generate_models_from_sql(tables, types, indexes):
                 if not nullable:
                     relationship_params.append('innerjoin=True')
                 if backref:
-                    if isinstance(backref, basestring):
+                    if isinstance(backref, six.string_types):
                         relationship_params.append('backref=backref({0!r})'.format(backref))
                     else:
                         relationship_params.append('backref=backref({0!r}, {1})'.format(backref[0], ', '.join(backref[1:])))
