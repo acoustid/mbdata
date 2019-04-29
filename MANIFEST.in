@@ -1,1 +1,2 @@
 recursive-include mbdata/web/static *
+recursive-include mbdata/sql *

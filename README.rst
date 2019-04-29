@@ -17,63 +17,63 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
- 0. Make sure you have [Python 2](http://python.org/) and [psycopg2](http://initd.org/psycopg/) installed.
-    On Debian and Ubuntu, that means installing these packages:
+0. Make sure you have [Python 2](http://python.org/) and [psycopg2](http://initd.org/psycopg/) installed.
+   On Debian and Ubuntu, that means installing these packages::
 
-        sudo apt install python python-psycopg2
+       sudo apt install python python-psycopg2
 
- 1. Create `mbslave.conf` by copying and editing `mbslave.conf.default`.
-    You will need to get the API token on the [MetaBrainz website](https://metabrainz.org/supporters/account-type).
+1. Create `mbslave.conf` by copying and editing `mbslave.conf.default`.
+   You will need to get the API token on the [MetaBrainz website](https://metabrainz.org/supporters/account-type).
 
- 1. Setup the database. If you are starting completely from scratch,
-    you can use the following commands to setup a clean database:
+1. Setup the database. If you are starting completely from scratch,
+   you can use the following commands to setup a clean database::
 
-        sudo su - postgres
-        createuser musicbrainz
-        createdb -l C -E UTF-8 -T template0 -O musicbrainz musicbrainz
-        createlang plpgsql musicbrainz
-        psql musicbrainz -c 'CREATE EXTENSION cube;'
-        psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
+       sudo su - postgres
+       createuser musicbrainz
+       createdb -l C -E UTF-8 -T template0 -O musicbrainz musicbrainz
+       createlang plpgsql musicbrainz
+       psql musicbrainz -c 'CREATE EXTENSION cube;'
+       psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
 
- 2. Prepare empty schemas for the MusicBrainz database and create the table structure:
+2. Prepare empty schemas for the MusicBrainz database and create the table structure::
 
-        echo 'CREATE SCHEMA musicbrainz;' | ./mbslave-psql.py -S
-        echo 'CREATE SCHEMA statistics;' | ./mbslave-psql.py -S
-        echo 'CREATE SCHEMA cover_art_archive;' | ./mbslave-psql.py -S
-        echo 'CREATE SCHEMA wikidocs;' | ./mbslave-psql.py -S
-        echo 'CREATE SCHEMA documentation;' | ./mbslave-psql.py -S
+       echo 'CREATE SCHEMA musicbrainz;' | mbslave psql -S
+       echo 'CREATE SCHEMA statistics;' | mbslave psql -S
+       echo 'CREATE SCHEMA cover_art_archive;' | mbslave psql -S
+       echo 'CREATE SCHEMA wikidocs;' | mbslave psql -S
+       echo 'CREATE SCHEMA documentation;' | mbslave psql -S
 
-        mbslave remap-schema <sql/CreateTables.sql | ./mbslave-psql.py
-        mbslave remap-schema <sql/statistics/CreateTables.sql | ./mbslave-psql.py
-        mbslave remap-schema <sql/caa/CreateTables.sql | ./mbslave-psql.py
-        mbslave remap-schema <sql/wikidocs/CreateTables.sql | ./mbslave-psql.py
-        mbslave remap-schema <sql/documentation/CreateTables.sql | ./mbslave-psql.py
+       mbslave remap-schema <sql/CreateTables.sql | mbslave psql
+       mbslave remap-schema <sql/statistics/CreateTables.sql | mbslave psql
+       mbslave remap-schema <sql/caa/CreateTables.sql | mbslave psql
+       mbslave remap-schema <sql/wikidocs/CreateTables.sql | mbslave psql
+       mbslave remap-schema <sql/documentation/CreateTables.sql | mbslave psql
 
- 3. Download the MusicBrainz database dump files from
-    http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
+3. Download the MusicBrainz database dump files from
+   http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
 
- 4. Import the data dumps, for example:
+4. Import the data dumps, for example::
 
-        mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
+       mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
 
- 5. Setup primary keys, indexes and views:
+5. Setup primary keys, indexes and views::
 
-        ./mbslave-remap-schema.py <sql/CreatePrimaryKeys.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/statistics/CreatePrimaryKeys.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/caa/CreatePrimaryKeys.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/wikidocs/CreatePrimaryKeys.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/documentation/CreatePrimaryKeys.sql | ./mbslave-psql.py
+       mbslave remap-schema <sql/CreatePrimaryKeys.sql | mbslave psql
+       mbslave remap-schema <sql/statistics/CreatePrimaryKeys.sql | mbslave psql
+       mbslave remap-schema <sql/caa/CreatePrimaryKeys.sql | mbslave psql
+       mbslave remap-schema <sql/wikidocs/CreatePrimaryKeys.sql | mbslave psql
+       mbslave remap-schema <sql/documentation/CreatePrimaryKeys.sql | mbslave psql
 
-        ./mbslave-remap-schema.py <sql/CreateIndexes.sql | grep -v musicbrainz_collate | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/CreateSlaveIndexes.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/statistics/CreateIndexes.sql | ./mbslave-psql.py
-        ./mbslave-remap-schema.py <sql/caa/CreateIndexes.sql | ./mbslave-psql.py
+       mbslave remap-schema <sql/CreateIndexes.sql | mbslave psql
+       mbslave remap-schema <sql/CreateSlaveIndexes.sql | mbslave psql
+       mbslave remap-schema <sql/statistics/CreateIndexes.sql | mbslave psql
+       mbslave remap-schema <sql/caa/CreateIndexes.sql | mbslave psql
 
-        ./mbslave-remap-schema.py <sql/CreateViews.sql | ./mbslave-psql.py
+       mbslave remap-schema <sql/CreateViews.sql | mbslave psql
 
- 6. Vacuum the newly created database (optional)
+6. Vacuum the newly created database (optional)::
 
-        echo 'VACUUM ANALYZE;' | ./mbslave-psql.py
+       echo 'VACUUM ANALYZE;' | mbslave psql
 
 Replication
 ===========

@@ -356,6 +356,26 @@ def mbslave_remap_schema_main(config, args):
         sys.stdout.write(line)
 
 
+def mbslave_psql_main(config, args):
+    args = ['psql']
+    args.append('-U')
+    args.append(config.get('DATABASE', 'user'))
+    if config.has_option('DATABASE', 'host'):
+        args.append('-h')
+        args.append(config.get('DATABASE', 'host'))
+    if config.has_option('DATABASE', 'port'):
+        args.append('-p')
+        args.append(config.get('DATABASE', 'port'))
+    args.append(config.get('DATABASE', 'name'))
+
+    if not args.public:
+        schema = config.schema.name(args.schema)
+        os.environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
+    if config.has_option('DATABASE', 'password'):
+        os.environ['PGPASSWORD'] = config.get('DATABASE', 'password')
+    os.execvp("psql", args)
+
+
 def main():
     default_config_path = 'mbslave.conf'
     if 'MBSLAVE_CONFIG' in os.environ:
@@ -379,6 +399,13 @@ def main():
 
     parser_remap_schema = subparsers.add_parser('remap-schema')
     parser_remap_schema.set_defaults(func=mbslave_remap_schema_main)
+
+    parser_psql = subparsers.add_parser('psql')
+    parser_psql.add_argument('-S, --no-schema', dest='public', action='store_true',
+                             help="don't configure the default schema")
+    parser_psql.add_argument('-s, --schema', dest='schema', default='musicbrainz',
+                             help="default schema")
+    parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()
 
