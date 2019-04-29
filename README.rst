@@ -17,7 +17,7 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-0. Make sure you have `Python 2 <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
+0. Make sure you have `Python <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
    On Debian and Ubuntu, that means installing these packages::
 
        sudo apt install python python-pip python-psycopg2
