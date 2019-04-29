@@ -33,6 +33,12 @@ setup(name='mbdata',
       ],
       namespace_packages=['mbdata'],
 
+      entry_points={
+          'console_scripts': [
+              'mbslave=mbdata.replication:main',
+          ],
+      },
+
       classifiers=[
           'Intended Audience :: Developers',
           'Programming Language :: Python :: 2',

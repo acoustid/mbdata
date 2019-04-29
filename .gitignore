@@ -3,5 +3,6 @@
 *.db
 /e/
 /.tox/
+/dist/
 mbdata.egg-info/
 settings.py
