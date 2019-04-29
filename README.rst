@@ -17,13 +17,13 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-0. Make sure you have [Python 2](http://python.org/) and [psycopg2](http://initd.org/psycopg/) installed.
+0. Make sure you have `Python 2 <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
    On Debian and Ubuntu, that means installing these packages::
 
        sudo apt install python python-psycopg2
 
-1. Create `mbslave.conf` by copying and editing `mbslave.conf.default`.
-   You will need to get the API token on the [MetaBrainz website](https://metabrainz.org/supporters/account-type).
+1. Create mbslave.conf by copying and editing mbslave.conf.default.
+   You will need to get the API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
 
 1. Setup the database. If you are starting completely from scratch,
    you can use the following commands to setup a clean database::
