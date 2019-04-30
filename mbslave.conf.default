@@ -1,15 +1,15 @@
-[DATABASE]
+[database]
 host=127.0.0.1
 port=5432
 name=musicbrainz
 user=musicbrainz
 #password=
 
-[MUSICBRAINZ]
+[musicbrainz]
 base_url=https://metabrainz.org/api/musicbrainz/
 #token=XXX
 
-[TABLES]
+[tables]
 ignore=
 #ignore=tracklist_index
 

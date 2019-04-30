@@ -12,21 +12,131 @@ import shutil
 import ConfigParser
 
 
-class ConfigSection(object):
-    pass
+def str_to_bool(x):
+    return x.lower() in ('1', 'on', 'true')
+
+
+def read_env_item(obj, key, name, convert=None):
+    value = None
+    if name in os.environ:
+        value = os.environ[name]
+    if name + '_FILE' in os.environ:
+        value = open(os.environ[name + '_FILE']).read().strip()
+    if value is not None:
+        if convert is not None:
+            value = convert(value)
+        setattr(obj, key, value)
+
+
+class DatabaseConfig(object):
+
+    def __init__(self):
+        self.user = None
+        self.superuser = 'postgres'
+        self.name = None
+        self.host = None
+        self.port = None
+        self.password = None
+
+    def create_psycopg2_kwargs(self, superuser=False):
+        kwargs = {}
+        if superuser:
+            kwargs['user'] = self.superuser
+        else:
+            kwargs['user'] = self.user
+        kwargs['database'] = self.name
+        if self.host is not None:
+            kwargs['host'] = self.host
+        if self.port is not None:
+            kwargs['port'] = self.port
+        if self.password is not None:
+            kwargs['password'] = self.password
+        return kwargs
+
+    def create_psql_args(self, superuser=False):
+        args = []
+        if superuser:
+            args.append('-U')
+            args.append(self.superuser)
+        else:
+            args.append('-U')
+            args.append(self.user)
+        if self.host is not None:
+            args.append('-h')
+            args.append(self.host)
+        if self.port is not None:
+            args.append('-p')
+            args.append(str(self.port))
+        args.append(self.name)
+        return args
+
+    def read(self, parser, section):
+        self.user = parser.get(section, 'user')
+        self.name = parser.get(section, 'name')
+        if parser.has_option(section, 'host'):
+            self.host = parser.get(section, 'host')
+        if parser.has_option(section, 'port'):
+            self.port = parser.getint(section, 'port')
+        if parser.has_option(section, 'password'):
+            self.password = parser.get(section, 'password')
+
+    def read_env(self, prefix):
+        read_env_item(self, 'name', prefix + 'DB_DB')
+        read_env_item(self, 'host', prefix + 'DB_HOST')
+        read_env_item(self, 'port', prefix + 'DB_PORT', convert=int)
+        read_env_item(self, 'user', prefix + 'DB_USER')
+        read_env_item(self, 'password', prefix + 'DB_PASSWORD')
 
 
 class SchemasConfig(object):
 
     def __init__(self):
         self.mapping = {}
+        self.ignored_schemas = set()
 
     def name(self, name):
         return self.mapping.get(name, name)
 
-    def parse(self, parser, section):
+    def read(self, parser, section):
         for name, value in parser.items(section):
-            self.mapping[name] = value
+            if name == 'ignore':
+                self.ignored_schemas = set([s.strip() for s in value.split(',')])
+            else:
+                self.mapping[name] = value
+
+    def read_env(self, prefix):
+        pass
+
+
+class TablesConfig(object):
+
+    def __init__(self):
+        self.ignored_tables = set()
+
+    def read(self, parser, section):
+        for name, value in parser.items(section):
+            if name == 'ignore':
+                self.ignored_tables = set([s.strip() for s in value.split(',')])
+
+    def read_env(self, prefix):
+        pass
+
+
+class MusicBrainzConfig(object):
+
+    def __init__(self):
+        self.base_url = 'https://metabrainz.org/api/musicbrainz/'
+        self.token = ''
+
+    def read(self, parser, section):
+        if parser.has_option(section, 'base_url'):
+            self.base_url = parser.get(section, 'base_url')
+        if parser.has_option(section, 'token'):
+            self.base_url = parser.get(section, 'token')
+
+    def read_env(self, prefix):
+        read_env_item(self, 'base_url', prefix + 'MUSICBRAINZ_BASE_URL')
+        read_env_item(self, 'token', prefix + 'MUSICBRAINZ_TOKEN')
 
 
 class Config(object):
@@ -37,10 +147,33 @@ class Config(object):
         self.cfg.read(self.path)
         self.get = self.cfg.get
         self.has_option = self.cfg.has_option
-        self.database = ConfigSection()
-        self.schema = SchemasConfig()
+
+        self.database = DatabaseConfig()
+        self.musicbrainz = SchemasConfig()
+        self.tables = TablesConfig()
+        self.schemas = SchemasConfig()
+
+        if self.cfg.has_section('database'):
+            self.database.read(self.cfg, 'database')
+        elif self.cfg.has_section('DATABASE'):
+            self.database.read(self.cfg, 'DATABASE')
+
+        if self.cfg.has_section('musicbrainz'):
+            self.musicbrainz.read(self.cfg, 'musicbrainz')
+        elif self.cfg.has_section('MUSICBRAINZ'):
+            self.musicbrainz.read(self.cfg, 'MUSICBRAINZ')
+
+        if self.cfg.has_section('tables'):
+            self.tables.read(self.cfg, 'tables')
+        elif self.cfg.has_section('TABLES'):
+            self.tables.read(self.cfg, 'TABLES')
+
         if self.cfg.has_section('schemas'):
-            self.schema.parse(self.cfg, 'schemas')
+            self.schemas.read(self.cfg, 'schemas')
+
+        self.database.read_env('MBSLAVE')
+        self.tables.read_env('MBSLAVE')
+        self.schemas.read_env('MBSLAVE')
 
     def make_psql_args(self):
         opts = {}
@@ -53,6 +186,12 @@ class Config(object):
         if self.cfg.has_option('DATABASE', 'port'):
             opts['port'] = self.cfg.get('DATABASE', 'port')
         return opts
+
+    def connect_db(self, set_search_path=False, superuser=False):
+        db = psycopg2.connect(**self.db.create_psycopg2_kwargs(superuser=superuser))
+        if set_search_path:
+            db.cursor().execute("SET search_path TO %s", (self.schemas.name('musicbrainz'),))
+        return db
 
 
 def connect_db(cfg, set_search_path=False):
@@ -67,7 +206,7 @@ def parse_name(config, table):
         schema, table = table.split('.', 1)
     else:
         schema = 'musicbrainz'
-    schema = config.schema.name(schema.strip('"'))
+    schema = config.schemas.name(schema.strip('"'))
     table = table.strip('"')
     return schema, table
 
@@ -115,10 +254,8 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
 def mbslave_import_main(config, args):
     db = connect_db(config)
 
-    ignored_schemas = set(config.get('schemas', 'ignore').split(','))
-    ignored_tables = set(config.get('TABLES', 'ignore').split(','))
     for filename in args.files:
-        load_tar(filename, db, config, ignored_schemas, ignored_tables)
+        load_tar(filename, db, config, config.schemas.ignored_schemas, config.tables.ignored_tables)
 
 
 class ReplicationHook(object):
@@ -312,18 +449,15 @@ def download_packet(base_url, token, replication_seq):
 def mbslave_sync_main(config, args):
     db = connect_db(config)
 
-    base_url = config.get('MUSICBRAINZ', 'base_url')
-    if config.has_option('MUSICBRAINZ', 'token'):
-        token = config.get('MUSICBRAINZ', 'token')
-    else:
-        token = None
-    ignored_schemas = set(config.get('schemas', 'ignore').split(','))
-    ignored_tables = set(config.get('TABLES', 'ignore').split(','))
+    base_url = config.musicbrainz.base_url
+    token = config.musicbrainz.token
+    ignored_schemas = config.schemas.ignored_schemas
+    ignored_tables = config.tables.ignored_tables
 
     hook_class = ReplicationHook
 
     cursor = db.cursor()
-    cursor.execute("SELECT current_schema_sequence, current_replication_sequence FROM %s.replication_control" % config.schema.name('musicbrainz'))
+    cursor.execute("SELECT current_schema_sequence, current_replication_sequence FROM %s.replication_control" % config.schemas.name('musicbrainz'))
     schema_seq, replication_seq = cursor.fetchone()
 
     while True:
@@ -344,11 +478,11 @@ def mbslave_sync_main(config, args):
 def mbslave_remap_schema_main(config, args):
     def update_search_path(m):
         schemas = m.group(2).replace("'", '').split(',')
-        schemas = [config.schema.name(s.strip()) for s in schemas]
+        schemas = [config.schemas.name(s.strip()) for s in schemas]
         return m.group(1) + ', '.join(schemas) + ';'
 
     def update_schema(m):
-        return m.group(1) + config.schema.name(m.group(2)) + m.group(3)
+        return m.group(1) + config.schemas.name(m.group(2)) + m.group(3)
 
     for line in sys.stdin:
         line = re.sub(r'(SET search_path = )(.+?);', update_search_path, line)
@@ -370,7 +504,7 @@ def mbslave_psql_main(config, args):
     args.append(config.get('DATABASE', 'name'))
 
     if not args.public:
-        schema = config.schema.name(args.schema)
+        schema = config.schemas.name(args.schema)
         os.environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
     if config.has_option('DATABASE', 'password'):
         os.environ['PGPASSWORD'] = config.get('DATABASE', 'password')
