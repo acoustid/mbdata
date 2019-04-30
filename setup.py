@@ -11,7 +11,7 @@ setup(name='mbdata',
       long_description=long_description,
       author='Lukas Lalinsky',
       author_email='lukas@oxygene.sk',
-      url='https://bitbucket.org/lalinsky/mbdata',
+      url='https://github.com/lalinsky/mbdata',
       license='MIT',
       platforms='ALL',
 
