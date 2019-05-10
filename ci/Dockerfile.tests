@@ -1,0 +1,4 @@
+FROM ubuntu:18.04
+
+RUN apt-get update && \
+    apt-get install -y python-dev python3-dev tox gcc libxml2-dev libxslt1-dev zlib1g-dev libpq-dev
