@@ -17,6 +17,6 @@ build docker image:
   stage: build
   script:
     - docker login -u $QUAY_USER -p $QUAY_PASSWORD quay.io
-    - ./admin/ci/build-image.sh
+    - ./ci/build-image.sh
   tags:
     - docker
