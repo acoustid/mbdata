@@ -177,14 +177,14 @@ class Config(object):
 
     def make_psql_args(self):
         opts = {}
-        opts['database'] = self.cfg.get('DATABASE', 'name')
-        opts['user'] = self.cfg.get('DATABASE', 'user')
-        if self.cfg.has_option('DATABASE', 'password'):
-            opts['password'] = self.cfg.get('DATABASE', 'password')
-        if self.cfg.has_option('DATABASE', 'host'):
-            opts['host'] = self.cfg.get('DATABASE', 'host')
-        if self.cfg.has_option('DATABASE', 'port'):
-            opts['port'] = self.cfg.get('DATABASE', 'port')
+        opts['database'] = self.database.name
+        opts['user'] = self.database.user
+        if self.database.password:
+            opts['password'] = self.database.password
+        if self.database.host:
+            opts['host'] = self.database.host
+        if self.database.port:
+            opts['port'] = self.database.port
         return opts
 
     def connect_db(self, set_search_path=False, superuser=False):
@@ -492,23 +492,23 @@ def mbslave_remap_schema_main(config, args):
 
 
 def mbslave_psql_main(config, args):
-    args = ['psql']
-    args.append('-U')
-    args.append(config.get('DATABASE', 'user'))
-    if config.has_option('DATABASE', 'host'):
-        args.append('-h')
-        args.append(config.get('DATABASE', 'host'))
-    if config.has_option('DATABASE', 'port'):
-        args.append('-p')
-        args.append(config.get('DATABASE', 'port'))
-    args.append(config.get('DATABASE', 'name'))
+    command = ['psql']
+    command.append('-U')
+    command.append(config.database.user)
+    if config.database.host:
+        command.append('-h')
+        command.append(config.database.host)
+    if config.database.port:
+        command.append('-p')
+        command.append(config.database.port)
+    command.append(config.database.name)
 
     if not args.public:
         schema = config.schemas.name(args.schema)
         os.environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
-    if config.has_option('DATABASE', 'password'):
-        os.environ['PGPASSWORD'] = config.get('DATABASE', 'password')
-    os.execvp("psql", args)
+    if config.database.password:
+        os.environ['PGPASSWORD'] = config.database.password
+    os.execvp("psql", command)
 
 
 def main():
