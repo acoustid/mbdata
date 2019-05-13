@@ -171,9 +171,10 @@ class Config(object):
         if self.cfg.has_section('schemas'):
             self.schemas.read(self.cfg, 'schemas')
 
-        self.database.read_env('MBSLAVE')
-        self.tables.read_env('MBSLAVE')
-        self.schemas.read_env('MBSLAVE')
+        self.database.read_env('MBSLAVE_')
+        self.musicbrainz.read_env('MBSLAVE_')
+        self.tables.read_env('MBSLAVE_')
+        self.schemas.read_env('MBSLAVE_')
 
     def make_psql_args(self):
         opts = {}
