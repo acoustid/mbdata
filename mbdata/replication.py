@@ -149,7 +149,7 @@ class Config(object):
         self.has_option = self.cfg.has_option
 
         self.database = DatabaseConfig()
-        self.musicbrainz = SchemasConfig()
+        self.musicbrainz = MusicBrainzConfig()
         self.tables = TablesConfig()
         self.schemas = SchemasConfig()
 
