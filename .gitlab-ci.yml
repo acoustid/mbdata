@@ -3,13 +3,25 @@ stages:
   - test
   - build
 
-test:
-  image: ubuntu:xenial
-  stage: test
+build-test-image:
+  stage: pre-test
   script:
-    - DEBIAN_FRONTEND=noninteractive apt -y update
-    - DEBIAN_FRONTEND=noninteractive apt -y install python-dev python3-dev tox gcc libxml2-dev libxslt1-dev zlib1g-dev libpq-dev
-    - tox
+    - cd ci/
+    - docker build -f Dockerfile.tests -t $CI_REGISTRY_IMAGE/test-env:$CI_COMMIT_REF_SLUG .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE/test-env:$CI_COMMIT_REF_SLUG
+  tags:
+    - docker
+
+test:
+  image: $CI_REGISTRY_IMAGE/test-env:$CI_COMMIT_REF_SLUG
+  stage: test
+  cache:
+    key: $CI_JOB_NAME-$CI_COMMIT_REF_SLUG
+    paths:
+      - pip-cache/
+  script:
+    - ./ci/run-tests.sh
   tags:
     - docker
 
