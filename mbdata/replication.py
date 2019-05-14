@@ -6,11 +6,12 @@ import re
 import os
 import psycopg2
 import argparse
-import urllib2
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.error import HTTPError
 import tempfile
 import shutil
-import ConfigParser
 import subprocess
+from six.moves import configparser as ConfigParser
 try:
     from contextlib import ExitStack
 except ImportError:
@@ -440,8 +441,8 @@ def download_packet(base_url, token, replication_seq):
         url += '?token=' + token
     print("Downloading {}".format(url))
     try:
-        data = urllib2.urlopen(url, timeout=60)
-    except urllib2.HTTPError as e:
+        data = urlopen(url, timeout=60)
+    except HTTPError as e:
         if e.code == 404:
             return None
         raise
