@@ -476,7 +476,7 @@ def mbslave_sync_main(config, args):
             tmp.close()
 
 
-def mbslave_remap_schema_main(config, args):
+def remap_schema(config, lines):
     def update_search_path(m):
         schemas = m.group(2).replace("'", '').split(',')
         schemas = [config.schemas.name(s.strip()) for s in schemas]
@@ -485,10 +485,19 @@ def mbslave_remap_schema_main(config, args):
     def update_schema(m):
         return m.group(1) + config.schemas.name(m.group(2)) + m.group(3)
 
-    for line in sys.stdin:
+    for line in lines:
         line = re.sub(r'(SET search_path = )(.+?);', update_search_path, line)
         line = re.sub(r'(\b)(\w+)(\.)', update_schema, line)
         line = re.sub(r'( SCHEMA )(\w+)(;)', update_schema, line)
+        yield line
+
+
+def locate_sql_file(rel_path):
+    return os.path.join(os.path.dirname(__file__), 'sql', rel_path)
+
+
+def mbslave_remap_schema_main(config, args):
+    for line in remap_schema(config, sys.stdin):
         sys.stdout.write(line)
 
 
