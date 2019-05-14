@@ -20,6 +20,7 @@ setup(name='mbdata',
 
       install_requires=[
           'six',
+          'contextlib2; python_version < "3.2"',
       ],
 
       packages=[

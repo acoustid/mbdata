@@ -10,6 +10,11 @@ import urllib2
 import tempfile
 import shutil
 import ConfigParser
+import subprocess
+try:
+    from contextlib import ExitStack
+except ImportError:
+    from contextlib2 import ExitStack
 
 
 def str_to_bool(x):
@@ -501,6 +506,12 @@ def mbslave_remap_schema_main(config, args):
         sys.stdout.write(line)
 
 
+def mbslave_print_sql_main(config, args):
+    for path in args.files:
+        for line in remap_schema(config, open(locate_sql_file(path))):
+            sys.stdout.write(line)
+
+
 def mbslave_psql_main(config, args):
     command = ['psql']
     command.append('-U')
@@ -511,14 +522,29 @@ def mbslave_psql_main(config, args):
     if config.database.port:
         command.append('-p')
         command.append(config.database.port)
-    command.append(config.database.name)
 
+    environ = os.environ.copy()
     if not args.public:
         schema = config.schemas.name(args.schema)
-        os.environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
+        environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
     if config.database.password:
-        os.environ['PGPASSWORD'] = config.database.password
-    os.execvp("psql", command)
+        environ['PGPASSWORD'] = config.database.password
+
+    with ExitStack() as es:
+        if args.sql_file:
+            sql_file = es.enter_context(tempfile.NamedTemporaryFile(suffix='.sql'))
+            with open(locate_sql_file(args.sql_file)) as input_sql_file:
+                for line in remap_schema(config, input_sql_file):
+                    sql_file.write(line)
+            sql_file.flush()
+            command.append('-f')
+            command.append(sql_file.name)
+
+        command.append(config.database.name)
+
+        print(command, environ)
+        process = subprocess.Popen(command, env=environ)
+        raise SystemExit(process.wait())
 
 
 def main():
@@ -545,7 +571,12 @@ def main():
     parser_remap_schema = subparsers.add_parser('remap-schema')
     parser_remap_schema.set_defaults(func=mbslave_remap_schema_main)
 
+    parser_print_sql = subparsers.add_parser('print-sql')
+    parser_print_sql.add_argument('files', metavar='FILE', nargs='+', help='sql file to print')
+    parser_print_sql.set_defaults(func=mbslave_print_sql_main)
+
     parser_psql = subparsers.add_parser('psql')
+    parser_psql.add_argument('-f, --file', dest='sql_file', metavar='FILE', help='sql file to execute')
     parser_psql.add_argument('-S, --no-schema', dest='public', action='store_true',
                              help="don't configure the default schema")
     parser_psql.add_argument('-s, --schema', dest='schema', default='musicbrainz',

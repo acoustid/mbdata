@@ -44,11 +44,11 @@ Installation
        echo 'CREATE SCHEMA wikidocs;' | mbslave psql -S
        echo 'CREATE SCHEMA documentation;' | mbslave psql -S
 
-       mbslave remap-schema <sql/CreateTables.sql | mbslave psql
-       mbslave remap-schema <sql/statistics/CreateTables.sql | mbslave psql
-       mbslave remap-schema <sql/caa/CreateTables.sql | mbslave psql
-       mbslave remap-schema <sql/wikidocs/CreateTables.sql | mbslave psql
-       mbslave remap-schema <sql/documentation/CreateTables.sql | mbslave psql
+       mbslave psql -f CreateTables.sql
+       mbslave psql -f statistics/CreateTables.sql
+       mbslave psql -f caa/CreateTables.sql
+       mbslave psql -f wikidocs/CreateTables.sql
+       mbslave psql -f documentation/CreateTables.sql
 
 3. Download the MusicBrainz database dump files from
    http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
@@ -59,18 +59,18 @@ Installation
 
 5. Setup primary keys, indexes and views::
 
-       mbslave remap-schema <sql/CreatePrimaryKeys.sql | mbslave psql
-       mbslave remap-schema <sql/statistics/CreatePrimaryKeys.sql | mbslave psql
-       mbslave remap-schema <sql/caa/CreatePrimaryKeys.sql | mbslave psql
-       mbslave remap-schema <sql/wikidocs/CreatePrimaryKeys.sql | mbslave psql
-       mbslave remap-schema <sql/documentation/CreatePrimaryKeys.sql | mbslave psql
+       mbslave psql -f CreatePrimaryKeys.sql
+       mbslave psql -f statistics/CreatePrimaryKeys.sql
+       mbslave psql -f caa/CreatePrimaryKeys.sql
+       mbslave psql -f wikidocs/CreatePrimaryKeys.sql
+       mbslave psql -f documentation/CreatePrimaryKeys.sql
 
-       mbslave remap-schema <sql/CreateIndexes.sql | mbslave psql
-       mbslave remap-schema <sql/CreateSlaveIndexes.sql | mbslave psql
-       mbslave remap-schema <sql/statistics/CreateIndexes.sql | mbslave psql
-       mbslave remap-schema <sql/caa/CreateIndexes.sql | mbslave psql
+       mbslave psql -f CreateIndexes.sql
+       mbslave psql -f CreateSlaveIndexes.sql
+       mbslave psql -f statistics/CreateIndexes.sql
+       mbslave psql -f caa/CreateIndexes.sql
 
-       mbslave remap-schema <sql/CreateViews.sql | mbslave psql
+       mbslave psql -f CreateViews.sql
 
 6. Vacuum the newly created database (optional)::
 
