@@ -1,7 +1,7 @@
 FROM ubuntu:bionic
 
-RUN apt-get update && apt-get install -y python python-psycopg2 python-six python-setuptools postgresql-client
+RUN apt-get update && apt-get install -y python3 python3-psycopg2 python3-six python3-setuptools postgresql-client
 ADD . /tmp/mbdata
-RUN cd /tmp/mbdata && python setup.py install
+RUN cd /tmp/mbdata && python3 setup.py install
 
 # ENTRYPOINT ["mbslave"]
