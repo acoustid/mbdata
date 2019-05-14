@@ -418,6 +418,10 @@ class PacketImporter(object):
         self._hook.after_commit()
 
 
+class MismatchedSchemaError(Exception):
+    pass
+
+
 def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook):
     print("Processing {}".format(fileobj.name))
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
@@ -426,7 +430,7 @@ def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_s
         if member.name == 'SCHEMA_SEQUENCE':
             schema_seq = int(tar.extractfile(member).read().strip())
             if schema_seq != expected_schema_seq:
-                raise Exception("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
+                raise MismatchedSchemaError("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
             ts = tar.extractfile(member).read().strip().decode('utf8')
             print(' - Packet was produced at {}'.format(ts))
@@ -480,7 +484,14 @@ def mbslave_sync_main(config, args):
             replication_seq -= 1
             time.sleep(60 * 10)
         else:
-            process_tar(tmp, db, config, ignored_schemas, ignored_tables, schema_seq, replication_seq, hook)
+            try:
+                process_tar(tmp, db, config, ignored_schemas, ignored_tables, schema_seq, replication_seq, hook)
+            except MismatchedSchemaError as exc:
+                if not args.keep_running:
+                    raise
+                print(exc)
+                replication_seq -= 1
+                time.sleep(60 * 10)
             tmp.close()
 
 
