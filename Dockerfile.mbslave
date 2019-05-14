@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-RUN apt-get update && apt-get install -y python python-psycopg2 python-six python-setuptools
+RUN apt-get update && apt-get install -y python python-psycopg2 python-six python-setuptools postgresql-client
 ADD . /tmp/mbdata
 RUN cd /tmp/mbdata && python setup.py install
 
