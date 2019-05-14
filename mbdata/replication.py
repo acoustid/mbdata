@@ -249,7 +249,7 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
             continue
         print(" - Loading {} to {}".format(name, fulltable))
         cursor.copy_from(tar.extractfile(member), fulltable)
-        db.commit
+        db.commit()
 
 
 def mbslave_import_main(config, args):
