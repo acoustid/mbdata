@@ -5,6 +5,7 @@ import re
 import itertools
 from six import string_types
 from mbdata.utils.models import ENTITY_TYPES
+from typing import Set, Dict, Type
 
 
 def _iter_includes(tokens):
@@ -51,8 +52,8 @@ def expand_includes_multi(inputs):
 
 
 class Includes(object):
-    INCLUDES = set([])
-    SUB_INCLUDES = {}
+    INCLUDES = set([])  # type: Set[str]
+    SUB_INCLUDES = {}  # type: Dict[str, Type[Includes]]
 
     def __init__(self, includes=None, itself=True):
         self.includes = dict(includes or {})
@@ -168,7 +169,7 @@ class TrackIncludes(Includes):
 
 
 class MediumIncludes(Includes):
-    INCLUDES = set([])
+    INCLUDES = set([])  # type: Set[str]
 
     SUB_INCLUDES = {
         'tracks': TrackIncludes,
@@ -210,7 +211,7 @@ class WorkIncludes(Includes):
 
 
 class PlaceIncludes(Includes):
-    INCLUDES = set([])
+    INCLUDES = set([])  # type: Set[str]
 
     SUB_INCLUDES = {
         'area': AreaIncludes,
@@ -219,7 +220,7 @@ class PlaceIncludes(Includes):
 
 
 class URLIncludes(Includes):
-    INCLUDES = set([])
+    INCLUDES = set([])  # type: Set[str]
 
     SUB_INCLUDES = {
         'relationships': RelationshipsIncludes,

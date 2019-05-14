@@ -13,9 +13,9 @@ import tempfile
 import shutil
 import subprocess
 from six.moves import configparser as ConfigParser
-try:
+if six.PY3:
     from contextlib import ExitStack
-except ImportError:
+else:
     from contextlib2 import ExitStack
 
 

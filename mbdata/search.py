@@ -13,6 +13,7 @@ from sqlalchemy.orm import Load, relationship
 from sqlalchemy.orm.properties import RelationshipProperty, ColumnProperty
 from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE
 from sqlalchemy.ext.declarative import declarative_base
+from typing import Any
 
 from mbdata.models import Area, Artist, Label, Recording, Release, ReleaseGroup, Work, Place
 
@@ -23,7 +24,7 @@ SAMPLE_SIZE = 2
 
 
 metadata = MetaData(schema='mbdata')
-Base = declarative_base(metadata=metadata)
+Base = declarative_base(metadata=metadata)  # type: Any
 
 
 class SearchQueue(Base):

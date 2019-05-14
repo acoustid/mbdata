@@ -8,10 +8,13 @@ from sqlalchemy import Column, Index, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
-from mbdata.types import PartialDate, Point, Cube, regexp, UUID, SMALLINT, BIGINT, JSONB
+from mbdata.types import PartialDate, Point, Cube as _Cube, regexp, UUID, SMALLINT, BIGINT, JSONB
+from typing import Any
 
 import mbdata.config
 mbdata.config.freeze()
+
+Base = None  # type: Any
 
 if mbdata.config.Base is not None:
     Base = mbdata.config.Base
@@ -20,7 +23,9 @@ elif mbdata.config.metadata is not None:
 else:
     Base = declarative_base()
 
-if not mbdata.config.use_cube:
+if mbdata.config.use_cube:
+    Cube = _Cube
+else:
     Cube = Text  # noqa: F811
 
 

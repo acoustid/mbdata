@@ -23,6 +23,7 @@ from mbdata.models import (
     URL,
 )
 from mbdata.utils.models import query_links
+from typing import Dict, Set
 
 
 RELEASE_GIDS = [
@@ -39,9 +40,9 @@ LABEL_GIDS = [
 ]
 
 
-counters = {}
-in_progress = set()
-models = set()
+counters = {}  # type: Dict[str, int]
+in_progress = set()  # type: Set[str]
+models = set()  # type: Set[str]
 
 
 _unaccent_dict = {u'Æ': u'AE', u'æ': u'ae', u'Œ': u'OE', u'œ': u'oe', u'ß': 'ss'}

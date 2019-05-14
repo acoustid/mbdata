@@ -8,6 +8,7 @@ import sqlparse
 import six
 from sqlparse import tokens as T
 from sqlparse.sql import TokenList, Parenthesis
+from typing import List
 from mbdata.utils.sql import CreateTable, CreateType, CreateIndex, Set, parse_statements
 
 
@@ -195,10 +196,13 @@ def generate_models_header():
     yield 'from sqlalchemy.ext.declarative import declarative_base'
     yield 'from sqlalchemy.ext.hybrid import hybrid_property'
     yield 'from sqlalchemy.orm import relationship, composite, backref'
-    yield 'from mbdata.types import PartialDate, Point, Cube, regexp, UUID, SMALLINT, BIGINT, JSONB'
+    yield 'from mbdata.types import PartialDate, Point, Cube as _Cube, regexp, UUID, SMALLINT, BIGINT, JSONB'
+    yield 'from typing import Any'
     yield ''
     yield 'import mbdata.config'
     yield 'mbdata.config.freeze()'
+    yield ''
+    yield 'Base = None  # type: Any'
     yield ''
     yield 'if mbdata.config.Base is not None:'
     yield '    Base = mbdata.config.Base'
@@ -207,7 +211,9 @@ def generate_models_header():
     yield 'else:'
     yield '    Base = declarative_base()'
     yield ''
-    yield 'if not mbdata.config.use_cube:'
+    yield 'if mbdata.config.use_cube:'
+    yield '    Cube = _Cube'
+    yield 'else:'
     yield '    Cube = Text  # noqa: F811'
     yield ''
     yield ''
@@ -502,9 +508,9 @@ if __name__ == '__main__':
     for line in generate_models_header():
         print(line)
 
-    tables = []
-    types = []
-    indexes = []
+    tables = []  # type: List[CreateTable]
+    types = []  # type: List[CreateType]
+    indexes = []  # type: List[CreateIndex]
     for file_name in args.sql:
         file_names = [file_name]
 

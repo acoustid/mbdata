@@ -1,4 +1,5 @@
 import sys
+from typing import Dict
 
 # Override this if you want mbdata models to be based on your own base class
 Base = None
@@ -7,7 +8,7 @@ Base = None
 metadata = None
 
 # Override this if you want customize the schema names that mbdata uses
-schemas = {}
+schemas = {}  # type: Dict[str, str]
 
 use_cube = True
 

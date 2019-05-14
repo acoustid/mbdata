@@ -75,7 +75,7 @@ def with_database(func):
 
 class DummyTestCase(TestCase):
 
-    def nop():
+    def nop(self):
         pass
 
 
