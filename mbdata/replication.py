@@ -542,7 +542,6 @@ def mbslave_psql_main(config, args):
 
         command.append(config.database.name)
 
-        print(command, environ)
         process = subprocess.Popen(command, env=environ)
         raise SystemExit(process.wait())
 
