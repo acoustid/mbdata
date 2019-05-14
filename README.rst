@@ -88,6 +88,57 @@ In order to update your database regularly, add a cron job like this that runs e
 
     15 * * * * mbslave sync >>/var/log/mbslave.log
 
+Schema Upgrade
+==============
+
+When the MusicBrainz database schema changes, the replication will stop working.
+This is usually announced on the `MusicBrainz blog <http://blog.musicbrainz.org/>`__.
+When it happens, you need to upgrade the database.
+
+Release 2019-05-14 (25)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the upgrade scripts::
+
+    mbslave psql -f sql/updates/schema-change/25.slave.sql
+    echo 'UPDATE replication_control SET current_schema_sequence = 25;' | mbslave psql
+
+Release 2017-05-25 (24)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the upgrade scripts::
+
+    mbslave psql -f sql/updates/schema-change/24.slave.sql
+    echo 'UPDATE replication_control SET current_schema_sequence = 24;' | mbslave psql
+
+Tips and Tricks
+===============
+
+Single Database Schema
+~~~~~~~~~~~~~~~~~~~~~~
+
+MusicBrainz used a number of schemas by default. If you are embedding the MusicBrainz database into
+an existing database for your application, it's convenient to merge them all into a single schema.
+That can be done by changing your config like this::
+
+    [schemas]
+    musicbrainz=musicbrainz
+    statistics=musicbrainz
+    cover_art_archive=musicbrainz
+    wikidocs=musicbrainz
+    documentation=musicbrainz
+
+After this, you only need to create the "musicbrainz" schema and import all the tables there.
+
+Full Import Schema Upgrade
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use the schema mapping feature to do zero-downtime upgrade of the database with full
+data import. You can temporarily map all schemas to e.g. "musicbrainz_NEW", import your new
+database there and then rename it::
+
+    echo 'BEGIN; ALTER SCHEMA musicbrainz RENAME TO musicbrainz_OLD; ALTER SCHEMA musicbrainz_NEW RENAME TO musicbrainz; COMMIT;' | mbslave psql -S
+
 *****************
 SQLAlchemy Models
 *****************
