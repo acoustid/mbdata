@@ -642,6 +642,7 @@ class ArtistCredit(Base):
     artist_count = Column(SMALLINT, nullable=False)
     ref_count = Column(Integer, default=0, server_default=sql.text('0'))
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
 
 
 class ArtistCreditName(Base):
@@ -1267,6 +1268,7 @@ class EventMeta(Base):
     id = Column('id', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='event_meta_fk_id', ondelete='CASCADE'), primary_key=True, nullable=False)
     rating = Column(SMALLINT)
     rating_count = Column(Integer)
+    event_art_presence = Column(Enum('absent', 'present', 'darkened', name='EVENT_ART_PRESENCE', schema=mbdata.config.schemas.get('musicbrainz', 'musicbrainz')), default='absent', server_default=sql.text("'absent'"), nullable=False)
 
     event = relationship('Event', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
 
@@ -1494,6 +1496,40 @@ class Gender(Base):
     gid = Column(UUID, nullable=False)
 
     parent = relationship('Gender', foreign_keys=[parent_id])
+
+
+class Genre(Base):
+    __tablename__ = 'genre'
+    __table_args__ = (
+        Index('genre_idx_gid', 'gid', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    gid = Column(UUID, nullable=False)
+    name = Column(String, nullable=False)
+    comment = Column(String(255), default='', server_default=sql.text("''"), nullable=False)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+
+class GenreAlias(Base):
+    __tablename__ = 'genre_alias'
+    __table_args__ = (
+        Index('genre_alias_idx_genre', 'genre'),
+        Index('genre_alias_idx_primary', 'genre', 'locale', unique=True),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    genre_id = Column('genre', Integer, ForeignKey(apply_schema('genre.id', 'musicbrainz'), name='genre_alias_fk_genre'), nullable=False)
+    name = Column(String, nullable=False)
+    locale = Column(String)
+    edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
+    primary_for_locale = Column(Boolean, default=False, server_default=sql.false(), nullable=False)
+
+    genre = relationship('Genre', foreign_keys=[genre_id], innerjoin=True)
 
 
 class InstrumentType(Base):
@@ -5320,6 +5356,19 @@ class EditorCollectionType(Base):
     parent = relationship('EditorCollectionType', foreign_keys=[parent_id])
 
 
+class EditorCollectionCollaborator(Base):
+    __tablename__ = 'editor_collection_collaborator'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_collaborator_fk_collection'), primary_key=True, nullable=False)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_collection_collaborator_fk_editor'), primary_key=True, nullable=False)
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
+
+
 class EditorCollectionArea(Base):
     __tablename__ = 'editor_collection_area'
     __table_args__ = (
@@ -5328,6 +5377,9 @@ class EditorCollectionArea(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_area_fk_collection'), primary_key=True, nullable=False)
     area_id = Column('area', Integer, ForeignKey(apply_schema('area.id', 'musicbrainz'), name='editor_collection_area_fk_area'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     area = relationship('Area', foreign_keys=[area_id], innerjoin=True)
@@ -5341,6 +5393,9 @@ class EditorCollectionArtist(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_artist_fk_collection'), primary_key=True, nullable=False)
     artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='editor_collection_artist_fk_artist'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
@@ -5354,6 +5409,9 @@ class EditorCollectionEvent(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_event_fk_collection'), primary_key=True, nullable=False)
     event_id = Column('event', Integer, ForeignKey(apply_schema('event.id', 'musicbrainz'), name='editor_collection_event_fk_event'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
@@ -5367,6 +5425,9 @@ class EditorCollectionInstrument(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_instrument_fk_collection'), primary_key=True, nullable=False)
     instrument_id = Column('instrument', Integer, ForeignKey(apply_schema('instrument.id', 'musicbrainz'), name='editor_collection_instrument_fk_instrument'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     instrument = relationship('Instrument', foreign_keys=[instrument_id], innerjoin=True)
@@ -5380,6 +5441,9 @@ class EditorCollectionLabel(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_label_fk_collection'), primary_key=True, nullable=False)
     label_id = Column('label', Integer, ForeignKey(apply_schema('label.id', 'musicbrainz'), name='editor_collection_label_fk_label'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     label = relationship('Label', foreign_keys=[label_id], innerjoin=True)
@@ -5393,6 +5457,9 @@ class EditorCollectionPlace(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_place_fk_collection'), primary_key=True, nullable=False)
     place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='editor_collection_place_fk_place'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
@@ -5406,6 +5473,9 @@ class EditorCollectionRecording(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_recording_fk_collection'), primary_key=True, nullable=False)
     recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='editor_collection_recording_fk_recording'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
@@ -5419,6 +5489,9 @@ class EditorCollectionRelease(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_release_fk_collection'), primary_key=True, nullable=False)
     release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='editor_collection_release_fk_release'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -5432,6 +5505,9 @@ class EditorCollectionReleaseGroup(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_release_group_fk_collection'), primary_key=True, nullable=False)
     release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='editor_collection_release_group_fk_release_group'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
@@ -5445,6 +5521,9 @@ class EditorCollectionSeries(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_series_fk_collection'), primary_key=True, nullable=False)
     series_id = Column('series', Integer, ForeignKey(apply_schema('series.id', 'musicbrainz'), name='editor_collection_series_fk_series'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     series = relationship('Series', foreign_keys=[series_id], innerjoin=True)
@@ -5458,6 +5537,9 @@ class EditorCollectionWork(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_work_fk_collection'), primary_key=True, nullable=False)
     work_id = Column('work', Integer, ForeignKey(apply_schema('work.id', 'musicbrainz'), name='editor_collection_work_fk_work'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     work = relationship('Work', foreign_keys=[work_id], innerjoin=True)
@@ -5471,6 +5553,9 @@ class EditorCollectionDeletedEntity(Base):
 
     collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_deleted_entity_fk_collection'), primary_key=True, nullable=False)
     gid = Column(UUID, ForeignKey(apply_schema('deleted_entity.gid', 'musicbrainz'), name='editor_collection_deleted_entity_fk_gid'), primary_key=True, nullable=False)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
+    comment = Column(String, default='', server_default=sql.text("''"), nullable=False)
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
 
@@ -7497,6 +7582,10 @@ class CoverArt(Base):
     date_uploaded = Column(DateTime(timezone=True), server_default=sql.func.now(), nullable=False)
     edits_pending = Column(Integer, default=0, server_default=sql.text('0'), nullable=False)
     mime_type = Column(String, ForeignKey(apply_schema('image_type.mime_type', u'cover_art_archive'), name='cover_art_fk_mime_type'), nullable=False)
+    filesize = Column(Integer)
+    thumb_250_filesize = Column(Integer)
+    thumb_500_filesize = Column(Integer)
+    thumb_1200_filesize = Column(Integer)
 
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
