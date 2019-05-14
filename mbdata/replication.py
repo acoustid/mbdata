@@ -536,7 +536,7 @@ def mbslave_psql_main(config, args):
             sql_file = es.enter_context(tempfile.NamedTemporaryFile(suffix='.sql'))
             with open(locate_sql_file(args.sql_file)) as input_sql_file:
                 for line in remap_schema(config, input_sql_file):
-                    sql_file.write(line)
+                    sql_file.write(line.encode('utf8'))
             sql_file.flush()
             command.append('-f')
             command.append(sql_file.name)

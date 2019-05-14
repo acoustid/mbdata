@@ -100,7 +100,7 @@ Release 2019-05-14 (25)
 
 Run the upgrade scripts::
 
-    mbslave psql -f sql/updates/schema-change/25.slave.sql
+    mbslave psql -f updates/schema-change/25.slave.sql
     echo 'UPDATE replication_control SET current_schema_sequence = 25;' | mbslave psql
 
 Release 2017-05-25 (24)
@@ -108,7 +108,7 @@ Release 2017-05-25 (24)
 
 Run the upgrade scripts::
 
-    mbslave psql -f sql/updates/schema-change/24.slave.sql
+    mbslave psql -f updates/schema-change/24.slave.sql
     echo 'UPDATE replication_control SET current_schema_sequence = 24;' | mbslave psql
 
 Tips and Tricks
