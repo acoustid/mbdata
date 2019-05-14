@@ -6,6 +6,7 @@ import re
 import os
 import psycopg2
 import argparse
+import six
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import HTTPError
 import tempfile
@@ -72,7 +73,7 @@ class DatabaseConfig(object):
             args.append(self.host)
         if self.port is not None:
             args.append('-p')
-            args.append(str(self.port))
+            args.append(six.text_type(self.port))
         args.append(self.name)
         return args
 
@@ -329,7 +330,8 @@ def unescape(s):
 
 def read_psql_dump(fp, types):
     for line in fp:
-        values = map(unescape, line.rstrip('\r\n').split('\t'))
+        line = line.decode('utf8')
+        values = list(map(unescape, line.rstrip('\r\n').split('\t')))
         for i, value in enumerate(values):
             if value is not None:
                 values[i] = types[i](value)
@@ -354,7 +356,7 @@ class PacketImporter(object):
             self._data[(id, key)] = values
 
     def load_pending(self, fp):
-        dump = read_psql_dump(fp, [int, str, str, int])
+        dump = read_psql_dump(fp, [int, six.text_type, six.text_type, int])
         for id, table, type, xid in dump:
             schema, table = parse_name(self._config, table)
             transaction = self._transactions.setdefault(xid, [])
@@ -388,13 +390,13 @@ class PacketImporter(object):
                 elif type == 'u':
                     sql_values = ', '.join('%s=%%s' % i for i in values)
                     sql = 'UPDATE %s SET %s' % (fulltable, sql_values)
-                    params = values.values()
+                    params = list(values.values())
                     self._hook.before_update(table, keys, values)
                 elif type == 'i':
                     sql_columns = ', '.join(values.keys())
                     sql_values = ', '.join(['%s'] * len(values))
                     sql = 'INSERT INTO %s (%s) VALUES (%s)' % (fulltable, sql_columns, sql_values)
-                    params = values.values()
+                    params = list(values.values())
                     self._hook.before_insert(table, values)
                 if type == 'd' or type == 'u':
                     sql += ' WHERE ' + ' AND '.join('%s%s%%s' % (i, ' IS ' if keys[i] is None else '=') for i in keys.keys())
@@ -426,7 +428,7 @@ def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_s
             if schema_seq != expected_schema_seq:
                 raise Exception("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
-            ts = tar.extractfile(member).read().strip()
+            ts = tar.extractfile(member).read().strip().decode('utf8')
             print(' - Packet was produced at {}'.format(ts))
         elif member.name in ('mbdump/Pending', 'mbdump/dbmirror_pending'):
             importer.load_pending(tar.extractfile(member))
@@ -534,8 +536,9 @@ def mbslave_psql_main(config, args):
     with ExitStack() as es:
         if args.sql_file:
             sql_file = es.enter_context(tempfile.NamedTemporaryFile(suffix='.sql'))
-            with open(locate_sql_file(args.sql_file)) as input_sql_file:
-                for line in remap_schema(config, input_sql_file):
+            with open(locate_sql_file(args.sql_file), 'rb') as input_sql_file:
+                lines = [l.decode('utf8') for l in input_sql_file]
+                for line in remap_schema(config, lines):
                     sql_file.write(line.encode('utf8'))
             sql_file.flush()
             command.append('-f')

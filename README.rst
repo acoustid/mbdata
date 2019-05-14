@@ -70,6 +70,7 @@ Installation
        mbslave psql -f statistics/CreateIndexes.sql
        mbslave psql -f caa/CreateIndexes.sql
 
+       mbslave psql -f CreateFunctions.sql
        mbslave psql -f CreateViews.sql
 
 6. Vacuum the newly created database (optional)::
