@@ -1,2 +1,3 @@
 recursive-include mbdata/web/static *
 recursive-include mbdata/sql *
+include mbslave.conf.default

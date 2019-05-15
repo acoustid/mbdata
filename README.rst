@@ -21,12 +21,16 @@ Installation
    On Debian and Ubuntu, that means installing these packages::
 
        sudo apt install python python-pip python-psycopg2
-       pip install mbdata  # if you don't have it installed already
+       pip install -U mbdata  # if you don't have it installed already
 
-1. Create mbslave.conf by copying and editing mbslave.conf.default.
-   You will need to get the API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
+1. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
 
-1. Setup the database. If you are starting completely from scratch,
+2. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::
+
+       curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
+       vim mbslave.conf
+
+3. Setup the database. If you are starting completely from scratch,
    you can use the following commands to setup a clean database::
 
        sudo su - postgres
@@ -36,7 +40,7 @@ Installation
        psql musicbrainz -c 'CREATE EXTENSION cube;'
        psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
 
-2. Prepare empty schemas for the MusicBrainz database and create the table structure::
+4. Prepare empty schemas for the MusicBrainz database and create the table structure::
 
        echo 'CREATE SCHEMA musicbrainz;' | mbslave psql -S
        echo 'CREATE SCHEMA statistics;' | mbslave psql -S
@@ -50,14 +54,14 @@ Installation
        mbslave psql -f wikidocs/CreateTables.sql
        mbslave psql -f documentation/CreateTables.sql
 
-3. Download the MusicBrainz database dump files from
+5. Download the MusicBrainz database dump files from
    http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
 
-4. Import the data dumps, for example::
+6. Import the data dumps, for example::
 
        mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
 
-5. Setup primary keys, indexes and views::
+7. Setup primary keys, indexes and views::
 
        mbslave psql -f CreatePrimaryKeys.sql
        mbslave psql -f statistics/CreatePrimaryKeys.sql
@@ -73,7 +77,7 @@ Installation
        mbslave psql -f CreateFunctions.sql
        mbslave psql -f CreateViews.sql
 
-6. Vacuum the newly created database (optional)::
+8. Vacuum the newly created database (optional)::
 
        echo 'VACUUM ANALYZE;' | mbslave psql
 

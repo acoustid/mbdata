@@ -3,6 +3,7 @@
 *.db
 /e/
 /.tox/
+/.mypy_cache/
 /dist/
 mbdata.egg-info/
 settings.py

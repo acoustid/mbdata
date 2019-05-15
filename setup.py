@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+import io
+import re
+from setuptools import find_packages, setup
 
-with open('README.rst') as file:
+with io.open('README.rst', 'rt', encoding='utf8') as file:
     long_description = file.read()
 
+with io.open("mbdata/__init__.py", "rt", encoding="utf8") as f:
+    version = re.search(r"__version__ = \"(.*?)\"", f.read()).group(1)
+
 setup(name='mbdata',
-      version='25.0.0',
+      version=version,
       description='MusicBrainz Database Tools',
       long_description=long_description,
       author='Lukas Lalinsky',
-      author_email='lukas@oxygene.sk',
+      author_email='lalinsky@gmail.com',
       url='https://github.com/lalinsky/mbdata',
       license='MIT',
       platforms='ALL',
@@ -23,17 +28,12 @@ setup(name='mbdata',
           'contextlib2; python_version < "3.2"',
           'typing; python_version < "3"',
       ],
+      extra_require={
+          'mbslave': ['psycopg2'],
+          'sqlalchemy': ['sqlalchemy'],
+      },
 
-      packages=[
-          'mbdata',
-          'mbdata.api',
-          'mbdata.api.blueprints',
-          'mbdata.api.tests',
-          'mbdata.tests',
-          'mbdata.tools',
-          'mbdata.utils',
-      ],
-      namespace_packages=['mbdata'],
+      packages=find_packages(),
 
       entry_points={
           'console_scripts': [
