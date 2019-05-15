@@ -1,3 +1,17 @@
+Version 25.0.1 (pending)
+========================
+
+- Added ``mbdata.__version__``.
+
+Version 25.0.0
+==============
+
+- Changed versioning with the Musicbrainz database schema as the major version.
+- Support for MusicBrainz database schema 25.
+- Added MusicBrainz replication (mbslave was merged into this project).
+- Docker image with mbslave.
+- Python 3 support.
+
 Version 2017.06.02
 ==================
 
