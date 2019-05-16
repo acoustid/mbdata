@@ -1,4 +1,5 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && \
-    apt-get install -y python-dev python3-dev tox gcc libxml2-dev libxslt1-dev zlib1g-dev libpq-dev
+RUN add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python2.7-dev python3.5-dev python3.6-dev tox gcc libxml2-dev libxslt1-dev zlib1g-dev libpq-dev
