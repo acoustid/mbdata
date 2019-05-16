@@ -1,3 +1,8 @@
+Version 25.0.2
+==============
+
+- Fixed database connection in ``mbslave``.
+
 Version 25.0.1
 ==============
 
