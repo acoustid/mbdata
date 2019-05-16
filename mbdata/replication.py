@@ -148,10 +148,11 @@ class MusicBrainzConfig(object):
 
 class Config(object):
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, paths):
         self.cfg = ConfigParser.RawConfigParser()
-        self.cfg.read(self.path)
+        for path in paths:
+            if os.path.exists(path):
+                self.cfg.read(path)
         self.get = self.cfg.get
         self.has_option = self.cfg.has_option
 
@@ -537,9 +538,11 @@ def mbslave_psql_main(config, args):
 
 
 def main():
-    default_config_path = 'mbslave.conf'
+    default_config_paths = ['mbslave.conf', '/etc/mbslave.conf']
     if 'MBSLAVE_CONFIG' in os.environ:
-        default_config_path = os.environ['MBSLAVE_CONFIG']
+        default_config_paths = [os.environ['MBSLAVE_CONFIG']]
+
+    default_config_path = os.pathsep.join(default_config_paths)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c, --config', dest='config_path', metavar='PATH',
@@ -574,5 +577,6 @@ def main():
 
     args = parser.parse_args()
 
-    config = Config(args.config_path)
+    config_paths = [p.strip() for p in os.pathsep.split(args.config_path)]
+    config = Config(config_paths)
     args.func(config, args)

@@ -2,6 +2,10 @@ Version 25.0.1 (pending)
 ========================
 
 - Added ``mbdata.__version__``.
+- Fixed ``mbslave psql`` with custom PostgreSQL port number.
+- By default, the ``mbslave`` script will read its config file from either
+  ``$PWD/mbslave.conf`` or ``/etc/mbslave.conf``. Previously, it was only ``$PWD/mbslave.conf``.
+- Documentation clarifications.
 
 Version 25.0.0
 ==============

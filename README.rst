@@ -32,6 +32,12 @@ Installation
        curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
        vim mbslave.conf
 
+   By default, the ``mbslave`` script will look for the config file in the current directory.
+   If you want it to find it from anywhere, either save it to ``/etc/mbslave.conf`` or
+   set the ``MBSLAVE_CONFIG`` environment variable. For example:::
+
+        export MBSLAVE_CONFIG=/usr/local/etc/mbslave.conf
+
 4. Setup the database. If you are starting completely from scratch,
    you can use the following commands to setup a clean database::
 
