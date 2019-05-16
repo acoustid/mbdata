@@ -23,6 +23,8 @@ Installation
        sudo apt install python python-pip python-psycopg2
        pip install -U mbdata  # if you don't have it installed already
 
+   The command will install the ``mbslave`` script into ``$HOME/.local/bin``.
+
 1. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
 
 2. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::

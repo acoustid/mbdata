@@ -2,6 +2,18 @@
 Development Guide
 #################
 
+Development Setup
+=================
+
+Clone the repository and setup virtualenv::
+
+    git clone git@github.com:lalinsky/mbdata.git
+    cd mbdata/
+    virtualenv -p python3 venv
+    . venv/bin/activate
+    pip install -r requirements.txt
+    python setup.py develop
+
 Updating SQL files and models
 =============================
 
