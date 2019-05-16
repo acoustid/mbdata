@@ -14,8 +14,15 @@ Release a new version
 =====================
 
 1. Change the version number in ``mbdata/__init__.py``.
+
 2. Add notes to ``CHANGELOG.rst``
-3. Upload to PyPI::
+
+3. Tag the repository::
+
+    git tag -s vX.Y.Z
+
+4. Upload the package to PyPI::
+
     rm -rf dist/
     python setup.py sdist
     twine upload dist/mbdata-*.tar.gz
