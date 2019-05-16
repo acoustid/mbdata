@@ -139,7 +139,7 @@ class MusicBrainzConfig(object):
         if parser.has_option(section, 'base_url'):
             self.base_url = parser.get(section, 'base_url')
         if parser.has_option(section, 'token'):
-            self.base_url = parser.get(section, 'token')
+            self.token = parser.get(section, 'token')
 
     def read_env(self, prefix):
         read_env_item(self, 'base_url', prefix + 'MUSICBRAINZ_BASE_URL')
