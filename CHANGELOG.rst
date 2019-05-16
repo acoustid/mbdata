@@ -1,3 +1,8 @@
+Version 25.0.4
+==============
+
+- Fixed reading of MusicBrainz API token from ``mbslave.conf``.
+
 Version 25.0.3
 ==============
 
