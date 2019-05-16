@@ -40,7 +40,7 @@ class DatabaseConfig(object):
     def __init__(self):
         self.user = None
         self.superuser = 'postgres'
-        self.name = None
+        self.name = 'musicbrainz'
         self.host = None
         self.port = None
         self.password = None
@@ -65,7 +65,7 @@ class DatabaseConfig(object):
         if superuser:
             args.append('-U')
             args.append(self.superuser)
-        else:
+        elif self.user:
             args.append('-U')
             args.append(self.user)
         if self.host is not None:
@@ -183,18 +183,6 @@ class Config(object):
         self.tables.read_env('MBSLAVE_')
         self.schemas.read_env('MBSLAVE_')
 
-    def make_psql_args(self):
-        opts = {}
-        opts['database'] = self.database.name
-        opts['user'] = self.database.user
-        if self.database.password:
-            opts['password'] = self.database.password
-        if self.database.host:
-            opts['host'] = self.database.host
-        if self.database.port:
-            opts['port'] = self.database.port
-        return opts
-
     def connect_db(self, set_search_path=False, superuser=False):
         db = psycopg2.connect(**self.db.create_psycopg2_kwargs(superuser=superuser))
         if set_search_path:
@@ -202,11 +190,8 @@ class Config(object):
         return db
 
 
-def connect_db(cfg, set_search_path=False):
-    db = psycopg2.connect(**cfg.make_psql_args())
-    if set_search_path:
-        db.cursor().execute("SET search_path TO %s", (cfg.schema.name('musicbrainz'),))
-    return db
+def connect_db(cfg, set_search_path=False, superuser=False):
+    return cfg.connect_db(set_search_path=set_search_path, superuser=superuser)
 
 
 def parse_name(config, table):
@@ -527,15 +512,7 @@ def mbslave_print_sql_main(config, args):
 
 
 def mbslave_psql_main(config, args):
-    command = ['psql']
-    command.append('-U')
-    command.append(config.database.user)
-    if config.database.host:
-        command.append('-h')
-        command.append(config.database.host)
-    if config.database.port:
-        command.append('-p')
-        command.append(config.database.port)
+    command = ['psql'] + config.database.create_psql_args()
 
     environ = os.environ.copy()
     if not args.public:
@@ -552,10 +529,8 @@ def mbslave_psql_main(config, args):
                 for line in remap_schema(config, lines):
                     sql_file.write(line.encode('utf8'))
             sql_file.flush()
-            command.append('-f')
-            command.append(sql_file.name)
-
-        command.append(config.database.name)
+            command.insert(-1, '-f')
+            command.insert(-1, sql_file.name)
 
         process = subprocess.Popen(command, env=environ)
         raise SystemExit(process.wait())
