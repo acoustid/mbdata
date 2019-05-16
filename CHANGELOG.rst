@@ -1,3 +1,8 @@
+Version 25.0.3
+==============
+
+- Fixed a bug in locating ``mbslave.conf``.
+
 Version 25.0.2
 ==============
 
