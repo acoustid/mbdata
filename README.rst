@@ -2,6 +2,11 @@
 MusicBrainz Database Tools
 ##########################
 
+|build status|
+
+.. |build status| image:: https://code.oxygene.sk/lukas/mbdata/badges/master/pipeline.svg
+   :target: https://code.oxygene.sk/lukas/mbdata/commits/master
+
 ****************************
 MusicBrainz Database Replica
 ****************************
