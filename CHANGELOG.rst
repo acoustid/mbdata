@@ -1,5 +1,5 @@
-Version 25.0.1 (pending)
-========================
+Version 25.0.1
+==============
 
 - Added ``mbdata.__version__``.
 - Fixed ``mbslave psql`` with custom PostgreSQL port number.
