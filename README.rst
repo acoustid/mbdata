@@ -17,7 +17,7 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-0. Make sure you have `Python <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
+1. Make sure you have `Python <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
    On Debian and Ubuntu, that means installing these packages::
 
        sudo apt install python python-pip python-psycopg2
@@ -25,14 +25,14 @@ Installation
 
    The command will install the ``mbslave`` script into ``$HOME/.local/bin``.
 
-1. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
+2. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
 
-2. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::
+3. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::
 
        curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
        vim mbslave.conf
 
-3. Setup the database. If you are starting completely from scratch,
+4. Setup the database. If you are starting completely from scratch,
    you can use the following commands to setup a clean database::
 
        sudo su - postgres
@@ -42,7 +42,7 @@ Installation
        psql musicbrainz -c 'CREATE EXTENSION cube;'
        psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
 
-4. Prepare empty schemas for the MusicBrainz database and create the table structure::
+5. Prepare empty schemas for the MusicBrainz database and create the table structure::
 
        echo 'CREATE SCHEMA musicbrainz;' | mbslave psql -S
        echo 'CREATE SCHEMA statistics;' | mbslave psql -S
@@ -56,14 +56,14 @@ Installation
        mbslave psql -f wikidocs/CreateTables.sql
        mbslave psql -f documentation/CreateTables.sql
 
-5. Download the MusicBrainz database dump files from
+6. Download the MusicBrainz database dump files from
    http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
 
-6. Import the data dumps, for example::
+7. Import the data dumps, for example::
 
        mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
 
-7. Setup primary keys, indexes and views::
+8. Setup primary keys, indexes and views::
 
        mbslave psql -f CreatePrimaryKeys.sql
        mbslave psql -f statistics/CreatePrimaryKeys.sql
@@ -79,7 +79,7 @@ Installation
        mbslave psql -f CreateFunctions.sql
        mbslave psql -f CreateViews.sql
 
-8. Vacuum the newly created database (optional)::
+9. Vacuum the newly created database (optional)::
 
        echo 'VACUUM ANALYZE;' | mbslave psql
 
