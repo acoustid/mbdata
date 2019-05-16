@@ -12,6 +12,7 @@ from six.moves.urllib.error import HTTPError
 import tempfile
 import shutil
 import subprocess
+from typing import List
 from six.moves import configparser as ConfigParser
 if six.PY3:
     from contextlib import ExitStack
@@ -537,6 +538,16 @@ def mbslave_psql_main(config, args):
         raise SystemExit(process.wait())
 
 
+def join_paths(paths):
+    # type: (List[str]) -> str
+    return os.pathsep.join(paths)
+
+
+def split_paths(s):
+    # type: (str) -> List[str]
+    return [p.strip() for p in s.split(os.pathsep)]
+
+
 def main():
     default_config_paths = ['mbslave.conf', '/etc/mbslave.conf']
     if 'MBSLAVE_CONFIG' in os.environ:
@@ -577,6 +588,5 @@ def main():
 
     args = parser.parse_args()
 
-    config_paths = [p.strip() for p in os.pathsep.split(args.config_path)]
-    config = Config(config_paths)
+    config = Config(split_paths(args.config_path))
     args.func(config, args)
