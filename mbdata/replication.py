@@ -185,7 +185,7 @@ class Config(object):
         self.schemas.read_env('MBSLAVE_')
 
     def connect_db(self, set_search_path=False, superuser=False):
-        db = psycopg2.connect(**self.db.create_psycopg2_kwargs(superuser=superuser))
+        db = psycopg2.connect(**self.database.create_psycopg2_kwargs(superuser=superuser))
         if set_search_path:
             db.cursor().execute("SET search_path TO %s", (self.schemas.name('musicbrainz'),))
         return db
