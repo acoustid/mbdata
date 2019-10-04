@@ -7,6 +7,7 @@ import os
 import psycopg2
 import argparse
 import six
+import logging
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import HTTPError
 import tempfile
@@ -18,6 +19,8 @@ if six.PY3:
     from contextlib import ExitStack
 else:
     from contextlib2 import ExitStack
+
+logger = logging.getLogger(__name__)
 
 
 def str_to_bool(x):
@@ -219,7 +222,7 @@ def check_table_exists(db, schema, table):
 
 
 def load_tar(filename, db, config, ignored_schemas, ignored_tables):
-    print("Importing data from", filename)
+    logger.info("Importing data from %s", filename)
     tar = tarfile.open(filename, 'r:bz2')
     cursor = db.cursor()
     for member in tar:
@@ -229,19 +232,19 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
         schema, table = parse_name(config, name)
         fulltable = fqn(schema, table)
         if schema in ignored_schemas:
-            print(" - Ignoring {}".format(name))
+            logger.info("Ignoring %s", name)
             continue
         if table in ignored_tables:
-            print(" - Ignoring {}".format(name))
+            logger.info("Ignoring %s", name)
             continue
         if not check_table_exists(db, schema, table):
-            print(" - Skipping {} (table {} does not exist)".format(name, fulltable))
+            logger.info("Skipping %s (table %s does not exist)", name, fulltable)
             continue
         cursor.execute("SELECT 1 FROM %s LIMIT 1" % fulltable)
         if cursor.fetchone():
-            print(" - Skipping {} (table {} already contains data)".format(name, fulltable))
+            logger.info("Skipping %s (table %s already contains data)", name, fulltable)
             continue
-        print(" - Loading {} to {}".format(name, fulltable))
+        logger.info("Loading %s to %s", name, fulltable)
         cursor.copy_from(tar.extractfile(member), fulltable)
         db.commit()
 
@@ -397,9 +400,9 @@ class PacketImporter(object):
                 elif type == 'i':
                     self._hook.after_insert(table, values)
             # print 'COMMIT; --', xid
-        print(' - Statistics:')
+        logger.info('Statistics:')
         for table in sorted(stats.keys()):
-            print('   * %-30s\t%d\t%d\t%d' % (table, stats[table]['i'], stats[table]['u'], stats[table]['d']))
+            logger.info('   * %-30s\t%d\t%d\t%d' % (table, stats[table]['i'], stats[table]['u'], stats[table]['d']))
         self._hook.before_commit()
         self._db.commit()
         self._hook.after_commit()
@@ -410,7 +413,7 @@ class MismatchedSchemaError(Exception):
 
 
 def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook):
-    print("Processing {}".format(fileobj.name))
+    logger.info("Processing %s", fileobj.name)
     tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
     importer = PacketImporter(db, schema, ignored_schemas, ignored_tables, replication_seq, hook)
     for member in tar:
@@ -420,7 +423,7 @@ def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_s
                 raise MismatchedSchemaError("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
             ts = tar.extractfile(member).read().strip().decode('utf8')
-            print(' - Packet was produced at {}'.format(ts))
+            logger.info('Packet was produced at %s', ts)
         elif member.name in ('mbdump/Pending', 'mbdump/dbmirror_pending'):
             importer.load_pending(tar.extractfile(member))
         elif member.name in ('mbdump/PendingData', 'mbdump/dbmirror_pendingdata'):
@@ -428,11 +431,20 @@ def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_s
     importer.process()
 
 
+def get_packet_url(base_url, token, replication_seq):
+    url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
+    if token:
+        url += '?token=' + token
+    return url
+
+
 def download_packet(base_url, token, replication_seq):
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
         url += '?token=' + token
-    print("Downloading {}".format(url))
+    url = get_packet_url(base_url, token, replication_seq)
+    clean_url = get_packet_url(base_url, '***', replication_seq)
+    logger.info('Downloading %s', clean_url)
     try:
         data = urlopen(url, timeout=60)
     except HTTPError as e:
@@ -465,7 +477,7 @@ def mbslave_sync_main(config, args):
         hook = hook_class(config, db, config)
         tmp = download_packet(base_url, token, replication_seq)
         if tmp is None:
-            print('Not found, stopping')
+            logger.info('Not found, stopping')
             if not args.keep_running:
                 break
             replication_seq -= 1
@@ -473,10 +485,10 @@ def mbslave_sync_main(config, args):
         else:
             try:
                 process_tar(tmp, db, config, ignored_schemas, ignored_tables, schema_seq, replication_seq, hook)
-            except MismatchedSchemaError as exc:
+            except MismatchedSchemaError:
                 if not args.keep_running:
                     raise
-                print(exc)
+                logger.exception('Schema mismatch')
                 replication_seq -= 1
                 time.sleep(60 * 10)
             tmp.close()
@@ -587,6 +599,8 @@ def main():
     parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO)
 
     config = Config(split_paths(args.config_path))
     args.func(config, args)
