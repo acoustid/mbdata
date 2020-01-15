@@ -492,6 +492,8 @@ def mbslave_sync_main(config, args):
                 replication_seq -= 1
                 time.sleep(60 * 10)
             tmp.close()
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 
 def remap_schema(config, lines):
