@@ -6,5 +6,4 @@ DROP INDEX label_idx_musicbrainz_collate;
 DROP INDEX recording_idx_musicbrainz_collate;
 DROP INDEX release_group_idx_musicbrainz_collate;
 DROP INDEX release_idx_musicbrainz_collate;
-DROP INDEX track_idx_musicbrainz_collate;
 DROP INDEX work_idx_musicbrainz_collate;
