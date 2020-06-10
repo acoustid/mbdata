@@ -19,7 +19,7 @@ replica of the MusicBrainz database. These used to be called "mbslave",
 but have been moved to this repository.
 
 The main motivation for these scripts is to be able to customize
-your database. If you don't need such custimizations, it might be
+your database. If you don't need such customizations, it might be
 easier to use the replication tools provided by MusicBrainz itself.
 
 Installation
@@ -138,7 +138,7 @@ Tips and Tricks
 Single Database Schema
 ~~~~~~~~~~~~~~~~~~~~~~
 
-MusicBrainz used a number of schemas by default. If you are embedding the MusicBrainz database into
+MusicBrainz uses a number of schemas by default. If you are embedding the MusicBrainz database into
 an existing database for your application, it's convenient to merge them all into a single schema.
 That can be done by changing your config like this::
 
