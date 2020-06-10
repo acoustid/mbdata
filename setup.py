@@ -28,7 +28,7 @@ setup(name='mbdata',
           'contextlib2; python_version < "3.2"',
           'typing; python_version < "3"',
       ],
-      extra_require={
+      extras_require={
           'mbslave': ['psycopg2'],
           'sqlalchemy': ['sqlalchemy'],
       },
