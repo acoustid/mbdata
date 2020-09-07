@@ -64,6 +64,7 @@ Installation
        echo 'CREATE SCHEMA wikidocs;' | mbslave psql -S
        echo 'CREATE SCHEMA documentation;' | mbslave psql -S
 
+       mbslave psql -f CreateCollations.sql
        mbslave psql -f CreateTables.sql
        mbslave psql -f statistics/CreateTables.sql
        mbslave psql -f caa/CreateTables.sql
@@ -115,6 +116,23 @@ Schema Upgrade
 When the MusicBrainz database schema changes, the replication will stop working.
 This is usually announced on the `MusicBrainz blog <http://blog.musicbrainz.org/>`__.
 When it happens, you need to upgrade the database.
+
+2020-05-18 Upgrade to PostgreSQL 12
+-----------------------------------
+
+These steps are recommended even if you were already running on Postgres 12 before MusicBrainz
+moved to make PostgreSQL 12 the minimal supported version.
+
+Run the pre-upgrade script::
+
+   mbslave psql -f updates/20200518-pg12-before-upgrade.sql
+
+If not already on PostgreSQL 12, upgrade your cluster now (depending on your OS, using
+`pg_upgradecluster` or `pg_upgrade`)
+
+After upgrading, or if already on PostgreSQL 12, run::
+
+   mbslave psql -f updates/20200518-pg12-after-upgrade.sql
 
 Release 2019-05-14 (25)
 ~~~~~~~~~~~~~~~~~~~~~~~

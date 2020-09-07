@@ -461,7 +461,7 @@ def generate_models_from_sql(tables, types, indexes):
             #    else:
             #        params.append('CheckConstraint({0})'.format(str(text)))
 
-            for name, value in column_attributes.iteritems():
+            for name, value in column_attributes.items():
                 params.append('{0}={1}'.format(name, value))
 
             yield '    {0} = Column({1})'.format(attribute_name, ', '.join(params))
