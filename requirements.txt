@@ -6,3 +6,4 @@ Flask
 pysolr==3.3.2
 lxml
 psycopg2
+sqlparse
