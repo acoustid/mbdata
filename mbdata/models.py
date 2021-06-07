@@ -604,7 +604,6 @@ class ArtistTag(Base):
 class ArtistRatingRaw(Base):
     __tablename__ = 'artist_rating_raw'
     __table_args__ = (
-        Index('artist_rating_raw_idx_artist', 'artist'),
         Index('artist_rating_raw_idx_editor', 'editor'),
         {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
     )
@@ -703,6 +702,44 @@ class ArtistType(Base):
     gid = Column(UUID, nullable=False)
 
     parent = relationship('ArtistType', foreign_keys=[parent_id])
+
+
+class ArtistRelease(Base):
+    __tablename__ = 'artist_release'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    is_track_artist = Column(Boolean, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_fk_artist'), nullable=False)
+    first_release_date = Column(Integer)
+    catalog_numbers = Column(String)
+    country_code = Column(CHAR(2))
+    barcode = Column(BIGINT)
+    sort_character = Column(CHAR(1), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='artist_release_fk_release'), nullable=False)
+
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+
+
+class ArtistReleaseGroup(Base):
+    __tablename__ = 'artist_release_group'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    is_track_artist = Column(Boolean, nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_group_fk_artist'), nullable=False)
+    unofficial = Column(Boolean, nullable=False)
+    primary_type = Column(SMALLINT)
+    secondary_types = Column(SMALLINT)
+    first_release_date = Column(Integer)
+    sort_character = Column(CHAR(1), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='artist_release_group_fk_release_group'), nullable=False)
+
+    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
+    release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
 
 
 class AutoeditorElection(Base):
@@ -1278,7 +1315,6 @@ class EventMeta(Base):
 class EventRatingRaw(Base):
     __tablename__ = 'event_rating_raw'
     __table_args__ = (
-        Index('event_rating_raw_idx_event', 'event'),
         Index('event_rating_raw_idx_editor', 'editor'),
         {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
     )
@@ -1481,6 +1517,34 @@ class EventType(Base):
     gid = Column(UUID, nullable=False)
 
     parent = relationship('EventType', foreign_keys=[parent_id])
+
+
+class ReleaseFirstReleaseDate(Base):
+    __tablename__ = 'release_first_release_date'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='release_first_release_date_fk_release', ondelete='CASCADE'), nullable=False, primary_key=True)
+    year = Column(SMALLINT)
+    month = Column(SMALLINT)
+    day = Column(SMALLINT)
+
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+
+
+class RecordingFirstReleaseDate(Base):
+    __tablename__ = 'recording_first_release_date'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    recording_id = Column('recording', Integer, ForeignKey(apply_schema('recording.id', 'musicbrainz'), name='recording_first_release_date_fk_recording', ondelete='CASCADE'), nullable=False, primary_key=True)
+    year = Column(SMALLINT)
+    month = Column(SMALLINT)
+    day = Column(SMALLINT)
+
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
 
 
 class Gender(Base):
@@ -4903,7 +4967,6 @@ class Label(Base):
 class LabelRatingRaw(Base):
     __tablename__ = 'label_rating_raw'
     __table_args__ = (
-        Index('label_rating_raw_idx_label', 'label'),
         Index('label_rating_raw_idx_editor', 'editor'),
         {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
     )
@@ -5164,7 +5227,7 @@ class Language(Base):
     iso_code_2b = Column(CHAR(3))
     iso_code_1 = Column(CHAR(2))
     name = Column(String(100), nullable=False)
-    frequency = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
+    frequency = Column(SMALLINT, nullable=False, default=0, server_default=sql.text('0'))
     iso_code_3 = Column(CHAR(3))
 
 
@@ -5297,8 +5360,8 @@ class LinkType(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     is_deprecated = Column(Boolean, nullable=False, default=False, server_default=sql.false())
     has_dates = Column(Boolean, nullable=False, default=True, server_default=sql.true())
-    entity0_cardinality = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
-    entity1_cardinality = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
+    entity0_cardinality = Column(SMALLINT, nullable=False, default=0, server_default=sql.text('0'))
+    entity1_cardinality = Column(SMALLINT, nullable=False, default=0, server_default=sql.text('0'))
 
     parent = relationship('LinkType', foreign_keys=[parent_id])
 
@@ -5337,6 +5400,28 @@ class EditorCollection(Base):
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     type = relationship('EditorCollectionType', foreign_keys=[type_id], innerjoin=True)
+
+
+class EditorCollectionGIDRedirect(Base):
+    __tablename__ = 'editor_collection_gid_redirect'
+    __table_args__ = (
+        Index('editor_collection_gid_redirect_idx_new_id', 'new_id'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    gid = Column(UUID, nullable=False, primary_key=True)
+    redirect_id = Column('new_id', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_gid_redirect_fk_new_id'), nullable=False)
+    created = Column(DateTime(timezone=True), server_default=sql.func.now())
+
+    redirect = relationship('EditorCollection', foreign_keys=[redirect_id], innerjoin=True)
+
+    @hybrid_property
+    def new_id(self):
+        return self.redirect_id
+
+    @hybrid_property
+    def editor_collection(self):
+        return self.redirect
 
 
 class EditorCollectionType(Base):
@@ -5579,6 +5664,8 @@ class EditorOauthToken(Base):
     expire_time = Column(DateTime(timezone=True), nullable=False)
     scope = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
     granted = Column(DateTime(timezone=True), nullable=False, server_default=sql.func.now())
+    code_challenge = Column(String)
+    code_challenge_method = Column(Enum('plain', 'S256', name='OAUTH_CODE_CHALLENGE_METHOD', schema=mbdata.config.schemas.get('musicbrainz', 'musicbrainz')))
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     application = relationship('Application', foreign_keys=[application_id], innerjoin=True)
@@ -5963,6 +6050,34 @@ class PlaceGIDRedirect(Base):
     @hybrid_property
     def place(self):
         return self.redirect
+
+
+class PlaceMeta(Base):
+    __tablename__ = 'place_meta'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column('id', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_meta_fk_id', ondelete='CASCADE'), nullable=False, primary_key=True)
+    rating = Column(SMALLINT)
+    rating_count = Column(Integer)
+
+    place = relationship('Place', foreign_keys=[id], innerjoin=True, backref=backref('meta', uselist=False))
+
+
+class PlaceRatingRaw(Base):
+    __tablename__ = 'place_rating_raw'
+    __table_args__ = (
+        Index('place_rating_raw_idx_editor', 'editor'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    place_id = Column('place', Integer, ForeignKey(apply_schema('place.id', 'musicbrainz'), name='place_rating_raw_fk_place'), nullable=False, primary_key=True)
+    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='place_rating_raw_fk_editor'), nullable=False, primary_key=True)
+    rating = Column(SMALLINT, nullable=False)
+
+    place = relationship('Place', foreign_keys=[place_id], innerjoin=True)
+    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
 
 
 class PlaceTag(Base):
@@ -6669,7 +6784,6 @@ class ReleaseGroupAlias(Base):
 class ReleaseGroupRatingRaw(Base):
     __tablename__ = 'release_group_rating_raw'
     __table_args__ = (
-        Index('release_group_rating_raw_idx_release_group', 'release_group'),
         Index('release_group_rating_raw_idx_editor', 'editor'),
         {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
     )
@@ -6886,7 +7000,7 @@ class Script(Base):
     iso_code = Column(CHAR(4), nullable=False)
     iso_number = Column(CHAR(3), nullable=False)
     name = Column(String(100), nullable=False)
-    frequency = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
+    frequency = Column(SMALLINT, nullable=False, default=0, server_default=sql.text('0'))
 
 
 class Series(Base):
@@ -8648,18 +8762,6 @@ class LinkTypeDocumentation(Base):
     examples_deleted = Column(SMALLINT, nullable=False, default=0, server_default=sql.text('0'))
 
     link_type = relationship('LinkType', foreign_keys=[id], innerjoin=True)
-
-
-class LogStatistic(Base):
-    __tablename__ = 'log_statistic'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('statistics', 'statistics')}
-    )
-
-    name = Column(String, nullable=False, primary_key=True)
-    category = Column(String, nullable=False, primary_key=True)
-    timestamp = Column(DateTime(timezone=True), nullable=False, primary_key=True, server_default=sql.func.now())
-    data = Column(String, nullable=False)
 
 
 class Statistic(Base):
