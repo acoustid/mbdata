@@ -65,6 +65,7 @@ ALTER TABLE editor_collection_artist ADD CONSTRAINT editor_collection_artist_pke
 ALTER TABLE editor_collection_collaborator ADD CONSTRAINT editor_collection_collaborator_pkey PRIMARY KEY (collection, editor);
 ALTER TABLE editor_collection_deleted_entity ADD CONSTRAINT editor_collection_deleted_entity_pkey PRIMARY KEY (collection, gid);
 ALTER TABLE editor_collection_event ADD CONSTRAINT editor_collection_event_pkey PRIMARY KEY (collection, event);
+ALTER TABLE editor_collection_gid_redirect ADD CONSTRAINT editor_collection_gid_redirect_pkey PRIMARY KEY (gid);
 ALTER TABLE editor_collection_instrument ADD CONSTRAINT editor_collection_instrument_pkey PRIMARY KEY (collection, instrument);
 ALTER TABLE editor_collection_label ADD CONSTRAINT editor_collection_label_pkey PRIMARY KEY (collection, label);
 ALTER TABLE editor_collection_place ADD CONSTRAINT editor_collection_place_pkey PRIMARY KEY (collection, place);
@@ -242,6 +243,8 @@ ALTER TABLE place_attribute ADD CONSTRAINT place_attribute_pkey PRIMARY KEY (id)
 ALTER TABLE place_attribute_type ADD CONSTRAINT place_attribute_type_pkey PRIMARY KEY (id);
 ALTER TABLE place_attribute_type_allowed_value ADD CONSTRAINT place_attribute_type_allowed_value_pkey PRIMARY KEY (id);
 ALTER TABLE place_gid_redirect ADD CONSTRAINT place_gid_redirect_pkey PRIMARY KEY (gid);
+ALTER TABLE place_meta ADD CONSTRAINT place_meta_pkey PRIMARY KEY (id);
+ALTER TABLE place_rating_raw ADD CONSTRAINT place_rating_raw_pkey PRIMARY KEY (place, editor);
 ALTER TABLE place_tag ADD CONSTRAINT place_tag_pkey PRIMARY KEY (place, tag);
 ALTER TABLE place_tag_raw ADD CONSTRAINT place_tag_raw_pkey PRIMARY KEY (place, editor, tag);
 ALTER TABLE place_type ADD CONSTRAINT place_type_pkey PRIMARY KEY (id);
@@ -252,6 +255,7 @@ ALTER TABLE recording_annotation ADD CONSTRAINT recording_annotation_pkey PRIMAR
 ALTER TABLE recording_attribute ADD CONSTRAINT recording_attribute_pkey PRIMARY KEY (id);
 ALTER TABLE recording_attribute_type ADD CONSTRAINT recording_attribute_type_pkey PRIMARY KEY (id);
 ALTER TABLE recording_attribute_type_allowed_value ADD CONSTRAINT recording_attribute_type_allowed_value_pkey PRIMARY KEY (id);
+ALTER TABLE recording_first_release_date ADD CONSTRAINT recording_first_release_date_pkey PRIMARY KEY (recording);
 ALTER TABLE recording_gid_redirect ADD CONSTRAINT recording_gid_redirect_pkey PRIMARY KEY (gid);
 ALTER TABLE recording_meta ADD CONSTRAINT recording_meta_pkey PRIMARY KEY (id);
 ALTER TABLE recording_rating_raw ADD CONSTRAINT recording_rating_raw_pkey PRIMARY KEY (recording, editor);
@@ -266,6 +270,7 @@ ALTER TABLE release_attribute_type ADD CONSTRAINT release_attribute_type_pkey PR
 ALTER TABLE release_attribute_type_allowed_value ADD CONSTRAINT release_attribute_type_allowed_value_pkey PRIMARY KEY (id);
 ALTER TABLE release_country ADD CONSTRAINT release_country_pkey PRIMARY KEY (release, country);
 ALTER TABLE release_coverart ADD CONSTRAINT release_coverart_pkey PRIMARY KEY (id);
+ALTER TABLE release_first_release_date ADD CONSTRAINT release_first_release_date_pkey PRIMARY KEY (release);
 ALTER TABLE release_gid_redirect ADD CONSTRAINT release_gid_redirect_pkey PRIMARY KEY (gid);
 ALTER TABLE release_group ADD CONSTRAINT release_group_pkey PRIMARY KEY (id);
 ALTER TABLE release_group_alias ADD CONSTRAINT release_group_alias_pkey PRIMARY KEY (id);

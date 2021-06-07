@@ -289,6 +289,30 @@ ALTER TABLE artist_rating_raw
    FOREIGN KEY (editor)
    REFERENCES editor(id);
 
+ALTER TABLE artist_release
+   ADD CONSTRAINT artist_release_fk_artist
+   FOREIGN KEY (artist)
+   REFERENCES artist(id)
+   ON DELETE CASCADE;
+
+ALTER TABLE artist_release
+   ADD CONSTRAINT artist_release_fk_release
+   FOREIGN KEY (release)
+   REFERENCES release(id)
+   ON DELETE CASCADE;
+
+ALTER TABLE artist_release_group
+   ADD CONSTRAINT artist_release_group_fk_artist
+   FOREIGN KEY (artist)
+   REFERENCES artist(id)
+   ON DELETE CASCADE;
+
+ALTER TABLE artist_release_group
+   ADD CONSTRAINT artist_release_group_fk_release_group
+   FOREIGN KEY (release_group)
+   REFERENCES release_group(id)
+   ON DELETE CASCADE;
+
 ALTER TABLE artist_tag
    ADD CONSTRAINT artist_tag_fk_artist
    FOREIGN KEY (artist)
@@ -595,6 +619,11 @@ ALTER TABLE editor_collection_event
    ADD CONSTRAINT editor_collection_event_fk_event
    FOREIGN KEY (event)
    REFERENCES event(id);
+
+ALTER TABLE editor_collection_gid_redirect
+   ADD CONSTRAINT editor_collection_gid_redirect_fk_new_id
+   FOREIGN KEY (new_id)
+   REFERENCES editor_collection(id);
 
 ALTER TABLE editor_collection_instrument
    ADD CONSTRAINT editor_collection_instrument_fk_collection
@@ -2616,6 +2645,22 @@ ALTER TABLE place_gid_redirect
    FOREIGN KEY (new_id)
    REFERENCES place(id);
 
+ALTER TABLE place_meta
+   ADD CONSTRAINT place_meta_fk_id
+   FOREIGN KEY (id)
+   REFERENCES place(id)
+   ON DELETE CASCADE;
+
+ALTER TABLE place_rating_raw
+   ADD CONSTRAINT place_rating_raw_fk_place
+   FOREIGN KEY (place)
+   REFERENCES place(id);
+
+ALTER TABLE place_rating_raw
+   ADD CONSTRAINT place_rating_raw_fk_editor
+   FOREIGN KEY (editor)
+   REFERENCES editor(id);
+
 ALTER TABLE place_tag
    ADD CONSTRAINT place_tag_fk_place
    FOREIGN KEY (place)
@@ -2705,6 +2750,12 @@ ALTER TABLE recording_attribute_type_allowed_value
    ADD CONSTRAINT recording_attribute_type_allowed_value_fk_parent
    FOREIGN KEY (parent)
    REFERENCES recording_attribute_type_allowed_value(id);
+
+ALTER TABLE recording_first_release_date
+   ADD CONSTRAINT recording_first_release_date_fk_recording
+   FOREIGN KEY (recording)
+   REFERENCES recording(id)
+   ON DELETE CASCADE;
 
 ALTER TABLE recording_gid_redirect
    ADD CONSTRAINT recording_gid_redirect_fk_new_id
@@ -2850,6 +2901,12 @@ ALTER TABLE release_country
 ALTER TABLE release_coverart
    ADD CONSTRAINT release_coverart_fk_id
    FOREIGN KEY (id)
+   REFERENCES release(id)
+   ON DELETE CASCADE;
+
+ALTER TABLE release_first_release_date
+   ADD CONSTRAINT release_first_release_date_fk_release
+   FOREIGN KEY (release)
    REFERENCES release(id)
    ON DELETE CASCADE;
 

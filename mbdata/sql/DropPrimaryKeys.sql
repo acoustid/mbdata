@@ -65,6 +65,7 @@ ALTER TABLE editor_collection_artist DROP CONSTRAINT IF EXISTS editor_collection
 ALTER TABLE editor_collection_collaborator DROP CONSTRAINT IF EXISTS editor_collection_collaborator_pkey;
 ALTER TABLE editor_collection_deleted_entity DROP CONSTRAINT IF EXISTS editor_collection_deleted_entity_pkey;
 ALTER TABLE editor_collection_event DROP CONSTRAINT IF EXISTS editor_collection_event_pkey;
+ALTER TABLE editor_collection_gid_redirect DROP CONSTRAINT IF EXISTS editor_collection_gid_redirect_pkey;
 ALTER TABLE editor_collection_instrument DROP CONSTRAINT IF EXISTS editor_collection_instrument_pkey;
 ALTER TABLE editor_collection_label DROP CONSTRAINT IF EXISTS editor_collection_label_pkey;
 ALTER TABLE editor_collection_place DROP CONSTRAINT IF EXISTS editor_collection_place_pkey;
@@ -242,6 +243,8 @@ ALTER TABLE place_attribute DROP CONSTRAINT IF EXISTS place_attribute_pkey;
 ALTER TABLE place_attribute_type DROP CONSTRAINT IF EXISTS place_attribute_type_pkey;
 ALTER TABLE place_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS place_attribute_type_allowed_value_pkey;
 ALTER TABLE place_gid_redirect DROP CONSTRAINT IF EXISTS place_gid_redirect_pkey;
+ALTER TABLE place_meta DROP CONSTRAINT IF EXISTS place_meta_pkey;
+ALTER TABLE place_rating_raw DROP CONSTRAINT IF EXISTS place_rating_raw_pkey;
 ALTER TABLE place_tag DROP CONSTRAINT IF EXISTS place_tag_pkey;
 ALTER TABLE place_tag_raw DROP CONSTRAINT IF EXISTS place_tag_raw_pkey;
 ALTER TABLE place_type DROP CONSTRAINT IF EXISTS place_type_pkey;
@@ -252,6 +255,7 @@ ALTER TABLE recording_annotation DROP CONSTRAINT IF EXISTS recording_annotation_
 ALTER TABLE recording_attribute DROP CONSTRAINT IF EXISTS recording_attribute_pkey;
 ALTER TABLE recording_attribute_type DROP CONSTRAINT IF EXISTS recording_attribute_type_pkey;
 ALTER TABLE recording_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS recording_attribute_type_allowed_value_pkey;
+ALTER TABLE recording_first_release_date DROP CONSTRAINT IF EXISTS recording_first_release_date_pkey;
 ALTER TABLE recording_gid_redirect DROP CONSTRAINT IF EXISTS recording_gid_redirect_pkey;
 ALTER TABLE recording_meta DROP CONSTRAINT IF EXISTS recording_meta_pkey;
 ALTER TABLE recording_rating_raw DROP CONSTRAINT IF EXISTS recording_rating_raw_pkey;
@@ -266,6 +270,7 @@ ALTER TABLE release_attribute_type DROP CONSTRAINT IF EXISTS release_attribute_t
 ALTER TABLE release_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS release_attribute_type_allowed_value_pkey;
 ALTER TABLE release_country DROP CONSTRAINT IF EXISTS release_country_pkey;
 ALTER TABLE release_coverart DROP CONSTRAINT IF EXISTS release_coverart_pkey;
+ALTER TABLE release_first_release_date DROP CONSTRAINT IF EXISTS release_first_release_date_pkey;
 ALTER TABLE release_gid_redirect DROP CONSTRAINT IF EXISTS release_gid_redirect_pkey;
 ALTER TABLE release_group DROP CONSTRAINT IF EXISTS release_group_pkey;
 ALTER TABLE release_group_alias DROP CONSTRAINT IF EXISTS release_group_alias_pkey;
