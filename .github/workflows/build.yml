@@ -1,0 +1,14 @@
+name: Build
+on: [push]
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v1
+
+    - name: Test
+      run: ./ci/run-tests.sh
