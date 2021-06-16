@@ -58,6 +58,10 @@ ALTER TABLE artist_isni DROP CONSTRAINT IF EXISTS artist_isni_fk_artist;
 ALTER TABLE artist_meta DROP CONSTRAINT IF EXISTS artist_meta_fk_id;
 ALTER TABLE artist_rating_raw DROP CONSTRAINT IF EXISTS artist_rating_raw_fk_artist;
 ALTER TABLE artist_rating_raw DROP CONSTRAINT IF EXISTS artist_rating_raw_fk_editor;
+ALTER TABLE artist_release DROP CONSTRAINT IF EXISTS artist_release_fk_artist;
+ALTER TABLE artist_release DROP CONSTRAINT IF EXISTS artist_release_fk_release;
+ALTER TABLE artist_release_group DROP CONSTRAINT IF EXISTS artist_release_group_fk_artist;
+ALTER TABLE artist_release_group DROP CONSTRAINT IF EXISTS artist_release_group_fk_release_group;
 ALTER TABLE artist_tag DROP CONSTRAINT IF EXISTS artist_tag_fk_artist;
 ALTER TABLE artist_tag DROP CONSTRAINT IF EXISTS artist_tag_fk_tag;
 ALTER TABLE artist_tag_raw DROP CONSTRAINT IF EXISTS artist_tag_raw_fk_artist;
@@ -117,6 +121,7 @@ ALTER TABLE editor_collection_deleted_entity DROP CONSTRAINT IF EXISTS editor_co
 ALTER TABLE editor_collection_deleted_entity DROP CONSTRAINT IF EXISTS editor_collection_deleted_entity_fk_gid;
 ALTER TABLE editor_collection_event DROP CONSTRAINT IF EXISTS editor_collection_event_fk_collection;
 ALTER TABLE editor_collection_event DROP CONSTRAINT IF EXISTS editor_collection_event_fk_event;
+ALTER TABLE editor_collection_gid_redirect DROP CONSTRAINT IF EXISTS editor_collection_gid_redirect_fk_new_id;
 ALTER TABLE editor_collection_instrument DROP CONSTRAINT IF EXISTS editor_collection_instrument_fk_collection;
 ALTER TABLE editor_collection_instrument DROP CONSTRAINT IF EXISTS editor_collection_instrument_fk_instrument;
 ALTER TABLE editor_collection_label DROP CONSTRAINT IF EXISTS editor_collection_label_fk_collection;
@@ -519,6 +524,9 @@ ALTER TABLE place_attribute_type DROP CONSTRAINT IF EXISTS place_attribute_type_
 ALTER TABLE place_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS place_attribute_type_allowed_value_fk_place_attribute_type;
 ALTER TABLE place_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS place_attribute_type_allowed_value_fk_parent;
 ALTER TABLE place_gid_redirect DROP CONSTRAINT IF EXISTS place_gid_redirect_fk_new_id;
+ALTER TABLE place_meta DROP CONSTRAINT IF EXISTS place_meta_fk_id;
+ALTER TABLE place_rating_raw DROP CONSTRAINT IF EXISTS place_rating_raw_fk_place;
+ALTER TABLE place_rating_raw DROP CONSTRAINT IF EXISTS place_rating_raw_fk_editor;
 ALTER TABLE place_tag DROP CONSTRAINT IF EXISTS place_tag_fk_place;
 ALTER TABLE place_tag DROP CONSTRAINT IF EXISTS place_tag_fk_tag;
 ALTER TABLE place_tag_raw DROP CONSTRAINT IF EXISTS place_tag_raw_fk_place;
@@ -537,6 +545,7 @@ ALTER TABLE recording_attribute DROP CONSTRAINT IF EXISTS recording_attribute_fk
 ALTER TABLE recording_attribute_type DROP CONSTRAINT IF EXISTS recording_attribute_type_fk_parent;
 ALTER TABLE recording_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS recording_attribute_type_allowed_value_fk_recording_attribute_type;
 ALTER TABLE recording_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS recording_attribute_type_allowed_value_fk_parent;
+ALTER TABLE recording_first_release_date DROP CONSTRAINT IF EXISTS recording_first_release_date_fk_recording;
 ALTER TABLE recording_gid_redirect DROP CONSTRAINT IF EXISTS recording_gid_redirect_fk_new_id;
 ALTER TABLE recording_meta DROP CONSTRAINT IF EXISTS recording_meta_fk_id;
 ALTER TABLE recording_rating_raw DROP CONSTRAINT IF EXISTS recording_rating_raw_fk_recording;
@@ -566,6 +575,7 @@ ALTER TABLE release_attribute_type_allowed_value DROP CONSTRAINT IF EXISTS relea
 ALTER TABLE release_country DROP CONSTRAINT IF EXISTS release_country_fk_release;
 ALTER TABLE release_country DROP CONSTRAINT IF EXISTS release_country_fk_country;
 ALTER TABLE release_coverart DROP CONSTRAINT IF EXISTS release_coverart_fk_id;
+ALTER TABLE release_first_release_date DROP CONSTRAINT IF EXISTS release_first_release_date_fk_release;
 ALTER TABLE release_gid_redirect DROP CONSTRAINT IF EXISTS release_gid_redirect_fk_new_id;
 ALTER TABLE release_group DROP CONSTRAINT IF EXISTS release_group_fk_artist_credit;
 ALTER TABLE release_group DROP CONSTRAINT IF EXISTS release_group_fk_type;

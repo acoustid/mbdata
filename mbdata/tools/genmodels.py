@@ -6,6 +6,7 @@ import os
 import re
 import sqlparse
 import six
+import sys
 from sqlparse import tokens as T
 from sqlparse.sql import TokenList, Parenthesis
 from typing import List
@@ -170,7 +171,11 @@ def parse_sql(sql, schema='musicbrainz'):
             schema = statement.get_value().split(',')[0].strip()
 
         elif isinstance(statement, CreateTable):
-            tables.append(parse_create_table(statement, schema))
+            try:
+                tables.append(parse_create_table(statement, schema))
+            except:
+                # TODO improve handling of partition tables
+                sys.stderr.write('ignoring statement: ' + statement.__str__() + '\n')
 
         elif isinstance(statement, CreateType):
             types.append(parse_create_type(statement, schema))

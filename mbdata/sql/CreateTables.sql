@@ -406,6 +406,74 @@ CREATE TABLE artist_type ( -- replicate
     gid                 uuid NOT NULL
 );
 
+CREATE TABLE artist_release (
+    -- `is_track_artist` is TRUE only if the artist came from a track
+    -- AC and does not also appear in the release AC. Track artists
+    -- that appear in the release AC are not stored.
+    is_track_artist                     BOOLEAN NOT NULL,
+    artist                              INTEGER NOT NULL, -- references artist.id, CASCADE
+    first_release_date                  INTEGER,
+    catalog_numbers                     TEXT[],
+    country_code                        CHAR(2),
+    barcode                             BIGINT,
+    -- Prior to adding these materialized tables, we'd order releases
+    -- by name only if all other attributes where equal. It's not too
+    -- common that an artist will have tons of releases with no dates,
+    -- catalog numbers, countries, or barcodes (though it can be seen
+    -- on some big composers). As a compromise between dropping the
+    -- name sorting and having to store the entire name here (which,
+    -- as a reminder, is duplicated for every artist on the release),
+    -- we only store the first character of the name for sorting.
+    sort_character                      CHAR(1) COLLATE musicbrainz NOT NULL,
+    release                             INTEGER NOT NULL -- references release.id, CASCADE
+) PARTITION BY LIST (is_track_artist);
+
+CREATE TABLE artist_release_nonva
+    PARTITION OF artist_release FOR VALUES IN (FALSE);
+
+CREATE TABLE artist_release_va
+    PARTITION OF artist_release FOR VALUES IN (TRUE);
+
+-- The set of triggers keeping the `artist_release` table up-to-date
+-- (which can be found in admin/sql/CreateSlaveOnlyTriggers.sql) don't
+-- update the table directly. The query to do that for a particular
+-- release can be moderately heavy if there are a lot of tracks, so it
+-- would degrade performance if identical updates to the same release
+-- were triggered many times in the same transaction (which is very
+-- easy to trigger when adding, editing, or removing tracks). The
+-- strategy we use is to instead push release IDs that need updating
+-- to the `artist_release_pending_update` table, and perform the
+-- actual updates in a DEFERRED trigger at the end of the transaction.
+-- (For where this happens, see the apply_*_pending_updates functions.)
+CREATE TABLE artist_release_pending_update (
+    release INTEGER NOT NULL
+);
+
+CREATE TABLE artist_release_group (
+    -- See comment for `artist_release.is_track_artist`.
+    is_track_artist                     BOOLEAN NOT NULL,
+    artist                              INTEGER NOT NULL, -- references artist.id, CASCADE
+    unofficial                          BOOLEAN NOT NULL,
+    primary_type                        SMALLINT,
+    secondary_types                     SMALLINT[],
+    first_release_date                  INTEGER,
+    -- See comment for `artist_release.sort_character`.
+    sort_character                      CHAR(1) COLLATE musicbrainz NOT NULL,
+    release_group                       INTEGER NOT NULL -- references release_group.id, CASCADE
+) PARTITION BY LIST (is_track_artist);
+
+CREATE TABLE artist_release_group_nonva
+    PARTITION OF artist_release_group FOR VALUES IN (FALSE);
+
+CREATE TABLE artist_release_group_va
+    PARTITION OF artist_release_group FOR VALUES IN (TRUE);
+
+-- Please see the comment above `artist_release_pending_update`
+-- (the same idea applies).
+CREATE TABLE artist_release_group_pending_update (
+    release_group INTEGER NOT NULL
+);
+
 CREATE TABLE autoeditor_election
 (
     id                  SERIAL,
@@ -845,6 +913,20 @@ CREATE TABLE event_type ( -- replicate
     child_order         INTEGER NOT NULL DEFAULT 0,
     description         TEXT,
     gid                 uuid NOT NULL
+);
+
+CREATE TABLE release_first_release_date (
+    release     INTEGER NOT NULL, -- PK, references release.id CASCADE
+    year        SMALLINT,
+    month       SMALLINT,
+    day         SMALLINT
+);
+
+CREATE TABLE recording_first_release_date (
+    recording   INTEGER NOT NULL, -- PK, references recording.id CASCADE
+    year        SMALLINT,
+    month       SMALLINT,
+    day         SMALLINT
 );
 
 CREATE TABLE gender ( -- replicate
@@ -2161,7 +2243,7 @@ CREATE TABLE language ( -- replicate
     iso_code_2b         CHAR(3), -- ISO 639-2 (B)
     iso_code_1          CHAR(2), -- ISO 639
     name                VARCHAR(100) NOT NULL,
-    frequency           INTEGER NOT NULL DEFAULT 0,
+    frequency           SMALLINT NOT NULL DEFAULT 0,
     iso_code_3          CHAR(3)  -- ISO 639-3
 );
 
@@ -2250,8 +2332,8 @@ CREATE TABLE link_type ( -- replicate
     last_updated        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_deprecated       BOOLEAN NOT NULL DEFAULT false,
     has_dates           BOOLEAN NOT NULL DEFAULT true,
-    entity0_cardinality INTEGER NOT NULL DEFAULT 0,
-    entity1_cardinality INTEGER NOT NULL DEFAULT 0
+    entity0_cardinality SMALLINT NOT NULL DEFAULT 0,
+    entity1_cardinality SMALLINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE link_type_attribute_type ( -- replicate
@@ -2271,6 +2353,12 @@ CREATE TABLE editor_collection
     public              BOOLEAN NOT NULL DEFAULT FALSE,
     description         TEXT DEFAULT '' NOT NULL,
     type                INTEGER NOT NULL -- references editor_collection_type.id
+);
+
+CREATE TABLE editor_collection_gid_redirect (
+    gid                 UUID NOT NULL, -- PK
+    new_id              INTEGER NOT NULL, -- references editor_collection.id
+    created             TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE editor_collection_type ( -- replicate
@@ -2384,17 +2472,25 @@ CREATE TABLE editor_collection_deleted_entity (
     comment TEXT DEFAULT '' NOT NULL
 );
 
+CREATE TYPE oauth_code_challenge_method AS ENUM ('plain', 'S256');
+
 CREATE TABLE editor_oauth_token
 (
-    id                  SERIAL,
-    editor              INTEGER NOT NULL, -- references editor.id
-    application         INTEGER NOT NULL, -- references application.id
-    authorization_code  TEXT,
-    refresh_token       TEXT,
-    access_token        TEXT,
-    expire_time         TIMESTAMP WITH TIME ZONE NOT NULL,
-    scope               INTEGER NOT NULL DEFAULT 0,
-    granted             TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    id                      SERIAL,
+    editor                  INTEGER NOT NULL, -- references editor.id
+    application             INTEGER NOT NULL, -- references application.id
+    authorization_code      TEXT,
+    refresh_token           TEXT,
+    access_token            TEXT,
+    expire_time             TIMESTAMP WITH TIME ZONE NOT NULL,
+    scope                   INTEGER NOT NULL DEFAULT 0,
+    granted                 TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    code_challenge          TEXT,
+    code_challenge_method   oauth_code_challenge_method,
+    CONSTRAINT valid_code_challenge CHECK (
+        (code_challenge IS NULL) = (code_challenge_method IS NULL) AND
+        (code_challenge IS NULL OR code_challenge ~ E'^[A-Za-z0-9.~_-]{43,128}$')
+    )
 );
 
 CREATE TABLE editor_watch_preferences
@@ -2631,6 +2727,19 @@ CREATE TABLE place_gid_redirect ( -- replicate (verbose)
     gid                 UUID NOT NULL, -- PK
     new_id              INTEGER NOT NULL, -- references place.id
     created             TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE place_meta ( -- replicate
+    id                  INTEGER NOT NULL, -- PK, references place.id CASCADE
+    rating              SMALLINT CHECK (rating >= 0 AND rating <= 100),
+    rating_count        INTEGER
+);
+
+CREATE TABLE place_rating_raw
+(
+    place               INTEGER NOT NULL, -- PK, references place.id
+    editor              INTEGER NOT NULL, -- PK, references editor.id
+    rating              SMALLINT NOT NULL CHECK (rating >= 0 AND rating <= 100)
 );
 
 CREATE TABLE place_tag ( -- replicate (verbose)
@@ -3144,7 +3253,7 @@ CREATE TABLE script ( -- replicate
     iso_code            CHAR(4) NOT NULL, -- ISO 15924
     iso_number          CHAR(3) NOT NULL, -- ISO 15924
     name                VARCHAR(100) NOT NULL,
-    frequency           INTEGER NOT NULL DEFAULT 0
+    frequency           SMALLINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE series ( -- replicate (verbose)
