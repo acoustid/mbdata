@@ -3,12 +3,23 @@ on: [push]
 jobs:
 
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python_version: [ '2.7', '3.7', '3.8' ]
+
     steps:
 
     - name: Check out code
       uses: actions/checkout@v1
+
+    - name: Install python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python_version }}
+
+    - name: Install tox
+      run: pip install tox
 
     - name: Test
       run: ./ci/run-tests.sh
