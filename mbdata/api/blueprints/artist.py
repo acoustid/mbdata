@@ -2,7 +2,7 @@
 # Distributed under the MIT license, see the LICENSE file for details.
 
 from flask import Blueprint, g, abort
-from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer, load_only
+from sqlalchemy.orm import joinedload, subqueryload, defer, load_only
 from mbdata.models import (
     Artist,
     ArtistCreditName,

@@ -1,7 +1,7 @@
 # Copyright (C) 2013 Lukas Lalinsky
 # Distributed under the MIT license, see the LICENSE file for details.
 
-from sqlalchemy.orm import joinedload, subqueryload, subqueryload_all, defer
+from sqlalchemy.orm import joinedload, subqueryload, defer
 from mbdata.models import (
     Artist,
 )
