@@ -102,6 +102,17 @@ class CreateTable(Statement):
 
         return token.value
 
+    def is_partition_of(self):
+        idx, partition_token = self.token_next_by(m=(T.Keyword, 'PARTITION'))
+        if partition_token is None:
+            return False
+
+        idx, token = self.token_next(idx)
+        if token is None:
+            return False
+
+        return token.value == 'OF'
+
     def get_columns(self):
         for token in self.tokens:
             if isinstance(token, Parenthesis):

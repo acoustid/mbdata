@@ -12,7 +12,6 @@ from sqlparse.sql import TokenList, Parenthesis
 from typing import List
 from mbdata.utils.sql import CreateTable, CreateType, CreateIndex, Set, parse_statements
 
-
 ACRONYMS = set(['ipi', 'isni', 'gid', 'url', 'iso', 'isrc', 'iswc', 'cdtoc'])
 SPECIAL_NAMES = {'coverart': 'CoverArt'}
 
@@ -171,11 +170,8 @@ def parse_sql(sql, schema='musicbrainz'):
             schema = statement.get_value().split(',')[0].strip()
 
         elif isinstance(statement, CreateTable):
-            try:
+            if not statement.is_partition_of():
                 tables.append(parse_create_table(statement, schema))
-            except Exception:
-                # TODO improve handling of partition tables
-                sys.stderr.write('ignoring statement: ' + statement.__str__() + '\n')
 
         elif isinstance(statement, CreateType):
             types.append(parse_create_type(statement, schema))
@@ -331,6 +327,16 @@ def generate_models_from_sql(tables, types, indexes):
     for table in tables:
         if table.name == 'old_editor_name':
             continue
+
+        if table.name == 'artist_release':
+            for column in table.columns:
+                if column.name in {'artist', 'release'}:
+                    column.primary_key = True
+
+        if table.name == 'artist_release_group':
+            for column in table.columns:
+                if column.name in {'artist', 'release_group'}:
+                    column.primary_key = True
 
         model_name = format_model_name(table.name)
         yield 'class {0}(Base):'.format(model_name)

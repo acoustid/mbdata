@@ -711,13 +711,13 @@ class ArtistRelease(Base):
     )
 
     is_track_artist = Column(Boolean, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_fk_artist'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_fk_artist'), nullable=False, primary_key=True)
     first_release_date = Column(Integer)
     catalog_numbers = Column(String)
     country_code = Column(CHAR(2))
     barcode = Column(BIGINT)
     sort_character = Column(CHAR(1), nullable=False)
-    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='artist_release_fk_release'), nullable=False)
+    release_id = Column('release', Integer, ForeignKey(apply_schema('release.id', 'musicbrainz'), name='artist_release_fk_release'), nullable=False, primary_key=True)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
@@ -730,13 +730,13 @@ class ArtistReleaseGroup(Base):
     )
 
     is_track_artist = Column(Boolean, nullable=False)
-    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_group_fk_artist'), nullable=False)
+    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='artist_release_group_fk_artist'), nullable=False, primary_key=True)
     unofficial = Column(Boolean, nullable=False)
     primary_type = Column(SMALLINT)
     secondary_types = Column(SMALLINT)
     first_release_date = Column(Integer)
     sort_character = Column(CHAR(1), nullable=False)
-    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='artist_release_group_fk_release_group'), nullable=False)
+    release_group_id = Column('release_group', Integer, ForeignKey(apply_schema('release_group.id', 'musicbrainz'), name='artist_release_group_fk_release_group'), nullable=False, primary_key=True)
 
     artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
     release_group = relationship('ReleaseGroup', foreign_keys=[release_group_id], innerjoin=True)
