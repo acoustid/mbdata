@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, composite, backref
 from mbdata.types import PartialDate, Point, Cube as _Cube, regexp, UUID, SMALLINT, BIGINT, JSONB
-from typing import Any
+from typing import Any, Union
 
 import mbdata.config
 mbdata.config.freeze()
@@ -24,9 +24,9 @@ else:
     Base = declarative_base()
 
 if mbdata.config.use_cube:
-    Cube = _Cube
+    Cube = _Cube  # type: Union[_Cube, Text]
 else:
-    Cube = Text  # noqa: F811
+    Cube = Text
 
 
 def apply_schema(name, schema):
