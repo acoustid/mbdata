@@ -9,7 +9,7 @@ then
   VERSION=$(echo "$GITHUB_REF" | sed 's/^refs\/tags\/v//')
   PREV_VERSION=master
 else
-  VERSION=$(echo "$GITHUB_REF" | sed 's/^refs\/heads\//')
+  VERSION=$(echo "$GITHUB_REF" | sed 's/^refs\/heads\///')
   PREV_VERSION=$VERSION
 fi
 
