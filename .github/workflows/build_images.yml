@@ -1,0 +1,25 @@
+name: Build Docker images
+on:
+  push:
+    branches:
+      - master
+      - docker
+    tags:
+      - *
+
+jobs:
+
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v1
+
+    - name: Build Docker images
+      run: ./ci/build-image.sh
+      env:
+        GITHUB_REF: ${{ github.ref }}
+        QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+        QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
