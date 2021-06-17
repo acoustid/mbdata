@@ -173,7 +173,7 @@ def parse_sql(sql, schema='musicbrainz'):
         elif isinstance(statement, CreateTable):
             try:
                 tables.append(parse_create_table(statement, schema))
-            except:
+            except Exception:
                 # TODO improve handling of partition tables
                 sys.stderr.write('ignoring statement: ' + statement.__str__() + '\n')
 
@@ -234,7 +234,7 @@ def generate_models_header():
 def make_type_mapper(types):
     mapping = dict(TYPE_MAPPING)
     for type in types:
-        mapping[type.name.upper()] = 'Enum({0}, name={1!r}, schema=mbdata.config.schemas.get({2!r}, {2!r}))'.format(', '.join(('{0!r}'.format(str(l)) for l in type.labels)), str(type.name.upper()), type.schema)
+        mapping[type.name.upper()] = 'Enum({0}, name={1!r}, schema=mbdata.config.schemas.get({2!r}, {2!r}))'.format(', '.join(('{0!r}'.format(str(label)) for label in type.labels)), str(type.name.upper()), type.schema)
 
     def inner(type):
         new_type = mapping.get(type.upper())
@@ -419,7 +419,7 @@ def generate_models_from_sql(tables, types, indexes):
                     params.insert(0, repr(str(column.name)))
                     foreign_keys.append((attribute_name, relationship_name, foreign_key, backref, column.nullable))
                     if table.name.startswith('l_') and column.name in ('entity0', 'entity1'):
-                        if table.name == 'l_{0}_{0}'.format(foreign_key.table, foreign_key.table):
+                        if table.name == 'l_{0}_{0}'.format(foreign_key.table):
                             aliases.append((column.name, foreign_key.table + column.name[-1]))
                             aliases.append((attribute_name, foreign_key.table + column.name[-1] + '_id'))
                         else:
