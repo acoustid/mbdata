@@ -1,3 +1,8 @@
+Version 26.0.0
+==============
+
+- Support for MusicBrainz database schema 26.
+
 Version 25.0.4
 ==============
 
