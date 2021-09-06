@@ -468,11 +468,10 @@ def mbslave_sync_main(config, args):
 
     hook_class = ReplicationHook
 
-    cursor = db.cursor()
-    cursor.execute("SELECT current_schema_sequence, current_replication_sequence FROM %s.replication_control" % config.schemas.name('musicbrainz'))
-    schema_seq, replication_seq = cursor.fetchone()
-
     while True:
+        cursor = db.cursor()
+        cursor.execute("SELECT current_schema_sequence, current_replication_sequence FROM %s.replication_control" % config.schemas.name('musicbrainz'))
+        schema_seq, replication_seq = cursor.fetchone()
         replication_seq += 1
         hook = hook_class(config, db, config)
         tmp = download_packet(base_url, token, replication_seq)
