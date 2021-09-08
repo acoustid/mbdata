@@ -7,9 +7,6 @@ MusicBrainz Database Tools
 .. |pypi badge| image:: https://badge.fury.io/py/mbdata.svg
     :target: https://badge.fury.io/py/mbdata
 
-.. |ci badge| image:: https://code.oxygene.sk/lukas/mbdata/badges/master/pipeline.svg
-    :target: https://code.oxygene.sk/lukas/mbdata/commits/master
-
 ****************************
 MusicBrainz Database Replica
 ****************************

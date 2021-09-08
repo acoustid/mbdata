@@ -1,0 +1,46 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - build-docker-image
+
+jobs:
+
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to GitHub container registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check version details
+      id: version
+      run: |
+        echo ::set-output name=IMAGE::ghcr.io/lalinsky/mbdata/mbslave
+        if [[ $GITHUB_REF == refs/tags/v* ]]
+        then
+          echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d'/' -f3 | sed 's/^v//')
+        else
+          echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d'/' -f3)
+        fi
+
+    - name: Build and push mbslave image
+      uses: docker/build-push-action@v2
+      with:
+        file: Dockerfile.mbslave
+        tags: ${{ steps.version.outputs.IMAGE }}:${{ steps.version.outputs.VERSION }}
+        push: true
