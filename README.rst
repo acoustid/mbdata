@@ -2,7 +2,7 @@
 MusicBrainz Database Tools
 ##########################
 
-|pypi badge| |ci badge|
+|pypi badge|
 
 .. |pypi badge| image:: https://badge.fury.io/py/mbdata.svg
     :target: https://badge.fury.io/py/mbdata
