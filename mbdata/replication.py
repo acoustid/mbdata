@@ -245,7 +245,7 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
             logger.info("Skipping %s (table %s already contains data)", name, fulltable)
             continue
         logger.info("Loading %s to %s", name, fulltable)
-        cursor.copy_expert(f'COPY {fulltable} FROM STDIN', tar.extractfile(member))
+        cursor.copy_expert('COPY {} FROM STDIN'.format(fulltable), tar.extractfile(member))
         db.commit()
 
 
