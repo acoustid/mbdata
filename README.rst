@@ -49,7 +49,6 @@ Installation
        sudo su - postgres
        createuser musicbrainz
        createdb -l C -E UTF-8 -T template0 -O musicbrainz musicbrainz
-       createlang plpgsql musicbrainz
        psql musicbrainz -c 'CREATE EXTENSION cube;'
        psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
 
