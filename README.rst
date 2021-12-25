@@ -248,23 +248,6 @@ If you need sample MusicBrainz data for your tests, you can use
     from mbdata.sample_data import create_sample_data
     create_sample_data(session)
 
-**********
-Solr Index
-**********
-
-Create a minimal Solr configuration:
-
-.. code:: sh
-
-    ./bin/create_solr_home.py -d /tmp/mbdata_solr
-
-Start Solr:
-
-.. code:: sh
-
-    cd /path/to/solr-4.6.1/example
-    java -Dsolr.solr.home=/tmp/mbdata_solr -jar start.jar
-
 ***********
 Development
 ***********
