@@ -8,7 +8,6 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.6"
 SQLAlchemy = "^1.4.29"
-Flask = "^2.0.2"
 lxml = "^4.7.1"
 psycopg2 = "^2.9.2"
 sqlparse = "^0.4.2"
