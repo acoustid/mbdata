@@ -74,7 +74,7 @@ name = "psycopg2"
 version = "2.9.2"
 description = "psycopg2 - Python-PostgreSQL Database Adapter"
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.6"
 
 [[package]]
@@ -168,7 +168,7 @@ replication = ["psycopg2"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "a9944d4a569fae8da306daca9d6d11281f084661fae12982c53057a1a1357c70"
+content-hash = "46ac662c2600ebf7b1d6bda1df01d7df5706fccb806b713f3c0846c782f53366"
 
 [metadata.files]
 flake8 = [
