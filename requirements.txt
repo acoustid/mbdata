@@ -2,7 +2,6 @@ six
 contextlib2; python_version < "3.2"
 typing; python_version < "3"
 SQLAlchemy
-pysolr==3.3.2
 lxml
 psycopg2
 sqlparse>=0.2
