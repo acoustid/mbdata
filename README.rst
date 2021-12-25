@@ -248,49 +248,6 @@ If you need sample MusicBrainz data for your tests, you can use
     from mbdata.sample_data import create_sample_data
     create_sample_data(session)
 
-********
-HTTP API
-********
-
-**Note:** This is very much a work in progress. It is not ready to use
-yet. Any help is welcome.
-
-There is also a HTTP API, which you can use to access the MusicBrainz
-data using JSON or XML formats over HTTP. This is useful if you want to
-abstract away the MusicBrainz PostgreSQL database.
-
-Installation:
-
-.. code:: sh
-
-    virtualenv --system-site-packages e
-    . e/bin/activate
-    pip install -r requirements.txt
-    python setup.py develop
-
-Configuration:
-
-.. code:: sh
-
-    cp settings.py.sample settings.py
-    vim settings.py
-
-Start the development server:
-
-.. code:: sh
-
-    MBDATA_API_SETTINGS=`pwd`/settings.py python -m mbdata.api.app
-
-Query the API:
-
-.. code:: sh
-
-    curl 'http://127.0.0.1:5000/v1/artist/get?id=b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d'
-
-For production use, you should use server software like
-`uWSGI <http://projects.unbit.it/uwsgi/>`__ and
-`nginx <http://nginx.org/>`__ to run the service.
-
 **********
 Solr Index
 **********
