@@ -386,6 +386,8 @@ def generate_models_from_sql(tables, types, indexes):
                         backref = 'artists', 'order_by="ArtistCreditName.position"'
                     if table.schema == 'musicbrainz' and table.name == 'track' and column.name == 'medium':
                         backref = 'tracks', 'order_by="Track.position"'
+                    if table.schema == 'musicbrainz' and table.name == 'track' and column.name == 'recording':
+                        backref = 'tracks'
                     if table.schema == 'musicbrainz' and table.name == 'medium' and column.name == 'release':
                         backref = 'mediums', 'order_by="Medium.position"'
                     if table.schema == 'musicbrainz' and table.name == 'isrc' and column.name == 'recording':
