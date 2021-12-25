@@ -22,5 +22,7 @@ jobs:
       run: poetry install
     - name: Run flake8
       run: poetry run flake8 mbdata
+    - name: Run mypy
+      run: poetry run mypy mbdata
     - name: Run pytest
       run: poetry run nosetests -v

@@ -604,7 +604,7 @@ def create_solr_home(dir):
 
 
 if __name__ == '__main__':
-    from settings import DATABASE_URI
+    from settings import DATABASE_URI  # type: ignore
 
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
