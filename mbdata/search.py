@@ -87,7 +87,6 @@ class CustomLabel(Label):
 
 class CustomRecording(Recording):
     redirect_gids = relationship("RecordingGIDRedirect")
-    tracks = relationship("Track")
 
 
 class CustomRelease(Release):
