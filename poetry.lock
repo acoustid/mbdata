@@ -162,10 +162,13 @@ python-versions = ">=3.6"
 docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
+[extras]
+replication = ["psycopg2"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "a8ceafdc2d6ad6b465ec0fb0e87f78328763478f06ffd53a32aa5b107e759113"
+content-hash = "46ac662c2600ebf7b1d6bda1df01d7df5706fccb806b713f3c0846c782f53366"
 
 [metadata.files]
 flake8 = [
