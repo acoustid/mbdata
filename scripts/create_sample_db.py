@@ -10,9 +10,10 @@ from sqlalchemy.orm import sessionmaker
 
 import mbdata.config
 mbdata.config.configure(schema=None)
+mbdata.config.freeze()
 
-from mbdata.sample_data import create_sample_data
-from mbdata.models import Base
+from mbdata.sample_data import create_sample_data  # noqa: E402
+from mbdata.models import Base  # noqa: E402
 
 
 parser = argparse.ArgumentParser(add_help=True,

@@ -1,28 +1,26 @@
 name: Test
+
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
 
 jobs:
-
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python_version: [ '2.7', '3.6', '3.7', '3.8', '3.9' ]
-
     steps:
-
-    - name: Check out code
-      uses: actions/checkout@v1
-
-    - name: Install python
+    - uses: actions/checkout@v2
+    - name: Install Python
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python_version }}
-
-    - name: Install tox
-      run: pip install tox
-
-    - name: Test
-      run: ./ci/run-tests.sh ${{ matrix.python_version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+    - name: Install application dependencies
+      run: poetry install
+    - name: Run flake8
+      run: poetry run flake8 mbdata
+    - name: Run pytest
+      run: poetry run pytest
