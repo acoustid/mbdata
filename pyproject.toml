@@ -8,7 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.6"
 SQLAlchemy = "^1.4.29"
-lxml = "^4.7.1"
+lxml = {version = "^4.7.1", optional = true}
 psycopg2 = {version = "^2.9.2", optional = true}
 sqlparse = "^0.4.2"
 six = "^1.16.0"
@@ -20,6 +20,7 @@ psycopg2 = "^2.9.2"
 
 [tool.poetry.extras]
 replication = ["psycopg2"]
+search = ["lxml"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
