@@ -1,0 +1,7 @@
+[flake8]
+ignore = F401,E501,W391,F405,E128,W291,E126,E121,F403
+per-file-ignores =
+    mbdata/sample_data.py:E501
+    mbdata/models.py:E501
+    mbdata/api/tests/__init__.py:E402
+max-line-length = 160
