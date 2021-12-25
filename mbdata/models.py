@@ -7285,7 +7285,7 @@ class Track(Base):
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     is_data_track = Column(Boolean, nullable=False, default=False, server_default=sql.false())
 
-    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True, backref=backref('tracks'))
     medium = relationship('Medium', foreign_keys=[medium_id], innerjoin=True, backref=backref('tracks', order_by="Track.position"))
     artist_credit = relationship('ArtistCredit', foreign_keys=[artist_credit_id], innerjoin=True)
 
