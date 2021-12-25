@@ -101,7 +101,7 @@ name = "psycopg2"
 version = "2.9.2"
 description = "psycopg2 - Python-PostgreSQL Database Adapter"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -237,7 +237,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "7200659418f2d3bc099ed339f328633a60df395e69cad990b9a38c80e834f545"
+content-hash = "9ccfd1417f6fecbe890adaa7ef5e18d71a49078b4b01622e365bb6f114b6ef89"
 
 [metadata.files]
 certifi = [

@@ -7,9 +7,9 @@ MusicBrainz Database Tools
 .. |pypi badge| image:: https://badge.fury.io/py/mbdata.svg
     :target: https://badge.fury.io/py/mbdata
 
-****************************
-MusicBrainz Database Replica
-****************************
+********************************
+MusicBrainz Database Replication
+********************************
 
 This repository now contains a collection of scripts for managing a
 replica of the MusicBrainz database. These used to be called "mbslave",
@@ -22,13 +22,11 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-1. Make sure you have `Python <https://python.org/>`__ and `psycopg2 <https://initd.org/psycopg/>`__ installed.
-   On Debian and Ubuntu, that means installing these packages::
+1. You need to have `Python 3.x <https://python.org/>`__ installed on your system.
+   Then you can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
 
-       sudo apt install python python-pip python-psycopg2
-       pip install -U mbdata  # if you don't have it installed already
-
-   The command will install the ``mbslave`` script into ``$HOME/.local/bin``.
+       sudo apt install python3 pipx
+       pipx install 'mbdata[replication]'
 
 2. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
 
