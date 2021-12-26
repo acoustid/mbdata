@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mbdata"
-version = "26.0.0"
+version = "26.0.1"
 description = ""
 authors = ["Lukáš Lalinský <lalinsky@gmail.com>"]
 license = "MIT"

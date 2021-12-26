@@ -1,17 +1,23 @@
-FROM ubuntu:bionic
+FROM python:3 AS build
 
 RUN apt-get update && \
-    apt-get install -y \
-      python3 \
-      python3-psycopg2 \
-      python3-six \
-      python3-certifi \
-      python3-setuptools \
-      postgresql-client \
-      dumb-init
+    apt-get install -y --no-install-recommends curl && \
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python && \
+    ln -s /root/.poetry/bin/poetry /usr/local/bin/poetry && \
+    poetry --version
 
 ADD . /tmp/mbdata
-RUN cd /tmp/mbdata && python3 setup.py install
+RUN cd /tmp/mbdata && \
+    poetry build -f wheel && \
+    ls -l dist/
+
+FROM python:3
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends postgresql-client dumb-init
+
+COPY --from=build /tmp/mbdata/dist/ /tmp/dist/
+RUN python -m pip install "$(ls -1 /tmp/dist/*.whl)[replication,models]" && rm -rf /tmp/dist/
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["mbslave", "sync", "-r"]
