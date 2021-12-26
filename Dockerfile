@@ -1,6 +1,9 @@
 FROM python:3 AS build
 
-RUN python3 -m pip install poetry && poetry --version
+RUN python3 -m venv /opt/poetry && \
+    /opt/poetry/bin/pip install poetry && \
+    ln -s /opt/poetry/bin/poetry /usr/local/bin/ && \
+    poetry --version
 
 ADD . /tmp/mbdata
 RUN cd /tmp/mbdata && \
