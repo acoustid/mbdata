@@ -5,11 +5,6 @@ Development Guide
 Development Setup
 =================
 
-Run build environment in Docker (optional)::
-
-    docker build -t mbdata-dev -f Dockerfile.dev .
-    docker run -ti --rm -v $PWD:/mbdata mbdata-dev
-
 Clone the repository and setup virtualenv::
 
     git clone git@github.com:lalinsky/mbdata.git
