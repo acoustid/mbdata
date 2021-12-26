@@ -1,10 +1,6 @@
 FROM python:3 AS build
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python && \
-    ln -s /root/.poetry/bin/poetry /usr/local/bin/poetry && \
-    poetry --version
+RUN python3 -m pip install poetry && poetry --version
 
 ADD . /tmp/mbdata
 RUN cd /tmp/mbdata && \
