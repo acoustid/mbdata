@@ -23,6 +23,9 @@ replication = ["psycopg2"]
 search = ["lxml"]
 models = ["SQLAlchemy"]
 
+[tool.poetry.scripts]
+mbslave = "mbdata.replication:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
