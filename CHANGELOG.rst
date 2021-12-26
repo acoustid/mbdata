@@ -1,3 +1,8 @@
+Version 26.0.1
+==============
+
+- Added ``Recording.tracks`` relationship to the SQLAlchemy models.
+
 Version 26.0.0
 ==============
 
