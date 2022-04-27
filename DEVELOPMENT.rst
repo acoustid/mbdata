@@ -11,8 +11,8 @@ Clone the repository and setup virtualenv::
     cd mbdata/
     virtualenv -p python3 venv
     source venv/bin/activate
-    pip install -r requirements.txt
-    python setup.py develop
+    pip install poetry
+    poetry install
 
 Updating SQL files and models
 =============================
