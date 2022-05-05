@@ -1530,7 +1530,9 @@ class ReleaseFirstReleaseDate(Base):
     month = Column(SMALLINT)
     day = Column(SMALLINT)
 
-    release = relationship('Release', foreign_keys=[release_id], innerjoin=True)
+    release = relationship('Release', foreign_keys=[release_id], innerjoin=True, backref=backref('first_release', uselist=False))
+
+    date = composite(PartialDate, year, month, day)
 
 
 class RecordingFirstReleaseDate(Base):
@@ -1544,7 +1546,9 @@ class RecordingFirstReleaseDate(Base):
     month = Column(SMALLINT)
     day = Column(SMALLINT)
 
-    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True)
+    recording = relationship('Recording', foreign_keys=[recording_id], innerjoin=True, backref=backref('first_release', uselist=False))
+
+    date = composite(PartialDate, year, month, day)
 
 
 class Gender(Base):
