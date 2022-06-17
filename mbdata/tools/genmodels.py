@@ -370,6 +370,15 @@ def generate_models_from_sql(tables, types, indexes):
                      column.name.replace('_year', '_day'))
                 ))
 
+            if table.name.endswith('_first_release_date') and column.name == 'year':
+                composites.append((
+                    'date',
+                    'PartialDate',
+                    (column.name,
+                     'month',
+                     'day')
+                ))
+
             attribute_name = column.name
             params = [column_type]
 
@@ -410,6 +419,8 @@ def generate_models_from_sql(tables, types, indexes):
                         backref = 'unknown_country_dates'
                     if table.schema == 'musicbrainz' and table.name == 'release_group_secondary_type_join' and column.name == 'release_group':
                         backref = 'secondary_types'
+                    if table.schema == 'musicbrainz' and table.name.endswith('_first_release_date') and column.name in ('recording', 'release'):
+                        backref = 'first_release', 'uselist=False'
                     if table.schema == 'musicbrainz' and table.name.endswith('_meta') and column.name == 'id':
                         backref = 'meta', 'uselist=False'
                     if table.schema == 'musicbrainz' and table.name.startswith('iso_') and column.name == 'area':
