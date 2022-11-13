@@ -68,6 +68,9 @@ class PartialDate(object):
             other.month == self.month and \
             other.day == self.day
 
+    def __hash__(self):
+        return hash((self.year, self.month, self.day))
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
