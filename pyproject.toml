@@ -8,7 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.6"
 SQLAlchemy = {version = "^1.4.29", optional = true}
-lxml = {version = "^4.7.1", optional = true}
+lxml = {version = "^4.9.1", optional = true}
 psycopg2 = {version = "^2.9.2", optional = true}
 six = "^1.16.0"
 
