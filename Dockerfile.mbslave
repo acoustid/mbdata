@@ -1,4 +1,4 @@
-FROM python:3 AS build
+FROM python:3.10 AS build
 
 RUN python3 -m venv /opt/poetry && \
     /opt/poetry/bin/pip install poetry && \
@@ -10,7 +10,7 @@ RUN cd /tmp/mbdata && \
     poetry build -f wheel && \
     ls -l dist/
 
-FROM python:3
+FROM python:3.10
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends postgresql-client dumb-init
