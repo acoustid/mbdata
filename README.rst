@@ -277,14 +277,14 @@ Running tests:
 
 .. code:: sh
 
-    nosetests -v
+    pytest -v
 
 If you want to see the SQL queries from a failed test, you can use the
 following:
 
 .. code:: sh
 
-    MBDATA_DATABASE_ECHO=1 nosetests -v
+    MBDATA_DATABASE_ECHO=1 pytest -v
 
 Jenkins task that automatically runs the tests after each commit is
 `here <http://build.oxygene.sk/job/mbdata/>`__.

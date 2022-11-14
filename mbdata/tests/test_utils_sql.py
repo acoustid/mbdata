@@ -1,6 +1,5 @@
 from __future__ import print_function
 import sys
-from nose.tools import assert_equal, assert_true, assert_false, assert_is_instance, assert_multi_line_equal
 from six import StringIO
 import sqlparse
 from sqlparse import tokens as T
@@ -72,7 +71,7 @@ def test_group_parentheses():
     finally:
         sys.stdout = stdout
 
-    assert_multi_line_equal(a, b)
+    assert a == b
 
 
 def test_parse_statements():
@@ -99,36 +98,36 @@ def test_set_statement():
     sql = "SET search_path = 'cover_art_archive';"
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, Set)
-    assert_equal('search_path', statement.get_name())
-    assert_equal('cover_art_archive', statement.get_value())
+    assert isinstance(statement, Set)
+    assert 'search_path' == statement.get_name()
+    assert 'cover_art_archive' == statement.get_value()
 
 
 def test_set_statement_without_quotes():
     sql = "SET search_path = cover_art_archive;"
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, Set)
-    assert_equal('search_path', statement.get_name())
-    assert_equal('cover_art_archive', statement.get_value())
+    assert isinstance(statement, Set)
+    assert 'search_path' == statement.get_name()
+    assert 'cover_art_archive' == statement.get_value()
 
 
 def test_set_statement_with_to():
     sql = "SET search_path TO 'cover_art_archive';"
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, Set)
-    assert_equal('search_path', statement.get_name())
-    assert_equal('cover_art_archive', statement.get_value())
+    assert isinstance(statement, Set)
+    assert 'search_path' == statement.get_name()
+    assert 'cover_art_archive' == statement.get_value()
 
 
 def test_create_type_statement():
     sql = "CREATE TYPE FLUENCY AS ENUM ('basic', 'intermediate');"
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, CreateType)
-    assert_equal('FLUENCY', statement.get_name())
-    assert_equal(['basic', 'intermediate'], statement.get_enum_labels())
+    assert isinstance(statement, CreateType)
+    assert 'FLUENCY' == statement.get_name()
+    assert ['basic', 'intermediate'] == statement.get_enum_labels()
 
 
 def test_create_table_statement():
@@ -141,76 +140,76 @@ CREATE TABLE table_name (
     '''
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, CreateTable)
-    assert_equal('table_name', statement.get_name())
+    assert isinstance(statement, CreateTable)
+    assert 'table_name' == statement.get_name()
 
     columns = list(statement.get_columns())
-    assert_equal(3, len(columns))
+    assert 3 == len(columns)
 
     column = columns[0]
-    assert_equal('id', column.get_name())
-    assert_equal('SERIAL', column.get_type())
-    assert_equal(None, column.get_default_value())
-    assert_equal(['-- PK'], column.get_comments())
-    assert_equal(False, column.is_not_null())
-    assert_equal(None, column.get_check_constraint())
+    assert 'id' == column.get_name()
+    assert 'SERIAL' == column.get_type()
+    assert None is column.get_default_value()
+    assert ['-- PK'] == column.get_comments()
+    assert False is column.is_not_null()
+    assert None is column.get_check_constraint()
 
     column = columns[1]
-    assert_equal('name', column.get_name())
-    assert_equal('VARCHAR(100)', column.get_type())
-    assert_equal(None, column.get_default_value())
-    assert_equal([], column.get_comments())
-    assert_equal(True, column.is_not_null())
-    assert_equal(None, column.get_check_constraint())
+    assert 'name' == column.get_name()
+    assert 'VARCHAR(100)' == column.get_type()
+    assert None is column.get_default_value()
+    assert [] == column.get_comments()
+    assert True is column.is_not_null()
+    assert None is column.get_check_constraint()
 
     column = columns[2]
-    assert_equal('created', column.get_name())
-    assert_equal('TIMESTAMP WITH TIME ZONE', column.get_type())
-    assert_equal('now()', column.get_default_value())
-    assert_equal([], column.get_comments())
-    assert_equal(True, column.is_not_null())
-    assert_equal(None, column.get_check_constraint())
+    assert 'created' == column.get_name()
+    assert 'TIMESTAMP WITH TIME ZONE' == column.get_type()
+    assert 'now()' == column.get_default_value()
+    assert [] == column.get_comments()
+    assert True is column.is_not_null()
+    assert None is column.get_check_constraint()
 
 
 def test_create_table_statement_check_constraint():
     sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CHECK (edits_pending > 0)); '''
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, CreateTable)
+    assert isinstance(statement, CreateTable)
     columns = list(statement.get_columns())
-    assert_equal(1, len(columns))
+    assert 1 == len(columns)
 
     column = columns[0]
     check = column.get_check_constraint()
-    assert_true(check)
-    assert_equal(None, check.get_name())
-    assert_equal('edits_pending>0', str(check.get_body()))
+    assert check
+    assert None is check.get_name()
+    assert 'edits_pending>0' == str(check.get_body())
 
 
 def test_create_table_statement_named_check_constraint():
     sql = '''CREATE TABLE table_name (column INTEGER(2) NOT NULL DEFAULT 0 CONSTRAINT check_column CHECK (edits_pending > 0)); '''
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, CreateTable)
+    assert isinstance(statement, CreateTable)
     columns = list(statement.get_columns())
-    assert_equal(1, len(columns))
+    assert 1 == len(columns)
 
     column = columns[0]
     check = column.get_check_constraint()
-    assert_true(check)
-    assert_equal('check_column', check.get_name())
-    assert_equal('edits_pending>0', str(check.get_body()))
+    assert check
+    assert 'check_column' == check.get_name()
+    assert 'edits_pending>0' == str(check.get_body())
 
 
 def test_create_index():
     sql = '''CREATE INDEX statistic_name ON statistic (name); '''
     statement = next(parse_statements(sqlparse.parse(sql)))
 
-    assert_is_instance(statement, CreateIndex)
-    assert_equal('statistic_name', statement.get_name())
-    assert_equal('statistic', statement.get_table())
-    assert_equal(['name'], statement.get_columns())
-    assert_false(statement.is_unique())
+    assert isinstance(statement, CreateIndex)
+    assert 'statistic_name' == statement.get_name()
+    assert 'statistic' == statement.get_table()
+    assert ['name'] == statement.get_columns()
+    assert not statement.is_unique()
 
 
 def test_create_unique_index():
@@ -219,8 +218,8 @@ def test_create_unique_index():
 
     statement._pprint_tree()
 
-    assert_is_instance(statement, CreateIndex)
-    assert_equal('statistic_name_date_collected', statement.get_name())
-    assert_equal('statistic', statement.get_table())
-    assert_equal(['name', 'date_collected'], statement.get_columns())
-    assert_true(statement.is_unique())
+    assert isinstance(statement, CreateIndex)
+    assert 'statistic_name_date_collected' == statement.get_name()
+    assert 'statistic' == statement.get_table()
+    assert ['name', 'date_collected'] == statement.get_columns()
+    assert statement.is_unique()
