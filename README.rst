@@ -26,6 +26,7 @@ Installation
    Then you can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
 
        sudo apt install python3 pipx
+       source "/home/$(whoami)/.local/pipx/venvs/mbdata/bin/activate"
        pipx install 'mbdata[replication]'
 
 2. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
