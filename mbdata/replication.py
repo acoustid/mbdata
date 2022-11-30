@@ -8,6 +8,8 @@ import psycopg2
 import argparse
 import six
 import logging
+from io import BytesIO
+from urllib.parse import urljoin
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import HTTPError
 import tempfile
@@ -221,9 +223,9 @@ def check_table_exists(db, schema, table):
     return True
 
 
-def load_tar(filename, db, config, ignored_schemas, ignored_tables):
-    logger.info("Importing data from %s", filename)
-    tar = tarfile.open(filename, 'r|*')
+def load_tar(source: str, fileobj: BytesIO, db, config, ignored_schemas, ignored_tables):
+    logger.info("Importing data from %s", source)
+    tar = tarfile.open(fileobj=fileobj, mode='r|*')
     cursor = db.cursor()
     for member in tar:
         if not member.name.startswith('mbdump/'):
@@ -252,8 +254,39 @@ def load_tar(filename, db, config, ignored_schemas, ignored_tables):
 def mbslave_import_main(config, args):
     db = connect_db(config)
 
-    for filename in args.files:
-        load_tar(filename, db, config, config.schemas.ignored_schemas, config.tables.ignored_tables)
+    for source in args.sources:
+        with ExitStack() as exit_stack:
+            if source.startswith('http://') or source.startswith('https://'):
+                fileobj = exit_stack.enter_context(urlopen(source))
+            else:
+                fileobj = exit_stack.enter_context(open(source, 'rb'))
+            load_tar(source, fileobj, db, config, config.schemas.ignored_schemas, config.tables.ignored_tables)
+
+
+def mbslave_auto_import_main(config: Config, args) -> None:
+    base_url = args.base_url
+    if not base_url:
+        logger.error("No base URL specified")
+        raise SystemExit(1)
+
+    with urlopen(urljoin(base_url, 'LATEST')) as f:
+        latest = f.read().decode('utf-8').strip()
+
+    logger.info("Latest dump is %s", latest)
+
+    db = connect_db(config)
+
+    files = [
+        'mbdump.tar.bz2',
+        'mbdump-derived.tar.bz2',
+        'mbdump-wikidocs.tar.bz2',
+        'mbdump-cover-art-archive.tar.bz2',
+        'mbdump-stats.tar.bz2',
+    ]
+    for file in files:
+        url = urljoin(base_url, latest + '/' + file)
+        with urlopen(url) as fileobj:
+            load_tar(url, fileobj, db, config, config.schemas.ignored_schemas, config.tables.ignored_tables)
 
 
 class ReplicationHook(object):
@@ -576,8 +609,18 @@ def main():
     subparsers = parser.add_subparsers()
 
     parser_import = subparsers.add_parser('import')
-    parser_import.add_argument('files', metavar='FILE', nargs='+', help='tar.bz2 file to import')
+    parser_import.add_argument('sources', metavar='FILE_OR_URL', nargs='+', help='tar.bz2 file to import')
     parser_import.set_defaults(func=mbslave_import_main)
+
+    parser_auto_import = subparsers.add_parser('auto-import')
+    parser_auto_import.add_argument(
+        '--mirror',
+        dest='base_url',
+        metavar='URL',
+        help='URL of the data dump mirror',
+        default='http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/',
+    )
+    parser_auto_import.set_defaults(func=mbslave_auto_import_main)
 
     parser_sync = subparsers.add_parser('sync')
     parser_sync.add_argument('-r, --keep-running', dest='keep_running', action='store_true',
