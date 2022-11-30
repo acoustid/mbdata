@@ -59,6 +59,7 @@ Installation
        echo 'CREATE SCHEMA documentation;' | mbslave psql -S
 
        mbslave psql -f CreateCollations.sql
+       mbslave psql -f CreateTypes.sql
        mbslave psql -f CreateTables.sql
        mbslave psql -f statistics/CreateTables.sql
        mbslave psql -f caa/CreateTables.sql
