@@ -223,7 +223,7 @@ def check_table_exists(db, schema, table):
 
 def load_tar(filename, db, config, ignored_schemas, ignored_tables):
     logger.info("Importing data from %s", filename)
-    tar = tarfile.open(filename, 'r:bz2')
+    tar = tarfile.open(filename, 'r|*')
     cursor = db.cursor()
     for member in tar:
         if not member.name.startswith('mbdump/'):
@@ -414,7 +414,7 @@ class MismatchedSchemaError(Exception):
 
 def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook):
     logger.info("Processing %s", fileobj.name)
-    tar = tarfile.open(fileobj=fileobj, mode='r:bz2')
+    tar = tarfile.open(fileobj=fileobj, mode='r|*')
     importer = PacketImporter(db, schema, ignored_schemas, ignored_tables, replication_seq, hook)
     for member in tar:
         if member.name == 'SCHEMA_SEQUENCE':
