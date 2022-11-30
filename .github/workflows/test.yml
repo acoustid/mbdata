@@ -52,6 +52,8 @@ jobs:
       - name: Run `mbslave init`
         run: poetry run mbslave init --create-user --create-database
         env:
+          MBSLAVE_DB_HOST: 127.0.0.1
+          MBSLAVE_DB_PORT: ${{ job.services.postgresql.ports['5432'] }}
           MBSLAVE_DB_NAME: musicbrainz
           MBSLAVE_DB_USER: musicbrainz
           MBSLAVE_DB_PASSWORD: reallynotapassword
