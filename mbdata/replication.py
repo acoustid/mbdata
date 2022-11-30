@@ -631,6 +631,7 @@ def mbslave_init_main(config, args):
     # https://github.com/metabrainz/musicbrainz-server/blob/master/admin/InitDb.pl#L254
 
     run_sql_script('Extensions.sql', superuser=True)
+    run_sql_script('CreateSearchConfiguration.sql', superuser=True)
 
     sql_scripts = [
 
@@ -667,7 +668,6 @@ def mbslave_init_main(config, args):
         ('wikidocs', 'wikidocs/CreatePrimaryKeys.sql'),
 
         # functions
-        ('musicbrainz', 'CreateSearchConfiguration.sql', superuser=True),
         ('musicbrainz', 'CreateFunctions.sql'),
         ('musicbrainz', 'CreateMirrorOnlyFunctions.sql'),
         ('cover_art_archive', 'caa/CreateFunctions.sql'),
