@@ -667,6 +667,7 @@ def mbslave_init_main(config, args):
         ('wikidocs', 'wikidocs/CreatePrimaryKeys.sql'),
 
         # functions
+        ('musicbrainz', 'CreateSearchConfiguration.sql', superuser=True),
         ('musicbrainz', 'CreateFunctions.sql'),
         ('musicbrainz', 'CreateMirrorOnlyFunctions.sql'),
         ('cover_art_archive', 'caa/CreateFunctions.sql'),
