@@ -32,7 +32,7 @@ There are two ways to configure the application.
 
 1. You can use a config file::
 
-       curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
+       curl https://raw.githubusercontent.com/acoustid/mbdata/main/mbslave.conf.default -o mbslave.conf
        vim mbslave.conf
 
    By default, the ``mbslave`` script will look for the config file in the current directory.
