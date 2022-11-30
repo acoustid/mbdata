@@ -628,6 +628,8 @@ def mbslave_init_main(config, args):
 
     create_schemas(config)
 
+    # https://github.com/metabrainz/musicbrainz-server/blob/master/admin/InitDb.pl#L254
+
     run_sql_script('Extensions.sql', superuser=True)
 
     sql_scripts = [
