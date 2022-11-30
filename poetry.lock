@@ -278,6 +278,14 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "types-psycopg2"
+version = "2.9.21.2"
+description = "Typing stubs for psycopg2"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-six"
 version = "1.16.21.4"
 description = "Typing stubs for six"
@@ -313,7 +321,7 @@ search = ["lxml"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "722b54937de2c9a24518e935bebc176b101a47a9f53941c858af1c3097f4ea06"
+content-hash = "7a525fbda6050734d129d00630bde6855b7b660f136a8996c9af945977cfd6cc"
 
 [metadata.files]
 attrs = []
@@ -422,6 +430,7 @@ tomli = [
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 typed-ast = []
+types-psycopg2 = []
 types-six = []
 typing-extensions = [
     {file = "typing_extensions-4.1.1-py3-none-any.whl", hash = "sha256:21c85e0fe4b9a155d0799430b0ad741cdce7e359660ccbd8b530613e8df88ce2"},
