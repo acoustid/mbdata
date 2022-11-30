@@ -22,3 +22,32 @@ jobs:
       run: poetry install
     - name: Run tests
       run: ./check.sh
+
+  mbslave_initdb_test:
+    runs-on: ubuntu-latest
+    services:
+      postgresql:
+        image: postgres
+        ports:
+          - 5432/tcp
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: hackme
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.10
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Install application dependencies
+        run: poetry install
+      - name: Run `mbslave initdb`
+        run: poetry run mbslave initdb --create-user --create-database

@@ -15,12 +15,9 @@ from six.moves.urllib.error import HTTPError
 import tempfile
 import shutil
 import subprocess
-from typing import List
+from typing import List, Optional
 from six.moves import configparser as ConfigParser
-if six.PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from contextlib import ExitStack
 
 logger = logging.getLogger(__name__)
 
@@ -43,27 +40,30 @@ def read_env_item(obj, key, name, convert=None):
 
 class DatabaseConfig(object):
 
-    def __init__(self):
-        self.user = None
-        self.superuser = 'postgres'
+    def __init__(self) -> None:
         self.name = 'musicbrainz'
-        self.host = None
-        self.port = None
-        self.password = None
+        self.host: Optional[str] = None
+        self.port: Optional[int] = None
+        self.user: str = 'musicbrainz'
+        self.password: Optional[str] = None
+        self.admin_user: str = 'postgres'
+        self.admin_password: Optional[str] = None
 
     def create_psycopg2_kwargs(self, superuser=False):
         kwargs = {}
         if superuser:
-            kwargs['user'] = self.superuser
+            kwargs['user'] = self.admin_user
+            if self.admin_password is not None:
+                kwargs['password'] = self.admin_password
         else:
             kwargs['user'] = self.user
+            if self.password is not None:
+                kwargs['password'] = self.password
         kwargs['database'] = self.name
         if self.host is not None:
             kwargs['host'] = self.host
         if self.port is not None:
             kwargs['port'] = self.port
-        if self.password is not None:
-            kwargs['password'] = self.password
         return kwargs
 
     def create_psql_args(self, superuser=False):
@@ -71,7 +71,7 @@ class DatabaseConfig(object):
         if superuser:
             args.append('-U')
             args.append(self.superuser)
-        elif self.user:
+        else:
             args.append('-U')
             args.append(self.user)
         if self.host is not None:
@@ -84,14 +84,19 @@ class DatabaseConfig(object):
         return args
 
     def read(self, parser, section):
-        self.user = parser.get(section, 'user')
         self.name = parser.get(section, 'name')
         if parser.has_option(section, 'host'):
             self.host = parser.get(section, 'host')
         if parser.has_option(section, 'port'):
             self.port = parser.getint(section, 'port')
+        if parser.has_option(section, 'user'):
+            self.user = parser.get(section, 'user')
         if parser.has_option(section, 'password'):
             self.password = parser.get(section, 'password')
+        if parser.has_option(section, 'admin_user'):
+            self.admin_user = parser.get(section, 'admin_user')
+        if parser.has_option(section, 'admin_password'):
+            self.admin_password = parser.get(section, 'admin_password')
 
     def read_env(self, prefix):
         read_env_item(self, 'name', prefix + 'DB_DB')
@@ -99,6 +104,8 @@ class DatabaseConfig(object):
         read_env_item(self, 'port', prefix + 'DB_PORT', convert=int)
         read_env_item(self, 'user', prefix + 'DB_USER')
         read_env_item(self, 'password', prefix + 'DB_PASSWORD')
+        read_env_item(self, 'admin_user', prefix + 'DB_ADMIN_USER')
+        read_env_item(self, 'admin_password', prefix + 'DB_ADMIN_PASSWORD')
 
 
 class SchemasConfig(object):
@@ -252,7 +259,8 @@ def load_tar(source: str, fileobj: BytesIO, db, config, ignored_schemas, ignored
 
 
 def mbslave_import_main(config, args):
-    db = connect_db(config)
+    db = config.database.connect_db(superuser=True, set_search_path=False)
+
 
     for source in args.sources:
         with ExitStack() as exit_stack:
@@ -282,7 +290,6 @@ def mbslave_auto_import_main(config: Config, args) -> None:
         'mbdump-cover-art-archive.tar.bz2',
         'mbdump-event-art-archive.tar.bz2',
         'mbdump-stats.tar.bz2',
-        'mbdump-wikidocs.tar.bz2',
     ]
     for file in files:
         url = urljoin(base_url, latest + '/' + file)
@@ -566,6 +573,42 @@ def join_lines(lines: List[str]) -> str:
     return '\n'.join(lines) + '\n'
 
 
+def create_database(config: Config) -> None:
+    db = connect_db(config, superuser=True)
+    cursor = db.cursor()
+    cursor.execute(f"CREATE DATABASE {config.database.name} WITH OWNER {config.database.user}")
+    cursor.execute(f"ALTER DATABASE {config.database.name} SET timezone TO 'UTC'")
+    db.commit()
+
+
+def run_script(script: str
+
+
+def run_sql_script(name: str, superuser: bool = False) -> None:
+    subprocess.run(['bash', '-euxc', f'mbsave psql -f {name}'], check=True)
+
+
+def create_relations(config: Config) -> None:
+    run_sql_script('Extensions.sql', superuser=True)
+    run_sql_script('CreateCollations.sql')
+    run_sql_script('CreateTypes.sql')
+    run_sql_script('CreateTables.sql')
+    run_sql_script('caa/CreateTables.sql')
+    run_sql_script('eaa/CreateTables.sql')
+    run_sql_script('statistics/CreateTables.sql')
+
+
+
+
+def mbslave_init_main(config, args):
+    if args.create_database:
+        create_database(config)
+    
+    script = ['CREATE DATABASE {config.database} | mbslave psql -S -a']
+    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
+
+
+
 def mbslave_create_schemas_main(config, args):
     script = ['mbslave print-create-schemas-sql | mbslave psql -S']
     subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
@@ -637,14 +680,19 @@ def mbslave_print_create_schemas_sql_main(config, args):
 
 
 def mbslave_psql_main(config, args):
-    command = ['psql'] + config.database.create_psql_args()
+    command = ['psql'] + config.database.create_psql_args(superuser=args.superuser)
 
     environ = os.environ.copy()
     if not args.public:
         schema = config.schemas.name(args.schema)
         environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
-    if config.database.password:
-        environ['PGPASSWORD'] = config.database.password
+
+    if args.superuser:
+        if config.database.admin_password:
+            environ['PGPASSWORD'] = config.database.admin_password
+    else:
+        if config.database.password:
+            environ['PGPASSWORD'] = config.database.password
 
     with ExitStack() as es:
         if args.sql_file:
@@ -684,6 +732,11 @@ def main():
                         help='path to the config file (default: {})'.format(default_config_path))
 
     subparsers = parser.add_subparsers()
+
+    parser_init = subparsers.add_parser('init')
+    parser_init.add_argument('--create-database', action='store_true')
+    parser_init.add_argument('--empty', action='store_true')
+    parser_init.set_defaults(func=mbslave_init_main, create_database=False, empty=False)
 
     parser_create_schemas = subparsers.add_parser('create-schemas')
     parser_create_schemas.set_defaults(func=mbslave_create_schemas_main)
@@ -732,6 +785,8 @@ def main():
                              help="don't configure the default schema")
     parser_psql.add_argument('-s, --schema', dest='schema', default='musicbrainz',
                              help="default schema")
+    parser_psql.add_argument('--superuser', dest='superuser', action='store_true',
+                             help="connect as superuser")
     parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()
