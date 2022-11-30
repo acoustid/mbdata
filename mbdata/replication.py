@@ -607,12 +607,16 @@ def create_schemas(config: Config) -> None:
         cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {config.schemas.name(schema)}")
 
 
+def run_script(script: str) -> None:
+    subprocess.run(['bash', '-euxc', script], check=True)
+
+
 def run_sql_script(name: str, superuser: bool = False) -> None:
     if superuser:
         command = f'mbslave psql --superuser -f {name}'
     else:
         command = f'mbslave psql -f {name}'
-    subprocess.run(['bash', '-euxc', command], check=True)
+    run_script(command)
 
 
 def mbslave_init_main(config, args):
@@ -626,24 +630,67 @@ def mbslave_init_main(config, args):
 
     run_sql_script('Extensions.sql', superuser=True)
 
-    run_sql_script('CreateCollations.sql')
-    run_sql_script('CreateTypes.sql')
-    run_sql_script('CreateTables.sql')
+    sql_scripts = [
 
-    if 'cover_art_archive' not in config.schemas.ignored_schemas:
-        run_sql_script('caa/CreateTables.sql')
+        # types
+        ('musicbrainz', 'CreateCollations.sql'),
+        ('musicbrainz', 'CreateTypes.sql'),
 
-    if 'event_art_archive' not in config.schemas.ignored_schemas:
-        run_sql_script('eaa/CreateTables.sql')
+        # tables
+        ('musicbrainz', 'CreateTables.sql'),
+        ('cover_art_archive', 'caa/CreateTables.sql'),
+        ('event_art_archive', 'eaa/CreateTables.sql'),
+        ('statistics', 'statistics/CreateTables.sql'),
+        ('documentation', 'wikidocs/CreateTables.sql'),
+        ('wikidocs', 'wikidocs/CreateTables.sql'),
 
-    if 'statistics' not in config.schemas.ignored_schemas:
-        run_sql_script('statistics/CreateTables.sql')
+    ]
 
-    if 'documentation' not in config.schemas.ignored_schemas:
-        run_sql_script('documentation/CreateTables.sql')
+    for schema, sql_script in sql_scripts:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        run_sql_script(sql_script)
 
-    if 'wikidocs' not in config.schemas.ignored_schemas:
-        run_sql_script('wikidocs/CreateTables.sql')
+    if not args.empty:
+        run_script('mbslave auto-import')
+
+    sql_scripts = [
+
+        # primary keys
+        ('musicbrainz', 'CreatePrimaryKeys.sql'),
+        ('cover_art_archive', 'caa/CreatePrimaryKeys.sql'),
+        ('event_art_archive', 'eaa/CreatePrimaryKeys.sql'),
+        ('statistics', 'statistics/CreatePrimaryKeys.sql'),
+        ('documentation', 'documentation/CreatePrimaryKeys.sql'),
+        ('wikidocs', 'wikidocs/CreatePrimaryKeys.sql'),
+
+        # functions
+        ('musicbrainz', 'CreateFunctions.sql'),
+        ('musicbrainz', 'CreateMirrorOnlyFunctions.sql'),
+        ('cover_art_archive', 'caa/CreateFunctions.sql'),
+        ('event_art_archive', 'eaa/CreateFunctions.sql'),
+
+        # indexes
+        ('musicbrainz', 'CreateIndexes.sql'),
+        ('musicbrainz', 'CreateMirrorOnlyIndexes.sql'),
+        ('cover_art_archive', 'caa/CreateIndexes.sql'),
+        ('event_art_archive', 'eaa/CreateIndexes.sql'),
+        ('statistics', 'statistics/CreateIndexes.sql'),
+
+        # views
+        ('musicbrainz', 'CreateViews.sql'),
+        ('cover_art_archive', 'caa/CreateViews.sql'),
+        ('event_art_archive', 'eaa/CreateViews.sql'),
+
+        # triggers
+        ('musicbrainz', 'CreateMirrorOnlyTriggers.sql'),
+
+    ]
+
+    for schema, sql_script in sql_scripts:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        run_sql_script(sql_script)
 
 
 def mbslave_psql_main(config, args):
