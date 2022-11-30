@@ -49,7 +49,7 @@ class DatabaseConfig(object):
         self.admin_user: str = 'postgres'
         self.admin_password: Optional[str] = None
 
-    def create_psycopg2_kwargs(self, superuser=False):
+    def create_psycopg2_kwargs(self, superuser=False, no_db=False):
         kwargs = {}
         if superuser:
             kwargs['user'] = self.admin_user
@@ -59,18 +59,19 @@ class DatabaseConfig(object):
             kwargs['user'] = self.user
             if self.password is not None:
                 kwargs['password'] = self.password
-        kwargs['database'] = self.name
+        if not no_db:
+            kwargs['database'] = self.name
         if self.host is not None:
             kwargs['host'] = self.host
         if self.port is not None:
             kwargs['port'] = self.port
         return kwargs
 
-    def create_psql_args(self, superuser=False):
+    def create_psql_args(self, superuser=False, no_db=False):
         args = []
         if superuser:
             args.append('-U')
-            args.append(self.superuser)
+            args.append(self.admin_user)
         else:
             args.append('-U')
             args.append(self.user)
@@ -80,7 +81,8 @@ class DatabaseConfig(object):
         if self.port is not None:
             args.append('-p')
             args.append(six.text_type(self.port))
-        args.append(self.name)
+        if not no_db:
+            args.append(self.name)
         return args
 
     def read(self, parser, section):
@@ -197,15 +199,15 @@ class Config(object):
         self.tables.read_env('MBSLAVE_')
         self.schemas.read_env('MBSLAVE_')
 
-    def connect_db(self, set_search_path=False, superuser=False):
-        db = psycopg2.connect(**self.database.create_psycopg2_kwargs(superuser=superuser))
+    def connect_db(self, set_search_path=False, superuser=False, no_db=False):
+        db = psycopg2.connect(**self.database.create_psycopg2_kwargs(superuser=superuser, no_db=no_db))
         if set_search_path:
             db.cursor().execute("SET search_path TO %s", (self.schemas.name('musicbrainz'),))
         return db
 
 
-def connect_db(cfg, set_search_path=False, superuser=False):
-    return cfg.connect_db(set_search_path=set_search_path, superuser=superuser)
+def connect_db(cfg, set_search_path=False, superuser=False, no_db=False):
+    return cfg.connect_db(set_search_path=set_search_path, superuser=superuser, no_db=no_db)
 
 
 def parse_name(config, table):
@@ -260,7 +262,6 @@ def load_tar(source: str, fileobj: BytesIO, db, config, ignored_schemas, ignored
 
 def mbslave_import_main(config, args):
     db = config.database.connect_db(superuser=True, set_search_path=False)
-
 
     for source in args.sources:
         with ExitStack() as exit_stack:
@@ -573,40 +574,76 @@ def join_lines(lines: List[str]) -> str:
     return '\n'.join(lines) + '\n'
 
 
+def create_user(config: Config) -> None:
+    db = connect_db(config, superuser=True, no_db=True)
+    db.autocommit = True
+    cursor = db.cursor()
+    cursor.execute(f"CREATE USER {config.database.user} PASSWORD %s", (config.database.password,))
+
+
 def create_database(config: Config) -> None:
-    db = connect_db(config, superuser=True)
+    db = connect_db(config, superuser=True, no_db=True)
+    db.autocommit = True
     cursor = db.cursor()
     cursor.execute(f"CREATE DATABASE {config.database.name} WITH OWNER {config.database.user}")
     cursor.execute(f"ALTER DATABASE {config.database.name} SET timezone TO 'UTC'")
-    db.commit()
 
 
-def run_script(script: str
+def create_schemas(config: Config) -> None:
+    db = connect_db(config)
+    db.autocommit = True
+    cursor = db.cursor()
+    schemas = [
+        'musicbrainz',
+        'cover_art_archive',
+        'event_art_archive',
+        'statistics',
+        'documentation',
+        'wikidocs',
+    ]
+    for schema in schemas:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {config.schemas.name(schema)}")
 
 
 def run_sql_script(name: str, superuser: bool = False) -> None:
-    subprocess.run(['bash', '-euxc', f'mbsave psql -f {name}'], check=True)
+    if superuser:
+        command = f'mbslave psql --superuser -f {name}'
+    else:
+        command = f'mbslave psql -f {name}'
+    subprocess.run(['bash', '-euxc', command], check=True)
 
 
-def create_relations(config: Config) -> None:
+def mbslave_initdb_main(config, args):
+    if args.create_user:
+        create_user(config)
+
+    if args.create_database:
+        create_database(config)
+
+    create_schemas(config)
+
     run_sql_script('Extensions.sql', superuser=True)
+
     run_sql_script('CreateCollations.sql')
     run_sql_script('CreateTypes.sql')
     run_sql_script('CreateTables.sql')
-    run_sql_script('caa/CreateTables.sql')
-    run_sql_script('eaa/CreateTables.sql')
-    run_sql_script('statistics/CreateTables.sql')
 
+    if 'cover_art_archive' not in config.schemas.ignored_schemas:
+        run_sql_script('caa/CreateTables.sql')
 
+    if 'event_art_archive' not in config.schemas.ignored_schemas:
+        run_sql_script('eaa/CreateTables.sql')
 
+    if 'statistics' not in config.schemas.ignored_schemas:
+        run_sql_script('statistics/CreateTables.sql')
 
-def mbslave_init_main(config, args):
-    if args.create_database:
-        create_database(config)
-    
-    script = ['CREATE DATABASE {config.database} | mbslave psql -S -a']
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
+    if 'documentation' not in config.schemas.ignored_schemas:
+        run_sql_script('documentation/CreateTables.sql')
 
+    if 'wikidocs' not in config.schemas.ignored_schemas:
+        run_sql_script('wikidocs/CreateTables.sql')
 
 
 def mbslave_create_schemas_main(config, args):
@@ -663,24 +700,8 @@ def mbslave_create_indexes_main(config, args):
     subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
 
-def mbslave_print_create_schemas_sql_main(config, args):
-    all_schemas = [
-        'musicbrainz',
-        'cover_art_archive',
-        'event_art_archive',
-        'documentation',
-        'statistics',
-        'wikidocs'
-    ]
-
-    for schema in all_schemas:
-        if schema not in config.schemas.ignored_schemas:
-            name = config.schemas.name(schema)
-            print("CREATE SCHEMA IF NOT EXISTS %s;" % name)
-
-
 def mbslave_psql_main(config, args):
-    command = ['psql'] + config.database.create_psql_args(superuser=args.superuser)
+    command = ['psql'] + config.database.create_psql_args(superuser=args.superuser, no_db=args.no_db)
 
     environ = os.environ.copy()
     if not args.public:
@@ -733,10 +754,11 @@ def main():
 
     subparsers = parser.add_subparsers()
 
-    parser_init = subparsers.add_parser('init')
+    parser_init = subparsers.add_parser('initdb')
+    parser_init.add_argument('--create-user', action='store_true')
     parser_init.add_argument('--create-database', action='store_true')
     parser_init.add_argument('--empty', action='store_true')
-    parser_init.set_defaults(func=mbslave_init_main, create_database=False, empty=False)
+    parser_init.set_defaults(func=mbslave_initdb_main, create_user=False, create_database=False, empty=False)
 
     parser_create_schemas = subparsers.add_parser('create-schemas')
     parser_create_schemas.set_defaults(func=mbslave_create_schemas_main)
@@ -776,9 +798,6 @@ def main():
     parser_print_sql.add_argument('files', metavar='FILE', nargs='+', help='sql file to print')
     parser_print_sql.set_defaults(func=mbslave_print_sql_main)
 
-    parser_print_create_schemas_sql = subparsers.add_parser('print-create-schemas-sql')
-    parser_print_create_schemas_sql.set_defaults(func=mbslave_print_create_schemas_sql_main)
-
     parser_psql = subparsers.add_parser('psql')
     parser_psql.add_argument('-f, --file', dest='sql_file', metavar='FILE', help='sql file to execute')
     parser_psql.add_argument('-S, --no-schema', dest='public', action='store_true',
@@ -787,6 +806,7 @@ def main():
                              help="default schema")
     parser_psql.add_argument('--superuser', dest='superuser', action='store_true',
                              help="connect as superuser")
+    parser_psql.add_argument('--no-db', dest='no_db', action='store_true')
     parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()
