@@ -32,7 +32,7 @@ jobs:
           - 5432/tcp
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: hackme
+          POSTGRES_PASSWORD: notapassword
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -51,3 +51,9 @@ jobs:
         run: poetry install
       - name: Run `mbslave initdb`
         run: poetry run mbslave initdb --create-user --create-database
+        env:
+          MBSLAVE_DB_NAME: musicbrainz
+          MBSLAVE_DB_USER: musicbrainz
+          MBSLAVE_DB_PASSWORD: reallynotapassword
+          MBSLAVE_DB_ADMIN_USER: postgres
+          MBSLAVE_DB_ADMIN_PASSWORD: notapassword
