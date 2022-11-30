@@ -17,6 +17,9 @@ flake8 = "^5.0.0"
 psycopg2 = "^2.9.2"
 sqlparse = "^0.4.2"
 pytest = "^7.2.0"
+mypy = "^0.991"
+types-six = "^1.16.21"
+types-psycopg2 = "^2.9.21"
 
 [tool.poetry.extras]
 replication = ["psycopg2"]

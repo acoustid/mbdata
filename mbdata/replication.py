@@ -15,12 +15,9 @@ from six.moves.urllib.error import HTTPError
 import tempfile
 import shutil
 import subprocess
-from typing import List
+from typing import List, Optional
 from six.moves import configparser as ConfigParser
-if six.PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from contextlib import ExitStack
 
 logger = logging.getLogger(__name__)
 
@@ -43,35 +40,39 @@ def read_env_item(obj, key, name, convert=None):
 
 class DatabaseConfig(object):
 
-    def __init__(self):
-        self.user = None
-        self.superuser = 'postgres'
+    def __init__(self) -> None:
         self.name = 'musicbrainz'
-        self.host = None
-        self.port = None
-        self.password = None
+        self.host: Optional[str] = None
+        self.port: Optional[int] = None
+        self.user: str = 'musicbrainz'
+        self.password: Optional[str] = None
+        self.admin_user: str = 'postgres'
+        self.admin_password: Optional[str] = None
 
-    def create_psycopg2_kwargs(self, superuser=False):
+    def create_psycopg2_kwargs(self, superuser=False, no_db=False):
         kwargs = {}
         if superuser:
-            kwargs['user'] = self.superuser
+            kwargs['user'] = self.admin_user
+            if self.admin_password is not None:
+                kwargs['password'] = self.admin_password
         else:
             kwargs['user'] = self.user
-        kwargs['database'] = self.name
+            if self.password is not None:
+                kwargs['password'] = self.password
+        if not no_db:
+            kwargs['database'] = self.name
         if self.host is not None:
             kwargs['host'] = self.host
         if self.port is not None:
             kwargs['port'] = self.port
-        if self.password is not None:
-            kwargs['password'] = self.password
         return kwargs
 
-    def create_psql_args(self, superuser=False):
+    def create_psql_args(self, superuser=False, no_db=False):
         args = []
         if superuser:
             args.append('-U')
-            args.append(self.superuser)
-        elif self.user:
+            args.append(self.admin_user)
+        else:
             args.append('-U')
             args.append(self.user)
         if self.host is not None:
@@ -80,18 +81,24 @@ class DatabaseConfig(object):
         if self.port is not None:
             args.append('-p')
             args.append(six.text_type(self.port))
-        args.append(self.name)
+        if not no_db:
+            args.append(self.name)
         return args
 
     def read(self, parser, section):
-        self.user = parser.get(section, 'user')
         self.name = parser.get(section, 'name')
         if parser.has_option(section, 'host'):
             self.host = parser.get(section, 'host')
         if parser.has_option(section, 'port'):
             self.port = parser.getint(section, 'port')
+        if parser.has_option(section, 'user'):
+            self.user = parser.get(section, 'user')
         if parser.has_option(section, 'password'):
             self.password = parser.get(section, 'password')
+        if parser.has_option(section, 'admin_user'):
+            self.admin_user = parser.get(section, 'admin_user')
+        if parser.has_option(section, 'admin_password'):
+            self.admin_password = parser.get(section, 'admin_password')
 
     def read_env(self, prefix):
         read_env_item(self, 'name', prefix + 'DB_DB')
@@ -99,6 +106,8 @@ class DatabaseConfig(object):
         read_env_item(self, 'port', prefix + 'DB_PORT', convert=int)
         read_env_item(self, 'user', prefix + 'DB_USER')
         read_env_item(self, 'password', prefix + 'DB_PASSWORD')
+        read_env_item(self, 'admin_user', prefix + 'DB_ADMIN_USER')
+        read_env_item(self, 'admin_password', prefix + 'DB_ADMIN_PASSWORD')
 
 
 class SchemasConfig(object):
@@ -190,15 +199,15 @@ class Config(object):
         self.tables.read_env('MBSLAVE_')
         self.schemas.read_env('MBSLAVE_')
 
-    def connect_db(self, set_search_path=False, superuser=False):
-        db = psycopg2.connect(**self.database.create_psycopg2_kwargs(superuser=superuser))
+    def connect_db(self, set_search_path=False, superuser=False, no_db=False):
+        db = psycopg2.connect(**self.database.create_psycopg2_kwargs(superuser=superuser, no_db=no_db))
         if set_search_path:
             db.cursor().execute("SET search_path TO %s", (self.schemas.name('musicbrainz'),))
         return db
 
 
-def connect_db(cfg, set_search_path=False, superuser=False):
-    return cfg.connect_db(set_search_path=set_search_path, superuser=superuser)
+def connect_db(cfg, set_search_path=False, superuser=False, no_db=False):
+    return cfg.connect_db(set_search_path=set_search_path, superuser=superuser, no_db=no_db)
 
 
 def parse_name(config, table):
@@ -252,7 +261,7 @@ def load_tar(source: str, fileobj: BytesIO, db, config, ignored_schemas, ignored
 
 
 def mbslave_import_main(config, args):
-    db = connect_db(config)
+    db = config.database.connect_db(superuser=True, set_search_path=False)
 
     for source in args.sources:
         with ExitStack() as exit_stack:
@@ -282,7 +291,6 @@ def mbslave_auto_import_main(config: Config, args) -> None:
         'mbdump-cover-art-archive.tar.bz2',
         'mbdump-event-art-archive.tar.bz2',
         'mbdump-stats.tar.bz2',
-        'mbdump-wikidocs.tar.bz2',
     ]
     for file in files:
         url = urljoin(base_url, latest + '/' + file)
@@ -566,85 +574,142 @@ def join_lines(lines: List[str]) -> str:
     return '\n'.join(lines) + '\n'
 
 
-def mbslave_create_schemas_main(config, args):
-    script = ['mbslave print-create-schemas-sql | mbslave psql -S']
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
+def create_user(config: Config) -> None:
+    db = connect_db(config, superuser=True, no_db=True)
+    db.autocommit = True
+    cursor = db.cursor()
+    cursor.execute(f"CREATE USER {config.database.user} PASSWORD %s", (config.database.password,))
 
 
-def mbslave_create_tables_main(config, args):
-    sql_files = [
+def create_database(config: Config) -> None:
+    db = connect_db(config, superuser=True, no_db=True)
+    db.autocommit = True
+    cursor = db.cursor()
+    cursor.execute(f"CREATE DATABASE {config.database.name} WITH OWNER {config.database.user}")
+    cursor.execute(f"ALTER DATABASE {config.database.name} SET timezone TO 'UTC'")
+
+
+def create_schemas(config: Config) -> None:
+    db = connect_db(config)
+    db.autocommit = True
+    cursor = db.cursor()
+    schemas = [
+        'musicbrainz',
+        'cover_art_archive',
+        'event_art_archive',
+        'statistics',
+        'documentation',
+        'wikidocs',
+    ]
+    for schema in schemas:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {config.schemas.name(schema)}")
+
+
+def run_script(script: str) -> None:
+    subprocess.run(['bash', '-euxc', script], check=True)
+
+
+def run_sql_script(name: str, superuser: bool = False) -> None:
+    if superuser:
+        command = f'mbslave psql --superuser -f {name}'
+    else:
+        command = f'mbslave psql -f {name}'
+    run_script(command)
+
+
+def mbslave_init_main(config, args):
+    if args.create_user:
+        create_user(config)
+
+    if args.create_database:
+        create_database(config)
+
+    create_schemas(config)
+
+    # https://github.com/metabrainz/musicbrainz-server/blob/master/admin/InitDb.pl#L254
+
+    run_sql_script('Extensions.sql', superuser=True)
+    run_sql_script('CreateSearchConfiguration.sql', superuser=True)
+
+    sql_scripts = [
+
+        # types
         ('musicbrainz', 'CreateCollations.sql'),
         ('musicbrainz', 'CreateTypes.sql'),
+
+        # tables
         ('musicbrainz', 'CreateTables.sql'),
-        ('musicbrainz', 'CreateFunctions.sql'),
         ('cover_art_archive', 'caa/CreateTables.sql'),
         ('event_art_archive', 'eaa/CreateTables.sql'),
         ('statistics', 'statistics/CreateTables.sql'),
-        ('documenation', 'documenation/CreateTables.sql'),
+        ('documentation', 'documentation/CreateTables.sql'),
         ('wikidocs', 'wikidocs/CreateTables.sql'),
+
     ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
+    for schema, sql_script in sql_scripts:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        run_sql_script(sql_script)
 
-def mbslave_create_primary_keys_main(config, args):
-    sql_files = [
+    if not args.empty:
+        run_script('mbslave auto-import')
+
+    sql_scripts = [
+
+        # primary keys
         ('musicbrainz', 'CreatePrimaryKeys.sql'),
         ('cover_art_archive', 'caa/CreatePrimaryKeys.sql'),
         ('event_art_archive', 'eaa/CreatePrimaryKeys.sql'),
         ('statistics', 'statistics/CreatePrimaryKeys.sql'),
-        ('documenation', 'documenation/CreatePrimaryKeys.sql'),
+        ('documentation', 'documentation/CreatePrimaryKeys.sql'),
         ('wikidocs', 'wikidocs/CreatePrimaryKeys.sql'),
-    ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
+        # functions
+        ('musicbrainz', 'CreateFunctions.sql'),
+        ('musicbrainz', 'CreateMirrorOnlyFunctions.sql'),
+        ('cover_art_archive', 'caa/CreateFunctions.sql'),
+        ('event_art_archive', 'eaa/CreateFunctions.sql'),
 
-def mbslave_create_indexes_main(config, args):
-    sql_files = [
+        # indexes
         ('musicbrainz', 'CreateIndexes.sql'),
+        ('musicbrainz', 'CreateMirrorIndexes.sql'),
         ('cover_art_archive', 'caa/CreateIndexes.sql'),
         ('event_art_archive', 'eaa/CreateIndexes.sql'),
         ('statistics', 'statistics/CreateIndexes.sql'),
-    ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
+        # views
+        ('musicbrainz', 'CreateViews.sql'),
+        ('cover_art_archive', 'caa/CreateViews.sql'),
+        ('event_art_archive', 'eaa/CreateViews.sql'),
 
-def mbslave_print_create_schemas_sql_main(config, args):
-    all_schemas = [
-        'musicbrainz',
-        'cover_art_archive',
-        'event_art_archive',
-        'documentation',
-        'statistics',
-        'wikidocs'
+        # triggers
+        ('musicbrainz', 'CreateMirrorOnlyTriggers.sql'),
+
     ]
 
-    for schema in all_schemas:
-        if schema not in config.schemas.ignored_schemas:
-            name = config.schemas.name(schema)
-            print("CREATE SCHEMA IF NOT EXISTS %s;" % name)
+    for schema, sql_script in sql_scripts:
+        if schema in config.schemas.ignored_schemas:
+            continue
+        run_sql_script(sql_script)
 
 
 def mbslave_psql_main(config, args):
-    command = ['psql'] + config.database.create_psql_args()
+    command = ['psql'] + config.database.create_psql_args(superuser=args.superuser, no_db=args.no_db)
 
     environ = os.environ.copy()
     if not args.public:
         schema = config.schemas.name(args.schema)
         environ['PGOPTIONS'] = '-c search_path=%s,public' % schema
-    if config.database.password:
-        environ['PGPASSWORD'] = config.database.password
+
+    if args.superuser:
+        if config.database.admin_password:
+            environ['PGPASSWORD'] = config.database.admin_password
+    else:
+        if config.database.password:
+            environ['PGPASSWORD'] = config.database.password
 
     with ExitStack() as es:
         if args.sql_file:
@@ -685,17 +750,11 @@ def main():
 
     subparsers = parser.add_subparsers()
 
-    parser_create_schemas = subparsers.add_parser('create-schemas')
-    parser_create_schemas.set_defaults(func=mbslave_create_schemas_main)
-
-    parser_create_tables = subparsers.add_parser('create-tables')
-    parser_create_tables.set_defaults(func=mbslave_create_tables_main)
-
-    parser_create_primary_keys = subparsers.add_parser('create-primary-keys')
-    parser_create_primary_keys.set_defaults(func=mbslave_create_primary_keys_main)
-
-    parser_create_indexes = subparsers.add_parser('create-indexes')
-    parser_create_indexes.set_defaults(func=mbslave_create_indexes_main)
+    parser_init = subparsers.add_parser('init')
+    parser_init.add_argument('--create-user', action='store_true')
+    parser_init.add_argument('--create-database', action='store_true')
+    parser_init.add_argument('--empty', action='store_true')
+    parser_init.set_defaults(func=mbslave_init_main, create_user=False, create_database=False, empty=False)
 
     parser_import = subparsers.add_parser('import')
     parser_import.add_argument('sources', metavar='FILE_OR_URL', nargs='+', help='tar.bz2 file to import')
@@ -723,15 +782,15 @@ def main():
     parser_print_sql.add_argument('files', metavar='FILE', nargs='+', help='sql file to print')
     parser_print_sql.set_defaults(func=mbslave_print_sql_main)
 
-    parser_print_create_schemas_sql = subparsers.add_parser('print-create-schemas-sql')
-    parser_print_create_schemas_sql.set_defaults(func=mbslave_print_create_schemas_sql_main)
-
     parser_psql = subparsers.add_parser('psql')
     parser_psql.add_argument('-f, --file', dest='sql_file', metavar='FILE', help='sql file to execute')
     parser_psql.add_argument('-S, --no-schema', dest='public', action='store_true',
                              help="don't configure the default schema")
     parser_psql.add_argument('-s, --schema', dest='schema', default='musicbrainz',
                              help="default schema")
+    parser_psql.add_argument('--superuser', dest='superuser', action='store_true',
+                             help="connect as superuser")
+    parser_psql.add_argument('--no-db', dest='no_db', action='store_true')
     parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()

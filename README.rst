@@ -7,9 +7,9 @@ MusicBrainz Database Tools
 .. |pypi badge| image:: https://badge.fury.io/py/mbdata.svg
     :target: https://badge.fury.io/py/mbdata
 
-********************************
-MusicBrainz Database Replication
-********************************
+***************************
+MusicBrainz Database Mirror
+***************************
 
 This repository now contains a collection of scripts for managing a
 replica of the MusicBrainz database. These used to be called "mbslave",
@@ -22,15 +22,15 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-1. You need to have `Python 3.x <https://python.org/>`__ installed on your system.
-   Then you can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
+You need to have `Python 3.x <https://python.org/>`__ installed on your system.
+You can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
 
        sudo apt install python3 pipx
        pipx install 'mbdata[replication]'
 
-2. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
+There are two ways to configure the application.
 
-3. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::
+1. You can use a config file::
 
        curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
        vim mbslave.conf
@@ -41,69 +41,40 @@ Installation
 
         export MBSLAVE_CONFIG=/usr/local/etc/mbslave.conf
 
-4. Setup the database. If you are starting completely from scratch,
-   you can use the following commands to setup a clean database::
+2. Alternativelly, you can use using environment variables::
 
-       sudo su - postgres
-       createuser musicbrainz
-       createdb -l C -E UTF-8 -T template0 -O musicbrainz musicbrainz
-       psql musicbrainz -c 'CREATE EXTENSION cube;'
-       psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
+        export MBSLAVE_DB_HOST=127.0.0.1
+        export MBSLAVE_DB_PORT=5432
+        export MBSLAVE_DB_NAME=musicbrainz
+        export MBSLAVE_DB_USER=musicbrainz
+        export MBSLAVE_DB_PASSWORD=XXX
+        export MBSLAVE_DB_ADMIN_USER=postgres
+        export MBSLAVE_DB_ADMIN_PASSWORD=XXX
 
-5. Prepare empty schemas for the MusicBrainz database and create the table structure::
+Database Setup
+==============
 
-       echo 'CREATE SCHEMA musicbrainz;' | mbslave psql -S
-       echo 'CREATE SCHEMA statistics;' | mbslave psql -S
-       echo 'CREATE SCHEMA cover_art_archive;' | mbslave psql -S
-       echo 'CREATE SCHEMA wikidocs;' | mbslave psql -S
-       echo 'CREATE SCHEMA documentation;' | mbslave psql -S
+If you are starting from scratch and want a full copy of the MusicBrainz database,
+you can use the ``mbslave init`` command. This will create a new database and
+populate it with the latest data from the MusicBrainz database::
 
-       mbslave psql -f CreateCollations.sql
-       mbslave psql -f CreateTypes.sql
-       mbslave psql -f CreateTables.sql
-       mbslave psql -f statistics/CreateTables.sql
-       mbslave psql -f caa/CreateTables.sql
-       mbslave psql -f wikidocs/CreateTables.sql
-       mbslave psql -f documentation/CreateTables.sql
+       mbslave init --create-user --create-database
 
-6. Download the MusicBrainz database dump files from
-   http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
+The other option is to create the database manually and use the ``mbslave psql``
+to apply the scripts from MusicBrainz. In this case you are expected to know what
+you are doing.
 
-7. Import the data dumps, for example::
+Database Replication
+====================
 
-       mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
+You can also keep the database up-to-date by applying incrementa changes.
 
-8. Setup primary keys, indexes and views::
+You need get an API token from the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__ and you
+need to either add it to `mbslave.conf` or set the ``MBSLAVE_MUSICBRAINZ_TOKEN`` environment variable.
 
-       mbslave psql -f CreatePrimaryKeys.sql
-       mbslave psql -f statistics/CreatePrimaryKeys.sql
-       mbslave psql -f caa/CreatePrimaryKeys.sql
-       mbslave psql -f wikidocs/CreatePrimaryKeys.sql
-       mbslave psql -f documentation/CreatePrimaryKeys.sql
+After that, you can use the ``mbslave sync`` command to download the latest updates::
 
-       mbslave psql -f CreateIndexes.sql
-       mbslave psql -f CreateSlaveIndexes.sql
-       mbslave psql -f statistics/CreateIndexes.sql
-       mbslave psql -f caa/CreateIndexes.sql
-
-       mbslave psql -f CreateFunctions.sql
-       mbslave psql -f CreateViews.sql
-
-9. Vacuum the newly created database (optional)::
-
-       echo 'VACUUM ANALYZE;' | mbslave psql
-
-Replication
-===========
-
-After the initial database setup, you might want to update the database with the latest data.
-The `mbslave sync` script will fetch updates from MusicBrainz and apply it to your local database::
-
-    mbslave sync
-
-In order to update your database regularly, add a cron job like this that runs every hour::
-
-    15 * * * * mbslave sync >>/var/log/mbslave.log
+       mbslave sync
 
 Schema Upgrade
 ==============

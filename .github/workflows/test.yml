@@ -20,7 +20,42 @@ jobs:
       uses: snok/install-poetry@v1
     - name: Install application dependencies
       run: poetry install
-    - name: Run flake8
-      run: poetry run flake8 mbdata
-    - name: Run pytest
-      run: poetry run pytest -v
+    - name: Run tests
+      run: ./check.sh
+
+  mbslave_initdb_test:
+    runs-on: ubuntu-latest
+    services:
+      postgresql:
+        image: postgres
+        ports:
+          - 5432/tcp
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: notapassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Install application dependencies
+        run: poetry install
+      - name: Run `mbslave init`
+        run: poetry run mbslave init --create-user --create-database --empty
+        env:
+          MBSLAVE_DB_HOST: 127.0.0.1
+          MBSLAVE_DB_PORT: ${{ job.services.postgresql.ports['5432'] }}
+          MBSLAVE_DB_NAME: musicbrainz
+          MBSLAVE_DB_USER: musicbrainz
+          MBSLAVE_DB_PASSWORD: reallynotapassword
+          MBSLAVE_DB_ADMIN_USER: postgres
+          MBSLAVE_DB_ADMIN_PASSWORD: notapassword
