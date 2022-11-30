@@ -646,60 +646,6 @@ def mbslave_init_main(config, args):
         run_sql_script('wikidocs/CreateTables.sql')
 
 
-def mbslave_create_schemas_main(config, args):
-    script = ['mbslave print-create-schemas-sql | mbslave psql -S']
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
-
-
-def mbslave_create_tables_main(config, args):
-    sql_files = [
-        ('musicbrainz', 'CreateCollations.sql'),
-        ('musicbrainz', 'CreateTypes.sql'),
-        ('musicbrainz', 'CreateTables.sql'),
-        ('musicbrainz', 'CreateFunctions.sql'),
-        ('cover_art_archive', 'caa/CreateTables.sql'),
-        ('event_art_archive', 'eaa/CreateTables.sql'),
-        ('statistics', 'statistics/CreateTables.sql'),
-        ('documenation', 'documenation/CreateTables.sql'),
-        ('wikidocs', 'wikidocs/CreateTables.sql'),
-    ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
-
-
-def mbslave_create_primary_keys_main(config, args):
-    sql_files = [
-        ('musicbrainz', 'CreatePrimaryKeys.sql'),
-        ('cover_art_archive', 'caa/CreatePrimaryKeys.sql'),
-        ('event_art_archive', 'eaa/CreatePrimaryKeys.sql'),
-        ('statistics', 'statistics/CreatePrimaryKeys.sql'),
-        ('documenation', 'documenation/CreatePrimaryKeys.sql'),
-        ('wikidocs', 'wikidocs/CreatePrimaryKeys.sql'),
-    ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
-
-
-def mbslave_create_indexes_main(config, args):
-    sql_files = [
-        ('musicbrainz', 'CreateIndexes.sql'),
-        ('cover_art_archive', 'caa/CreateIndexes.sql'),
-        ('event_art_archive', 'eaa/CreateIndexes.sql'),
-        ('statistics', 'statistics/CreateIndexes.sql'),
-    ]
-    script = []
-    for schema, sql_file in sql_files:
-        if schema not in config.schemas.ignored_schemas:
-            script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
-
-
 def mbslave_psql_main(config, args):
     command = ['psql'] + config.database.create_psql_args(superuser=args.superuser, no_db=args.no_db)
 
@@ -759,18 +705,6 @@ def main():
     parser_init.add_argument('--create-database', action='store_true')
     parser_init.add_argument('--empty', action='store_true')
     parser_init.set_defaults(func=mbslave_init_main, create_user=False, create_database=False, empty=False)
-
-    parser_create_schemas = subparsers.add_parser('create-schemas')
-    parser_create_schemas.set_defaults(func=mbslave_create_schemas_main)
-
-    parser_create_tables = subparsers.add_parser('create-tables')
-    parser_create_tables.set_defaults(func=mbslave_create_tables_main)
-
-    parser_create_primary_keys = subparsers.add_parser('create-primary-keys')
-    parser_create_primary_keys.set_defaults(func=mbslave_create_primary_keys_main)
-
-    parser_create_indexes = subparsers.add_parser('create-indexes')
-    parser_create_indexes.set_defaults(func=mbslave_create_indexes_main)
 
     parser_import = subparsers.add_parser('import')
     parser_import.add_argument('sources', metavar='FILE_OR_URL', nargs='+', help='tar.bz2 file to import')
