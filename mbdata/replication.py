@@ -587,7 +587,7 @@ def mbslave_create_tables_main(config, args):
     for schema, sql_file in sql_files:
         if schema not in config.schemas.ignored_schemas:
             script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', script], check=True)
+    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
 
 def mbslave_create_primary_keys_main(config, args):
@@ -603,7 +603,7 @@ def mbslave_create_primary_keys_main(config, args):
     for schema, sql_file in sql_files:
         if schema not in config.schemas.ignored_schemas:
             script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', script], check=True)
+    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
 
 def mbslave_create_indexes_main(config, args):
@@ -617,7 +617,7 @@ def mbslave_create_indexes_main(config, args):
     for schema, sql_file in sql_files:
         if schema not in config.schemas.ignored_schemas:
             script.append(f'mbslave psql -f {sql_file}')
-    subprocess.run(['bash', '-euxc', script], check=True)
+    subprocess.run(['bash', '-euxc', join_lines(script)], check=True)
 
 
 def mbslave_print_create_schemas_sql_main(config, args):
