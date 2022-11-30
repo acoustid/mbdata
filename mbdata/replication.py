@@ -615,7 +615,7 @@ def run_sql_script(name: str, superuser: bool = False) -> None:
     subprocess.run(['bash', '-euxc', command], check=True)
 
 
-def mbslave_initdb_main(config, args):
+def mbslave_init_main(config, args):
     if args.create_user:
         create_user(config)
 
@@ -754,11 +754,11 @@ def main():
 
     subparsers = parser.add_subparsers()
 
-    parser_init = subparsers.add_parser('initdb')
+    parser_init = subparsers.add_parser('init')
     parser_init.add_argument('--create-user', action='store_true')
     parser_init.add_argument('--create-database', action='store_true')
     parser_init.add_argument('--empty', action='store_true')
-    parser_init.set_defaults(func=mbslave_initdb_main, create_user=False, create_database=False, empty=False)
+    parser_init.set_defaults(func=mbslave_init_main, create_user=False, create_database=False, empty=False)
 
     parser_create_schemas = subparsers.add_parser('create-schemas')
     parser_create_schemas.set_defaults(func=mbslave_create_schemas_main)

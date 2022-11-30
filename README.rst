@@ -41,69 +41,23 @@ Installation
 
         export MBSLAVE_CONFIG=/usr/local/etc/mbslave.conf
 
-4. Setup the database. If you are starting completely from scratch,
-   you can use the following commands to setup a clean database::
+    Alternativelly, you can configure the scrit using environment variables, for example:::
 
-       sudo su - postgres
-       createuser musicbrainz
-       createdb -l C -E UTF-8 -T template0 -O musicbrainz musicbrainz
-       psql musicbrainz -c 'CREATE EXTENSION cube;'
-       psql musicbrainz -c 'CREATE EXTENSION earthdistance;'
+        export MBSLAVE_DB_HOST=127.0.0.1
+        export MBSLAVE_DB_PORT=5432
+        export MBSLAVE_DB_NAME=musicbrainz
+        export MBSLAVE_DB_USER=musicbrainz
+        export MBSLAVE_DB_PASSWORD=XXX
+        export MBSLAVE_DB_ADMIN_USER=postgres
+        export MBSLAVE_DB_ADMIN_PASSWORD=XXX
 
-5. Prepare empty schemas for the MusicBrainz database and create the table structure::
+4. Initialize the database::
 
-       echo 'CREATE SCHEMA musicbrainz;' | mbslave psql -S
-       echo 'CREATE SCHEMA statistics;' | mbslave psql -S
-       echo 'CREATE SCHEMA cover_art_archive;' | mbslave psql -S
-       echo 'CREATE SCHEMA wikidocs;' | mbslave psql -S
-       echo 'CREATE SCHEMA documentation;' | mbslave psql -S
+       mbslave init --create-user --create-database
 
-       mbslave psql -f CreateCollations.sql
-       mbslave psql -f CreateTypes.sql
-       mbslave psql -f CreateTables.sql
-       mbslave psql -f statistics/CreateTables.sql
-       mbslave psql -f caa/CreateTables.sql
-       mbslave psql -f wikidocs/CreateTables.sql
-       mbslave psql -f documentation/CreateTables.sql
+5. Update the database with the latest data::
 
-6. Download the MusicBrainz database dump files from
-   http://ftp.musicbrainz.org/pub/musicbrainz/data/fullexport/
-
-7. Import the data dumps, for example::
-
-       mbslave import mbdump.tar.bz2 mbdump-derived.tar.bz2
-
-8. Setup primary keys, indexes and views::
-
-       mbslave psql -f CreatePrimaryKeys.sql
-       mbslave psql -f statistics/CreatePrimaryKeys.sql
-       mbslave psql -f caa/CreatePrimaryKeys.sql
-       mbslave psql -f wikidocs/CreatePrimaryKeys.sql
-       mbslave psql -f documentation/CreatePrimaryKeys.sql
-
-       mbslave psql -f CreateIndexes.sql
-       mbslave psql -f CreateSlaveIndexes.sql
-       mbslave psql -f statistics/CreateIndexes.sql
-       mbslave psql -f caa/CreateIndexes.sql
-
-       mbslave psql -f CreateFunctions.sql
-       mbslave psql -f CreateViews.sql
-
-9. Vacuum the newly created database (optional)::
-
-       echo 'VACUUM ANALYZE;' | mbslave psql
-
-Replication
-===========
-
-After the initial database setup, you might want to update the database with the latest data.
-The `mbslave sync` script will fetch updates from MusicBrainz and apply it to your local database::
-
-    mbslave sync
-
-In order to update your database regularly, add a cron job like this that runs every hour::
-
-    15 * * * * mbslave sync >>/var/log/mbslave.log
+       mbslave sync
 
 Schema Upgrade
 ==============

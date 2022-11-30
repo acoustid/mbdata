@@ -49,8 +49,8 @@ jobs:
         uses: snok/install-poetry@v1
       - name: Install application dependencies
         run: poetry install
-      - name: Run `mbslave initdb`
-        run: poetry run mbslave initdb --create-user --create-database
+      - name: Run `mbslave init`
+        run: poetry run mbslave init --create-user --create-database
         env:
           MBSLAVE_DB_NAME: musicbrainz
           MBSLAVE_DB_USER: musicbrainz
