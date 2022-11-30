@@ -643,7 +643,7 @@ def mbslave_init_main(config, args):
         ('cover_art_archive', 'caa/CreateTables.sql'),
         ('event_art_archive', 'eaa/CreateTables.sql'),
         ('statistics', 'statistics/CreateTables.sql'),
-        ('documentation', 'wikidocs/CreateTables.sql'),
+        ('documentation', 'documentation/CreateTables.sql'),
         ('wikidocs', 'wikidocs/CreateTables.sql'),
 
     ]
