@@ -574,9 +574,9 @@ def mbslave_create_schemas_main(config, args):
 def mbslave_create_tables_main(config, args):
     sql_files = [
         ('musicbrainz', 'CreateCollations.sql'),
-        ('musicbrainz', 'CreateFunctions.sql'),
         ('musicbrainz', 'CreateTypes.sql'),
         ('musicbrainz', 'CreateTables.sql'),
+        ('musicbrainz', 'CreateFunctions.sql'),
         ('cover_art_archive', 'caa/CreateTables.sql'),
         ('event_art_archive', 'eaa/CreateTables.sql'),
         ('statistics', 'statistics/CreateTables.sql'),
