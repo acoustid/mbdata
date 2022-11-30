@@ -20,7 +20,5 @@ jobs:
       uses: snok/install-poetry@v1
     - name: Install application dependencies
       run: poetry install
-    - name: Run flake8
-      run: poetry run flake8 mbdata
-    - name: Run pytest
-      run: poetry run pytest -v
+    - name: Run tests
+      run: ./check.sh
