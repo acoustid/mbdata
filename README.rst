@@ -7,9 +7,9 @@ MusicBrainz Database Tools
 .. |pypi badge| image:: https://badge.fury.io/py/mbdata.svg
     :target: https://badge.fury.io/py/mbdata
 
-********************************
-MusicBrainz Database Replication
-********************************
+***************************
+MusicBrainz Database Mirror
+***************************
 
 This repository now contains a collection of scripts for managing a
 replica of the MusicBrainz database. These used to be called "mbslave",
@@ -22,15 +22,15 @@ easier to use the replication tools provided by MusicBrainz itself.
 Installation
 ============
 
-1. You need to have `Python 3.x <https://python.org/>`__ installed on your system.
-   Then you can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
+You need to have `Python 3.x <https://python.org/>`__ installed on your system.
+You can use `pipx <https://pypa.github.io/pipx/>`__ to install this package::
 
        sudo apt install python3 pipx
        pipx install 'mbdata[replication]'
 
-2. Get an API token on the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__.
+There are two ways to configure the application.
 
-3. Create mbslave.conf by copying and editing `mbslave.conf.default <https://github.com/lalinsky/mbdata/blob/master/mbslave.conf.default>`__::
+1. You can use a config file::
 
        curl https://raw.githubusercontent.com/lalinsky/mbdata/master/mbslave.conf.default -o mbslave.conf
        vim mbslave.conf
@@ -41,7 +41,7 @@ Installation
 
         export MBSLAVE_CONFIG=/usr/local/etc/mbslave.conf
 
-    Alternativelly, you can configure the scrit using environment variables, for example:::
+2. Alternativelly, you can use using environment variables::
 
         export MBSLAVE_DB_HOST=127.0.0.1
         export MBSLAVE_DB_PORT=5432
@@ -51,11 +51,28 @@ Installation
         export MBSLAVE_DB_ADMIN_USER=postgres
         export MBSLAVE_DB_ADMIN_PASSWORD=XXX
 
-4. Initialize the database::
+Database Setup
+==============
+
+If you are starting from scratch and want a full copy of the MusicBrainz database,
+you can use the ``mbslave init`` command. This will create a new database and
+populate it with the latest data from the MusicBrainz database::
 
        mbslave init --create-user --create-database
 
-5. Update the database with the latest data::
+The other option is to create the database manually and use the ``mbslave psql``
+to apply the scripts from MusicBrainz. In this case you are expected to know what
+you are doing.
+
+Database Replication
+====================
+
+You can also keep the database up-to-date by applying incrementa changes.
+
+You need get an API token from the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__ and you
+need to either add it to `mbslave.conf` or set the ``MBSLAVE_MUSICBRAINZ_TOKEN`` environment variable.
+
+After that, you can use the ``mbslave sync`` command to download the latest updates::
 
        mbslave sync
 
