@@ -675,7 +675,7 @@ def mbslave_init_main(config, args):
 
         # indexes
         ('musicbrainz', 'CreateIndexes.sql'),
-        ('musicbrainz', 'CreateMirrorOnlyIndexes.sql'),
+        ('musicbrainz', 'CreateMirrorIndexes.sql'),
         ('cover_art_archive', 'caa/CreateIndexes.sql'),
         ('event_art_archive', 'eaa/CreateIndexes.sql'),
         ('statistics', 'statistics/CreateIndexes.sql'),
