@@ -1,3 +1,8 @@
+Version 27.1.0
+==============
+
+- Added `mbslave init` command.
+
 Version 27.0.0
 ==============
 
