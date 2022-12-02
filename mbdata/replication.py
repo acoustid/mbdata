@@ -480,6 +480,10 @@ def get_packet_url(base_url, token, replication_seq):
     return url
 
 
+class PacketNotFoundError(Exception):
+    pass
+
+
 def download_packet(base_url, token, replication_seq):
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
@@ -488,16 +492,11 @@ def download_packet(base_url, token, replication_seq):
     clean_url = get_packet_url(base_url, '***', replication_seq)
     logger.info('Downloading %s', clean_url)
     try:
-        data = urlopen(url, timeout=60)
+        return urlopen(url, timeout=60)
     except HTTPError as e:
         if e.code == 404:
-            return None
+            raise PacketNotFoundError("Packet %d not found" % replication_seq)
         raise
-    tmp = tempfile.NamedTemporaryFile(suffix='.tar.bz2')
-    shutil.copyfileobj(data, tmp)
-    data.close()
-    tmp.seek(0)
-    return tmp
 
 
 def mbslave_sync_main(config, args):
@@ -516,23 +515,23 @@ def mbslave_sync_main(config, args):
         schema_seq, replication_seq = cursor.fetchone()
         replication_seq += 1
         hook = hook_class(config, db, config)
-        tmp = download_packet(base_url, token, replication_seq)
-        if tmp is None:
-            logger.info('Not found, stopping')
+        try:
+            with download_packet(base_url, token, replication_seq) as packet:
+                try:
+                    process_tar(packet, db, config, ignored_schemas, ignored_tables, schema_seq, replication_seq, hook)
+                except MismatchedSchemaError:
+                    if not args.keep_running:
+                        raise
+                    logger.exception('Schema mismatch, sleeping')
+                    replication_seq -= 1
+                    time.sleep(60 * 10)
+        except PacketNotFoundError:
             if not args.keep_running:
+                logger.info('Not found, stopping')
                 break
+            logger.info('Not found, waiting')
             replication_seq -= 1
             time.sleep(60 * 10)
-        else:
-            try:
-                process_tar(tmp, db, config, ignored_schemas, ignored_tables, schema_seq, replication_seq, hook)
-            except MismatchedSchemaError:
-                if not args.keep_running:
-                    raise
-                logger.exception('Schema mismatch')
-                replication_seq -= 1
-                time.sleep(60 * 10)
-            tmp.close()
         sys.stdout.flush()
         sys.stderr.flush()
 
