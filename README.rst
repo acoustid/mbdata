@@ -60,6 +60,10 @@ populate it with the latest data from the MusicBrainz database::
 
        mbslave init --create-user --create-database
 
+This requires that you have PostgreSQL running and configured in a way, so
+that ``mbslave`` can connect to it both using a regular account as well as
+superuser account. How you do that depends on your environment.
+
 The other option is to create the database manually and use the ``mbslave psql``
 to apply the scripts from MusicBrainz. In this case you are expected to know what
 you are doing.
