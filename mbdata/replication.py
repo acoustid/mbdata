@@ -744,6 +744,8 @@ def main():
                         default=default_config_path,
                         help='path to the config file (default: {})'.format(default_config_path))
 
+    parser.set_defaults(func=None)
+
     subparsers = parser.add_subparsers()
 
     parser_init = subparsers.add_parser('init')
@@ -790,6 +792,10 @@ def main():
     parser_psql.set_defaults(func=mbslave_psql_main)
 
     args = parser.parse_args()
+
+    if not args.func:
+        parser.print_help()
+        raise SystemExit(1)
 
     logging.basicConfig(level=logging.INFO)
 
