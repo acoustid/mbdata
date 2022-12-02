@@ -6,17 +6,16 @@ import re
 import os
 import psycopg2
 import argparse
-import six
 import logging
 from io import BytesIO
+from urllib.request import urlopen
 from urllib.parse import urljoin
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 import tempfile
 import shutil
 import subprocess
-from typing import List, Optional
-from six.moves import configparser as ConfigParser
+from typing import List, Optional, Iterable
+import configparser as ConfigParser
 from contextlib import ExitStack
 
 logger = logging.getLogger(__name__)
@@ -80,7 +79,7 @@ class DatabaseConfig(object):
             args.append(self.host)
         if self.port is not None:
             args.append('-p')
-            args.append(six.text_type(self.port))
+            args.append(str(self.port))
         if not no_db:
             args.append(self.name)
         return args
@@ -388,7 +387,7 @@ class PacketImporter(object):
             self._data[(id, key)] = values
 
     def load_pending(self, fp):
-        dump = read_psql_dump(fp, [int, six.text_type, six.text_type, int])
+        dump = read_psql_dump(fp, [int, str, str, int])
         for id, table, type, xid in dump:
             schema, table = parse_name(self._config, table)
             transaction = self._transactions.setdefault(xid, [])
@@ -484,7 +483,7 @@ class PacketNotFoundError(Exception):
     pass
 
 
-def download_packet(base_url, token, replication_seq):
+def download_packet(base_url: str, token: str, replication_seq: int) -> BytesIO:
     url = base_url.rstrip("/") + "/replication-%d.tar.bz2" % replication_seq
     if token:
         url += '?token=' + token
@@ -499,7 +498,7 @@ def download_packet(base_url, token, replication_seq):
         raise
 
 
-def mbslave_sync_main(config, args):
+def mbslave_sync_main(config: Config, args: argparse.Namespace) -> None:
     db = connect_db(config)
 
     base_url = config.musicbrainz.base_url
@@ -536,7 +535,7 @@ def mbslave_sync_main(config, args):
         sys.stderr.flush()
 
 
-def remap_schema(config, lines):
+def remap_schema(config: Config, lines: Iterable[str]) -> Iterable[str]:
     def update_search_path(m):
         schemas = m.group(2).replace("'", '').split(',')
         schemas = [config.schemas.name(s.strip()) for s in schemas]
@@ -552,16 +551,16 @@ def remap_schema(config, lines):
         yield line
 
 
-def locate_sql_file(rel_path):
+def locate_sql_file(rel_path: str) -> str:
     return os.path.join(os.path.dirname(__file__), 'sql', rel_path)
 
 
-def mbslave_remap_schema_main(config, args):
+def mbslave_remap_schema_main(config: Config, args: argparse.Namespace) -> None:
     for line in remap_schema(config, sys.stdin):
         sys.stdout.write(line)
 
 
-def mbslave_print_sql_main(config, args):
+def mbslave_print_sql_main(config: Config, args: argparse.Namespace) -> None:
     for path in args.files:
         for line in remap_schema(config, open(locate_sql_file(path))):
             sys.stdout.write(line)
@@ -618,7 +617,7 @@ def run_sql_script(name: str, superuser: bool = False) -> None:
     run_script(command)
 
 
-def mbslave_init_main(config, args):
+def mbslave_init_main(config: Config, args: argparse.Namespace) -> None:
     if args.create_user:
         create_user(config)
 
@@ -695,7 +694,7 @@ def mbslave_init_main(config, args):
         run_sql_script(sql_script)
 
 
-def mbslave_psql_main(config, args):
+def mbslave_psql_main(config: Config, args: argparse.Namespace) -> None:
     command = ['psql'] + config.database.create_psql_args(superuser=args.superuser, no_db=args.no_db)
 
     environ = os.environ.copy()
@@ -725,13 +724,11 @@ def mbslave_psql_main(config, args):
         raise SystemExit(process.wait())
 
 
-def join_paths(paths):
-    # type: (List[str]) -> str
+def join_paths(paths: List[str]) -> str:
     return os.pathsep.join(paths)
 
 
-def split_paths(s):
-    # type: (str) -> List[str]
+def split_paths(s: str) -> List[str]:
     return [p.strip() for p in s.split(os.pathsep)]
 
 
