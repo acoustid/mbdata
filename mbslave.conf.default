@@ -3,15 +3,16 @@ host=127.0.0.1
 port=5432
 name=musicbrainz
 user=musicbrainz
-#password=
+# password=
+admin_user=postgres
+# admin_password=
 
 [musicbrainz]
 base_url=https://metabrainz.org/api/musicbrainz/
-#token=XXX
+# token=XXX
 
 [tables]
 ignore=
-#ignore=tracklist_index
 
 [schemas]
 musicbrainz=musicbrainz
@@ -21,4 +22,3 @@ event_art_archive=event_art_archive
 wikidocs=wikidocs
 documentation=documentation
 ignore=
-#ignore=statistics,cover_art_archive,wikidocs,documentation
