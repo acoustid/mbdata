@@ -769,7 +769,7 @@ def main():
     parser_auto_import.set_defaults(func=mbslave_auto_import_main)
 
     parser_sync = subparsers.add_parser('sync')
-    parser_sync.add_argument('-r, --keep-running', dest='keep_running', action='store_true',
+    parser_sync.add_argument('-r', '--keep-running', dest='keep_running', action='store_true',
                              help='keep running until the script is explicitly terminated')
     parser_sync.set_defaults(func=mbslave_sync_main)
 
@@ -781,10 +781,10 @@ def main():
     parser_print_sql.set_defaults(func=mbslave_print_sql_main)
 
     parser_psql = subparsers.add_parser('psql')
-    parser_psql.add_argument('-f, --file', dest='sql_file', metavar='FILE', help='sql file to execute')
-    parser_psql.add_argument('-S, --no-schema', dest='public', action='store_true',
+    parser_psql.add_argument('-f', '--file', dest='sql_file', metavar='FILE', help='sql file to execute')
+    parser_psql.add_argument('-S', '--no-schema', dest='public', action='store_true',
                              help="don't configure the default schema")
-    parser_psql.add_argument('-s, --schema', dest='schema', default='musicbrainz',
+    parser_psql.add_argument('-s', '--schema', dest='schema', default='musicbrainz',
                              help="default schema")
     parser_psql.add_argument('--superuser', dest='superuser', action='store_true',
                              help="connect as superuser")
