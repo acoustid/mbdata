@@ -453,22 +453,24 @@ class MismatchedSchemaError(Exception):
     pass
 
 
-def process_tar(fileobj, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook):
-    logger.info("Processing %s", fileobj.name)
+def process_tar(fileobj: BytesIO, db, schema, ignored_schemas, ignored_tables, expected_schema_seq, replication_seq, hook) -> None:
     tar = tarfile.open(fileobj=fileobj, mode='r|*')
     importer = PacketImporter(db, schema, ignored_schemas, ignored_tables, replication_seq, hook)
     for member in tar:
+        member_file = tar.extractfile(member)
+        if member_file is None:
+            continue
         if member.name == 'SCHEMA_SEQUENCE':
-            schema_seq = int(tar.extractfile(member).read().strip())
+            schema_seq = int(member_file.read().strip())
             if schema_seq != expected_schema_seq:
                 raise MismatchedSchemaError("Mismatched schema sequence, %d (database) vs %d (replication packet)" % (expected_schema_seq, schema_seq))
         elif member.name == 'TIMESTAMP':
-            ts = tar.extractfile(member).read().strip().decode('utf8')
+            ts = member_file.read().strip().decode('utf8')
             logger.info('Packet was produced at %s', ts)
         elif member.name in ('mbdump/Pending', 'mbdump/dbmirror_pending'):
-            importer.load_pending(tar.extractfile(member))
+            importer.load_pending(member_file)
         elif member.name in ('mbdump/PendingData', 'mbdump/dbmirror_pendingdata'):
-            importer.load_pending_data(tar.extractfile(member))
+            importer.load_pending_data(member_file)
     importer.process()
 
 
