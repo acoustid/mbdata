@@ -71,7 +71,7 @@ you are doing.
 Database Replication
 ====================
 
-You can also keep the database up-to-date by applying incrementa changes.
+You can also keep the database up-to-date by applying incremental changes.
 
 You need get an API token from the `MetaBrainz website <https://metabrainz.org/supporters/account-type>`__ and you
 need to either add it to `mbslave.conf` or set the ``MBSLAVE_MUSICBRAINZ_TOKEN`` environment variable.
