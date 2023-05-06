@@ -2,9 +2,9 @@
 
 set -eux
 
-# poetry run isort --check mbdata/
-# poetry run black --check mbdata/
+# poetry run isort --check mbslave/
+# poetry run black --check mbslave/
 
-poetry run flake8 mbdata
-poetry run mypy -p mbdata.replication
+poetry run flake8 mbslave
+poetry run mypy -p mbslave.replication
 poetry run pytest -v

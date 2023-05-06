@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 import os
 from six import StringIO
-from mbdata.replication import (
+from mbslave.replication import (
     Config,
     remap_schema,
     join_paths,
