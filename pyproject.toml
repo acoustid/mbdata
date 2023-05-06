@@ -1,16 +1,14 @@
 [tool.poetry]
-name = "mbdata"
+name = "mbslave"
 version = "27.1.0"
-description = "MusicBrainz Database Tools"
+description = "MusicBrainz Database Mirror"
 readme = "README.rst"
 authors = ["Lukáš Lalinský <lalinsky@gmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-SQLAlchemy = {version = "^1.4.29", optional = true}
-lxml = {version = "^4.9.1", optional = true}
-psycopg2 = {version = "^2.9.2", optional = true}
+psycopg2 = "^2.9.2"
 six = "^1.16.0"
 
 [tool.poetry.dev-dependencies]
@@ -22,13 +20,8 @@ mypy = "^0.991"
 types-six = "^1.16.21"
 types-psycopg2 = "^2.9.21"
 
-[tool.poetry.extras]
-replication = ["psycopg2"]
-search = ["lxml"]
-models = ["SQLAlchemy"]
-
 [tool.poetry.scripts]
-mbslave = "mbdata.replication:main"
+mbslave = "mbslave.replication:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
