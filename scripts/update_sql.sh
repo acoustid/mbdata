@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd $(dirname $0)/../mbdata
+cd $(dirname $0)/../mbslave
 
 rm -rf sql
 
