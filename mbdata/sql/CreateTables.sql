@@ -524,7 +524,6 @@ CREATE TABLE cdtoc ( -- replicate
     track_count         INTEGER NOT NULL,
     leadout_offset      INTEGER NOT NULL,
     track_offset        INTEGER[] NOT NULL,
-    degraded            BOOLEAN NOT NULL DEFAULT FALSE,
     created             TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -574,6 +573,18 @@ CREATE TABLE edit_note
     edit                INTEGER NOT NULL, -- references edit.id
     text                TEXT NOT NULL,
     post_time            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE edit_note_change
+(
+    id                  SERIAL, -- PK
+    status              edit_note_status,
+    edit_note           INTEGER NOT NULL, -- references edit_note.id
+    change_editor       INTEGER NOT NULL, -- references editor.id
+    change_time         TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    old_note            TEXT NOT NULL,
+    new_note            TEXT NOT NULL,
+    reason              TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE edit_note_recipient (
@@ -2456,7 +2467,7 @@ CREATE TABLE label ( -- replicate (verbose)
     end_date_year       SMALLINT,
     end_date_month      SMALLINT,
     end_date_day        SMALLINT,
-    label_code          INTEGER CHECK (label_code > 0 AND label_code < 100000),
+    label_code          INTEGER,
     type                INTEGER, -- references label_type.id
     area                INTEGER, -- references area.id
     comment             VARCHAR(255) NOT NULL DEFAULT '',
@@ -2718,7 +2729,6 @@ CREATE TABLE link_type ( -- replicate
     link_phrase         VARCHAR(255) NOT NULL,
     reverse_link_phrase VARCHAR(255) NOT NULL,
     long_link_phrase    VARCHAR(255) NOT NULL,
-    priority            INTEGER NOT NULL DEFAULT 0,
     last_updated        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_deprecated       BOOLEAN NOT NULL DEFAULT false,
     has_dates           BOOLEAN NOT NULL DEFAULT true,
@@ -2785,6 +2795,14 @@ CREATE TABLE editor_collection_artist (
 CREATE TABLE editor_collection_event (
     collection INTEGER NOT NULL, -- PK, references editor_collection.id
     event INTEGER NOT NULL, -- PK, references event.id
+    added TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    position INTEGER NOT NULL DEFAULT 0 CHECK (position >= 0),
+    comment TEXT DEFAULT '' NOT NULL
+);
+
+CREATE TABLE editor_collection_genre (
+    collection INTEGER NOT NULL, -- PK, references editor_collection.id
+    genre INTEGER NOT NULL, -- PK, references genre.id
     added TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     position INTEGER NOT NULL DEFAULT 0 CHECK (position >= 0),
     comment TEXT DEFAULT '' NOT NULL
@@ -2879,32 +2897,6 @@ CREATE TABLE editor_oauth_token
         (code_challenge IS NULL) = (code_challenge_method IS NULL) AND
         (code_challenge IS NULL OR code_challenge ~ E'^[A-Za-z0-9.~_-]{43,128}$')
     )
-);
-
-CREATE TABLE editor_watch_preferences
-(
-    editor INTEGER NOT NULL, -- PK, references editor.id CASCADE
-    notify_via_email BOOLEAN NOT NULL DEFAULT TRUE,
-    notification_timeframe INTERVAL NOT NULL DEFAULT '1 week',
-    last_checked TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE editor_watch_artist
-(
-    artist INTEGER NOT NULL, -- PK, references artist.id CASCADE
-    editor INTEGER NOT NULL  -- PK, references editor.id CASCADE
-);
-
-CREATE TABLE editor_watch_release_group_type
-(
-    editor INTEGER NOT NULL, -- PK, references editor.id CASCADE
-    release_group_type INTEGER NOT NULL -- PK, references release_group_primary_type.id
-);
-
-CREATE TABLE editor_watch_release_status
-(
-    editor INTEGER NOT NULL, -- PK, references editor.id CASCADE
-    release_status INTEGER NOT NULL -- PK, references release_status.id
 );
 
 CREATE TABLE medium ( -- replicate (verbose)
@@ -3888,6 +3880,12 @@ CREATE TABLE track_raw ( -- replicate
 CREATE TABLE medium_index ( -- replicate
     medium              INTEGER, -- PK, references medium.id CASCADE
     toc                 CUBE
+);
+
+CREATE TABLE unreferenced_row_log (
+    table_name          VARCHAR NOT NULL, -- PK
+    row_id              INTEGER NOT NULL, -- PK
+    inserted            TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE TABLE url ( -- replicate
