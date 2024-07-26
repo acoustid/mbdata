@@ -48,8 +48,8 @@ INSERT INTO artist_credit_name (artist_credit, position, artist, name) VALUES (2
 INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
     (1, '123c079d-374e-4436-9448-da92dedef3ce', 'Dancing Queen', 2, 123456);
 
-INSERT INTO release_group (id, gid, name, artist_credit, type) VALUES
-    (1, '234c079d-374e-4436-9448-da92dedef3ce', 'Arrival', 2, 1);
+INSERT INTO release_group (id, gid, name, artist_credit, type, last_updated) VALUES
+    (1, '234c079d-374e-4436-9448-da92dedef3ce', 'Arrival', 2, 1, '2003-03-03');
 
 -- Test multiple release groups on a page
 INSERT INTO artist_credit (id, name, artist_count, gid) VALUES (4, 'Test Artist', 1, '261f02c2-75a6-313f-9dd8-1716f73f3ce8');
@@ -61,12 +61,12 @@ INSERT INTO release_group (id, gid, name, artist_credit, type) VALUES
 INSERT INTO release_group (id, gid, name, artist_credit, type) VALUES
     (4, '7348f3a0-454e-11de-8a39-0800200c9a66', 'Test RG 2', 4, 1);
 
-INSERT INTO release_group_alias (id, name, sort_name, release_group, edits_pending)
-    VALUES (1, 'Test RG 1 Alias 1', 'Test RG 1 Alias Sort Name 1', 3, 0),
-           (2, 'Test RG 1 Alias 2', 'Test RG 1 Alias Sort Name 2', 3, 0);
+INSERT INTO release_group_alias (id, name, sort_name, release_group, type, edits_pending)
+    VALUES (1, 'Test RG 1 Alias 1', 'Test RG 1 Alias Sort Name 1', 3, 1, 0),
+           (2, 'Test RG 1 Alias 2', 'Test RG 1 Alias Sort Name 2', 3, 2, 0);
 
-INSERT INTO work (id, gid, name, type) VALUES
-    (1, '745c079d-374e-4436-9448-da92dedef3ce', 'Dancing Queen', 1);
+INSERT INTO work (id, gid, name, type, last_updated) VALUES
+    (1, '745c079d-374e-4436-9448-da92dedef3ce', 'Dancing Queen', 1, '1999-01-02 12:00');
 INSERT INTO iswc (work, iswc) VALUES (1, 'T-000.000.001-0');
 
 -- Special Labels
@@ -75,9 +75,11 @@ INSERT INTO label (id, gid, name, type) VALUES
 
 INSERT INTO label (id, gid, name, type, area, label_code,
                    begin_date_year, begin_date_month, begin_date_day,
-                   end_date_year, end_date_month, end_date_day, comment)
+                   end_date_year, end_date_month, end_date_day, comment,
+                   last_updated)
      VALUES (2, '46f0f4cd-8aab-4b33-b698-f459faf64190', 'Warp Records', 4, 221, 2070,
-             1989, 02, 03, 2008, 05, 19, 'Sheffield based electronica label');
+             1989, 02, 03, 2008, 05, 19, 'Sheffield based electronica label',
+             '2014-01-12 18:00:27.843631-06');
 
 -- recording contract relationships for Warp Records
 INSERT INTO link (attribute_count, begin_date_day, begin_date_month, begin_date_year, created, end_date_day, end_date_month, end_date_year, ended, id, link_type) VALUES
@@ -140,11 +142,11 @@ INSERT INTO artist_credit_name (artist_credit, position, artist, name) VALUES (3
 INSERT INTO release_group (id, gid, name, artist_credit, type) VALUES
     (2, '7c3218d7-75e0-4e8c-971f-f097b6c308c5', 'Aerial', 3, 1);
 
-INSERT INTO release (id, gid, name, artist_credit, release_group, status, barcode) VALUES (2, 'f205627f-b70a-409d-adbe-66289b614e80', 'Aerial', 3, 2, 1, '0094634396028');
+INSERT INTO release (id, gid, name, artist_credit, release_group, status, barcode, last_updated) VALUES (2, 'f205627f-b70a-409d-adbe-66289b614e80', 'Aerial', 3, 2, 1, '0094634396028', '2020-02-20');
 INSERT INTO release_country (release, country, date_year, date_month, date_day) VALUES (2, 221, 2005, 11, 7);
 
-INSERT INTO release_alias (id, name, sort_name, release, edits_pending)
-    VALUES (1, 'Ærial', 'Ærial', 2, 0);
+INSERT INTO release_alias (id, name, sort_name, release, type, edits_pending)
+    VALUES (1, 'Ærial', 'Ærial', 2, 1, 0);
 
 INSERT INTO release (id, gid, name, artist_credit, release_group, status, barcode) VALUES (3, '9b3d9383-3d2a-417f-bfbb-56f7c15f075b', 'Aerial', 3, 2, 1, '0827969777220');
 INSERT INTO release_country (release, country, date_year, date_month, date_day) VALUES (3, 222, 2005, 11, 8);
@@ -161,8 +163,8 @@ INSERT INTO medium (id, release, position, format, name) VALUES (4, 2, 2, 1, 'A 
 INSERT INTO medium (id, release, position, format, name) VALUES (5, 3, 1, 1, 'A Sea of Honey');
 INSERT INTO medium (id, release, position, format, name) VALUES (6, 3, 2, 1, 'A Sky of Honey');
 
-INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
-    (2, '54b9d183-7dab-42ba-94a3-7388a66604b8', 'King of the Mountain', 3, 293720);
+INSERT INTO recording (id, gid, name, artist_credit, length, last_updated) VALUES
+    (2, '54b9d183-7dab-42ba-94a3-7388a66604b8', 'King of the Mountain', 3, 293720, '2020-02-20 19:00:00');
 INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
     (3, '659f405b-b4ee-4033-868a-0daa27784b89', 'π', 3, 369680);
 INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
@@ -195,8 +197,8 @@ INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
 INSERT INTO recording (id, gid, name, artist_credit, length) VALUES
     (17, '1539ac10-5081-4469-b8f2-c5896132724e', 'Aerial', 3, 472880);
 
-INSERT INTO recording_alias (id, name, sort_name, recording, edits_pending)
-    VALUES (1, 'King of the Mt.', 'King of the Mt.', 2, 0);
+INSERT INTO recording_alias (id, name, sort_name, recording, type, edits_pending)
+    VALUES (1, 'King of the Mt.', 'King of the Mt.', 2, 1, 0);
 
 INSERT INTO track (id, gid, medium, position, number, recording, name, artist_credit, length) VALUES (4, '39164965-d4bd-49e6-925d-72026ad03dce', 3, 1, 1, 2, 'King of the Mountain', 3, 293720);
 INSERT INTO track (id, gid, medium, position, number, recording, name, artist_credit, length) VALUES (5, '82edb036-4097-484d-ac8a-cf4971451ca0', 3, 2, 2, 3, 'π', 3, 369680);
@@ -250,6 +252,9 @@ INSERT INTO artist (id, gid, name, sort_name)
     (8, 'e2a083a9-9942-4d6e-b4d2-8397320b95f7', 'Test Alias', 'Kate Bush');
 INSERT INTO artist (id, gid, name, sort_name, comment) VALUES
     (9, '2fed031c-0e89-406e-b9f0-3d192637907a', 'Test Alias', 'Kate Bush', 'Second');
+
+INSERT INTO event (id, gid, name, begin_date_year, begin_date_month, begin_date_day, end_date_year, end_date_month, end_date_day, time, type, cancelled, setlist, comment, ended)
+    VALUES (59357, 'ca1d24c1-1999-46fd-8a95-3d4108df5cb2', 'BBC Open Music Prom', 2022, 9, 1, 2022, 9, 1, '19:30:00', 1, 'f', NULL, '2022, Prom 60', 't');
 
 INSERT INTO l_artist_recording (id, link, entity0, entity1) VALUES (1, 1, 8, 2);
 INSERT INTO l_artist_recording (id, link, entity0, entity1, edits_pending) VALUES (2, 1, 9, 2, 1);

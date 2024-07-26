@@ -147,7 +147,7 @@ CREATE INDEX edit_data_idx_link_type ON edit_data USING GIN (
                      (data#>>'{link,link_type,id}')::int,
                      (data#>>'{old,link_type,id}')::int,
                      (data#>>'{new,link_type,id}')::int,
-                     (data#>>'{relationship,link_type,id}')::int
+                     (data#>>'{relationship,link,type,id}')::int
                  ], NULL)
 );
 
@@ -169,6 +169,8 @@ CREATE INDEX edit_url_idx ON edit_url (url);
 
 CREATE INDEX edit_note_idx_edit ON edit_note (edit);
 CREATE INDEX edit_note_idx_editor ON edit_note (editor);
+
+CREATE INDEX edit_note_change_idx_edit_note ON edit_note_change (edit_note);
 
 CREATE INDEX edit_note_recipient_idx_recipient ON edit_note_recipient (recipient);
 
@@ -670,6 +672,8 @@ CREATE INDEX track_raw_idx_release ON track_raw (release);
 
 CREATE INDEX medium_idx_track_count ON medium (track_count);
 CREATE INDEX medium_index_idx ON medium_index USING gist (toc);
+
+CREATE INDEX unreferenced_row_log_idx_inserted ON unreferenced_row_log USING BRIN (inserted);
 
 CREATE UNIQUE INDEX url_idx_gid ON url (gid);
 CREATE UNIQUE INDEX url_idx_url ON url (url);

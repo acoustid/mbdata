@@ -838,7 +838,6 @@ class CDTOC(Base):
     track_count = Column(Integer, nullable=False)
     leadout_offset = Column(Integer, nullable=False)
     track_offset = Column(Integer, nullable=False)
-    degraded = Column(Boolean, nullable=False, default=False, server_default=sql.false())
     created = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
@@ -935,6 +934,26 @@ class EditNote(Base):
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     edit = relationship('Edit', foreign_keys=[edit_id], innerjoin=True)
+
+
+class EditNoteChange(Base):
+    __tablename__ = 'edit_note_change'
+    __table_args__ = (
+        Index('edit_note_change_idx_edit_note', 'edit_note'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    id = Column(Integer, primary_key=True)
+    status = Column(Enum('deleted', 'edited', name='EDIT_NOTE_STATUS', schema=mbdata.config.schemas.get('musicbrainz', 'musicbrainz')))
+    edit_note_id = Column('edit_note', Integer, ForeignKey(apply_schema('edit_note.id', 'musicbrainz'), name='edit_note_change_fk_edit_note'), nullable=False)
+    change_editor_id = Column('change_editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='edit_note_change_fk_change_editor'), nullable=False)
+    change_time = Column(DateTime(timezone=True), server_default=sql.func.now())
+    old_note = Column(String, nullable=False)
+    new_note = Column(String, nullable=False)
+    reason = Column(String, nullable=False, default='', server_default=sql.text("''"))
+
+    edit_note = relationship('EditNote', foreign_keys=[edit_note_id], innerjoin=True)
+    change_editor = relationship('Editor', foreign_keys=[change_editor_id], innerjoin=True)
 
 
 class EditNoteRecipient(Base):
@@ -6526,7 +6545,6 @@ class LinkType(Base):
     link_phrase = Column(String(255), nullable=False)
     reverse_link_phrase = Column(String(255), nullable=False)
     long_link_phrase = Column(String(255), nullable=False)
-    priority = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
     last_updated = Column(DateTime(timezone=True), server_default=sql.func.now())
     is_deprecated = Column(Boolean, nullable=False, default=False, server_default=sql.false())
     has_dates = Column(Boolean, nullable=False, default=True, server_default=sql.true())
@@ -6671,6 +6689,22 @@ class EditorCollectionEvent(Base):
 
     collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
     event = relationship('Event', foreign_keys=[event_id], innerjoin=True)
+
+
+class EditorCollectionGenre(Base):
+    __tablename__ = 'editor_collection_genre'
+    __table_args__ = (
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    collection_id = Column('collection', Integer, ForeignKey(apply_schema('editor_collection.id', 'musicbrainz'), name='editor_collection_genre_fk_collection'), nullable=False, primary_key=True)
+    genre_id = Column('genre', Integer, ForeignKey(apply_schema('genre.id', 'musicbrainz'), name='editor_collection_genre_fk_genre'), nullable=False, primary_key=True)
+    added = Column(DateTime(timezone=True), server_default=sql.func.now())
+    position = Column(Integer, nullable=False, default=0, server_default=sql.text('0'))
+    comment = Column(String, nullable=False, default='', server_default=sql.text("''"))
+
+    collection = relationship('EditorCollection', foreign_keys=[collection_id], innerjoin=True)
+    genre = relationship('Genre', foreign_keys=[genre_id], innerjoin=True)
 
 
 class EditorCollectionInstrument(Base):
@@ -6839,59 +6873,6 @@ class EditorOauthToken(Base):
 
     editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
     application = relationship('Application', foreign_keys=[application_id], innerjoin=True)
-
-
-class EditorWatchPreferences(Base):
-    __tablename__ = 'editor_watch_preferences'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-    )
-
-    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_preferences_fk_editor', ondelete='CASCADE'), nullable=False, primary_key=True)
-    notify_via_email = Column(Boolean, nullable=False, default=True, server_default=sql.true())
-    notification_timeframe = Column(Interval, nullable=False, default='1 week', server_default=sql.text("'1 week'"))
-    last_checked = Column(DateTime(timezone=True), nullable=False, server_default=sql.func.now())
-
-    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
-
-
-class EditorWatchArtist(Base):
-    __tablename__ = 'editor_watch_artist'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-    )
-
-    artist_id = Column('artist', Integer, ForeignKey(apply_schema('artist.id', 'musicbrainz'), name='editor_watch_artist_fk_artist', ondelete='CASCADE'), nullable=False, primary_key=True)
-    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_artist_fk_editor', ondelete='CASCADE'), nullable=False, primary_key=True)
-
-    artist = relationship('Artist', foreign_keys=[artist_id], innerjoin=True)
-    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
-
-
-class EditorWatchReleaseGroupType(Base):
-    __tablename__ = 'editor_watch_release_group_type'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-    )
-
-    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_release_group_type_fk_editor', ondelete='CASCADE'), nullable=False, primary_key=True)
-    release_group_type_id = Column('release_group_type', Integer, ForeignKey(apply_schema('release_group_primary_type.id', 'musicbrainz'), name='editor_watch_release_group_type_fk_release_group_type'), nullable=False, primary_key=True)
-
-    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
-    release_group_type = relationship('ReleaseGroupPrimaryType', foreign_keys=[release_group_type_id], innerjoin=True)
-
-
-class EditorWatchReleaseStatus(Base):
-    __tablename__ = 'editor_watch_release_status'
-    __table_args__ = (
-        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
-    )
-
-    editor_id = Column('editor', Integer, ForeignKey(apply_schema('editor.id', 'musicbrainz'), name='editor_watch_release_status_fk_editor', ondelete='CASCADE'), nullable=False, primary_key=True)
-    release_status_id = Column('release_status', Integer, ForeignKey(apply_schema('release_status.id', 'musicbrainz'), name='editor_watch_release_status_fk_release_status'), nullable=False, primary_key=True)
-
-    editor = relationship('Editor', foreign_keys=[editor_id], innerjoin=True)
-    release_status = relationship('ReleaseStatus', foreign_keys=[release_status_id], innerjoin=True)
 
 
 class Medium(Base):
@@ -8571,6 +8552,18 @@ class MediumIndex(Base):
     toc = Column(Cube)
 
     medium = relationship('Medium', foreign_keys=[medium_id])
+
+
+class UnreferencedRowLog(Base):
+    __tablename__ = 'unreferenced_row_log'
+    __table_args__ = (
+        Index('unreferenced_row_log_idx_inserted', 'inserted'),
+        {'schema': mbdata.config.schemas.get('musicbrainz', 'musicbrainz')}
+    )
+
+    table_name = Column(String, nullable=False, primary_key=True)
+    row_id = Column(Integer, nullable=False, primary_key=True)
+    inserted = Column(DateTime(timezone=True), server_default=sql.func.now())
 
 
 class URL(Base):

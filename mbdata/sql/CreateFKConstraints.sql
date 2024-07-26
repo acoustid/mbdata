@@ -500,6 +500,16 @@ ALTER TABLE edit_note
    FOREIGN KEY (edit)
    REFERENCES edit(id);
 
+ALTER TABLE edit_note_change
+   ADD CONSTRAINT edit_note_change_fk_edit_note
+   FOREIGN KEY (edit_note)
+   REFERENCES edit_note(id);
+
+ALTER TABLE edit_note_change
+   ADD CONSTRAINT edit_note_change_fk_change_editor
+   FOREIGN KEY (change_editor)
+   REFERENCES editor(id);
+
 ALTER TABLE edit_note_recipient
    ADD CONSTRAINT edit_note_recipient_fk_recipient
    FOREIGN KEY (recipient)
@@ -656,6 +666,16 @@ ALTER TABLE editor_collection_event
    ADD CONSTRAINT editor_collection_event_fk_event
    FOREIGN KEY (event)
    REFERENCES event(id);
+
+ALTER TABLE editor_collection_genre
+   ADD CONSTRAINT editor_collection_genre_fk_collection
+   FOREIGN KEY (collection)
+   REFERENCES editor_collection(id);
+
+ALTER TABLE editor_collection_genre
+   ADD CONSTRAINT editor_collection_genre_fk_genre
+   FOREIGN KEY (genre)
+   REFERENCES genre(id);
 
 ALTER TABLE editor_collection_gid_redirect
    ADD CONSTRAINT editor_collection_gid_redirect_fk_new_id
@@ -876,46 +896,6 @@ ALTER TABLE editor_subscribe_series_deleted
    ADD CONSTRAINT editor_subscribe_series_deleted_fk_deleted_by
    FOREIGN KEY (deleted_by)
    REFERENCES edit(id);
-
-ALTER TABLE editor_watch_artist
-   ADD CONSTRAINT editor_watch_artist_fk_artist
-   FOREIGN KEY (artist)
-   REFERENCES artist(id)
-   ON DELETE CASCADE;
-
-ALTER TABLE editor_watch_artist
-   ADD CONSTRAINT editor_watch_artist_fk_editor
-   FOREIGN KEY (editor)
-   REFERENCES editor(id)
-   ON DELETE CASCADE;
-
-ALTER TABLE editor_watch_preferences
-   ADD CONSTRAINT editor_watch_preferences_fk_editor
-   FOREIGN KEY (editor)
-   REFERENCES editor(id)
-   ON DELETE CASCADE;
-
-ALTER TABLE editor_watch_release_group_type
-   ADD CONSTRAINT editor_watch_release_group_type_fk_editor
-   FOREIGN KEY (editor)
-   REFERENCES editor(id)
-   ON DELETE CASCADE;
-
-ALTER TABLE editor_watch_release_group_type
-   ADD CONSTRAINT editor_watch_release_group_type_fk_release_group_type
-   FOREIGN KEY (release_group_type)
-   REFERENCES release_group_primary_type(id);
-
-ALTER TABLE editor_watch_release_status
-   ADD CONSTRAINT editor_watch_release_status_fk_editor
-   FOREIGN KEY (editor)
-   REFERENCES editor(id)
-   ON DELETE CASCADE;
-
-ALTER TABLE editor_watch_release_status
-   ADD CONSTRAINT editor_watch_release_status_fk_release_status
-   FOREIGN KEY (release_status)
-   REFERENCES release_status(id);
 
 ALTER TABLE event
    ADD CONSTRAINT event_fk_type

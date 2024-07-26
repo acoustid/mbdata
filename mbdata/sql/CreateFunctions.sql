@@ -101,13 +101,12 @@ DECLARE
     ref_count integer;
 BEGIN
     -- decrement ref_count for the old name,
-    -- or delete it if ref_count would drop to 0
+    -- or prepare it for deletion if ref_count would drop to 0
     EXECUTE 'SELECT ref_count FROM ' || tbl || ' WHERE id = ' || row_id || ' FOR UPDATE' INTO ref_count;
     IF ref_count <= val THEN
-        EXECUTE 'DELETE FROM ' || tbl || ' WHERE id = ' || row_id;
-    ELSE
-        EXECUTE 'UPDATE ' || tbl || ' SET ref_count = ref_count - ' || val || ' WHERE id = ' || row_id;
+        EXECUTE 'INSERT INTO unreferenced_row_log (table_name, row_id) VALUES ($1, $2)' USING tbl, row_id;
     END IF;
+    EXECUTE 'UPDATE ' || tbl || ' SET ref_count = ref_count - ' || val || ' WHERE id = ' || row_id;
     RETURN;
 END;
 $$ LANGUAGE 'plpgsql';
@@ -203,21 +202,6 @@ $$ LANGUAGE 'plpgsql';
 -----------------------------------------------------------------------
 -- editor triggers
 -----------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION a_ins_editor() RETURNS trigger AS $$
-BEGIN
-    -- add a new entry to the editor_watch_preference table
-    INSERT INTO editor_watch_preferences (editor) VALUES (NEW.id);
-
-    -- by default watch for new official albums
-    INSERT INTO editor_watch_release_group_type (editor, release_group_type)
-        VALUES (NEW.id, 2);
-    INSERT INTO editor_watch_release_status (editor, release_status)
-        VALUES (NEW.id, 1);
-
-    RETURN NULL;
-END;
-$$ LANGUAGE 'plpgsql';
 
 CREATE OR REPLACE FUNCTION check_editor_name() RETURNS trigger AS $$
 BEGIN
@@ -494,6 +478,19 @@ BEGIN
     IF NEW.artist_credit != OLD.artist_credit THEN
         PERFORM dec_ref_count('artist_credit', OLD.artist_credit, 1);
         PERFORM inc_ref_count('artist_credit', NEW.artist_credit, 1);
+    END IF;
+    IF (
+        NEW.status IS DISTINCT FROM OLD.status AND
+        (NEW.status = 6 OR OLD.status = 6)
+    ) THEN
+        PERFORM set_release_first_release_date(NEW.id);
+
+        -- avoid executing it twice as this will be executed a few lines below if RG changes
+        IF NEW.release_group = OLD.release_group THEN
+            PERFORM set_release_group_first_release_date(NEW.release_group);
+        END IF;
+
+        PERFORM set_releases_recordings_first_release_dates(ARRAY[NEW.id]);
     END IF;
     IF NEW.release_group != OLD.release_group THEN
         -- release group is changed, decrement release_count in the original RG, increment in the new one
@@ -1082,7 +1079,13 @@ BEGIN
             SELECT release, date_year, date_month, date_day FROM release_unknown_country
         ) all_dates
         WHERE ' || condition ||
-        ' ORDER BY release, year NULLS LAST, month NULLS LAST, day NULLS LAST';
+        ' AND NOT EXISTS (
+          SELECT TRUE
+            FROM release
+           WHERE release.id = all_dates.release
+             AND status = 6
+        )
+        ORDER BY release, year NULLS LAST, month NULLS LAST, day NULLS LAST';
 END;
 $$ LANGUAGE 'plpgsql' STRICT;
 
